@@ -4,7 +4,7 @@ import { bendFor, cursorPosition, emptyPlan, sceneAt, strokePhase, TIMING, trave
 const home = { x: 800, y: 450 };
 
 function plan(overrides: Partial<EffectsPlan> = {}): EffectsPlan {
-  return { ...emptyPlan('mouse', home), ...overrides };
+  return { ...emptyPlan('mouse', { width: 1600, height: 900 }), ...overrides };
 }
 
 describe('cursorPosition', () => {
@@ -82,6 +82,23 @@ describe('sceneAt', () => {
     }));
     expect(scene.strokes).toHaveLength(2);
     expect(scene.strokes.every(s => s.d.startsWith('M'))).toBe(true);
+  });
+});
+
+describe('labels in the scene', () => {
+  const label = { time: 1, rect: { x: 600, y: 400, width: 200, height: 60 }, text: 'Nuevo filtro', hold: 2, seed: 3 };
+
+  it('pops the bubble in, draws the arrow, then its head, and fades everything out', () => {
+    expect(sceneAt(0.9, plan({ labels: [label] })).bubbles).toEqual([]);
+    const opening = sceneAt(1.1, plan({ labels: [label] }));
+    expect(opening.bubbles[0]!.scale).toBeLessThan(1);
+    expect(opening.strokes).toHaveLength(0);
+    expect(sceneAt(1.3, plan({ labels: [label] })).strokes).toHaveLength(1);
+    const full = sceneAt(2, plan({ labels: [label] }));
+    expect(full.strokes).toHaveLength(2);
+    expect(full.bubbles[0]).toMatchObject({ opacity: 1, scale: 1, lines: ['Nuevo filtro'] });
+    expect(sceneAt(3.2, plan({ labels: [label] })).bubbles[0]!.opacity).toBeLessThan(1);
+    expect(sceneAt(4, plan({ labels: [label] })).bubbles).toEqual([]);
   });
 });
 

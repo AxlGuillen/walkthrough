@@ -22,24 +22,29 @@ export interface PrepStep {
   center: boolean;
 }
 
+// A scroll without its own duration takes about this long.
+const SCROLL_ESTIMATE = 0.8;
+
 // Each selector action is prepared ahead of time (scroll it into view, send the cursor),
-// but never before the previous action ran: that one may navigate or change the screen.
+// but never before the previous action ran, or a scroll finished: either may change what
+// is on screen.
 export function prepSchedule(actions: readonly TimedAction[], lead = PREP_LEAD): PrepStep[] {
   let previous = 0;
   return actions.flatMap(timed => {
     const target = targetOf(timed);
     const step = target ? [{
-      action: timed, target, prepAt: Math.max(timed.time - lead, previous),
+      action: timed, target, prepAt: Math.min(timed.time, Math.max(timed.time - lead, previous)),
       pointer: pointerTarget(timed) !== undefined, center: timed.action.kind === 'zoom',
     }] : [];
-    previous = Math.max(previous, timed.time);
+    const busyUntil = timed.action.kind === 'scroll' ? timed.time + (timed.action.duration ?? SCROLL_ESTIMATE) : timed.time;
+    previous = Math.max(previous, busyUntil);
     return step;
   });
 }
 
 export function targetOf(timed: TimedAction): string | undefined {
   const { action } = timed;
-  if (action.kind === 'highlight') return action.on;
+  if (action.kind === 'highlight' || action.kind === 'label') return action.on;
   if (action.kind === 'zoom') return action.to === 'out' ? undefined : action.to;
   return pointerTarget(timed);
 }

@@ -1,4 +1,5 @@
-import type { Rect } from '../timeline/camera.ts';
+import type { Rect, Size } from '../timeline/camera.ts';
+import { arrowPaths, layoutLabel, type LabelSide } from './label.ts';
 import { random, sketchCircle, sketchRect, type Point } from './sketch.ts';
 
 export const TIMING = {
@@ -10,6 +11,11 @@ export const TIMING = {
   circleHold: 0.8,
   ringDraw: 0.5,
   ringHold: 1.5,
+  labelHold: 2.2,
+  labelPop: 0.25,
+  arrowDelay: 0.15,
+  arrowDraw: 0.4,
+  headDraw: 0.12,
   fade: 0.35,
 };
 
@@ -56,12 +62,31 @@ export interface Ring {
   track?: string;
 }
 
+export interface Label {
+  time: number;
+  rect: Rect;
+  text: string;
+  side?: LabelSide;
+  hold: number;
+  seed: number;
+  track?: string;
+}
+
 export interface EffectsPlan {
   pointer: 'mouse' | 'touch';
+  viewport: Size;
   home: Point;
   moves: CursorMove[];
   clicks: ClickMark[];
   rings: Ring[];
+  labels: Label[];
+}
+
+export interface Bubble {
+  rect: Rect;
+  lines: string[];
+  opacity: number;
+  scale: number;
 }
 
 export interface Stroke {
@@ -73,10 +98,12 @@ export interface Stroke {
 export interface Scene {
   cursor: { at: Point; opacity: number; scale: number } | null;
   strokes: Stroke[];
+  bubbles: Bubble[];
 }
 
-export function emptyPlan(pointer: EffectsPlan['pointer'], home: Point): EffectsPlan {
-  return { pointer, home, moves: [], clicks: [], rings: [] };
+export function emptyPlan(pointer: EffectsPlan['pointer'], viewport: Size): EffectsPlan {
+  const home = { x: viewport.width / 2, y: viewport.height / 2 };
+  return { pointer, viewport, home, moves: [], clicks: [], rings: [], labels: [] };
 }
 
 export function cursorPosition(time: number, { moves, home }: EffectsPlan): Point {
@@ -111,7 +138,33 @@ export function sceneAt(time: number, plan: EffectsPlan): Scene {
     const phase = strokePhase(time, ring.time, TIMING.ringDraw, ring.hold);
     if (phase) strokes.push({ d: sketchRect(pad(ring.rect, RING_PADDING), ring.seed), ...phase });
   }
-  return { cursor: cursorAt(time, plan), strokes };
+  const bubbles: Bubble[] = [];
+  for (const label of plan.labels) {
+    const bubble = bubbleAt(time, label);
+    if (!bubble) continue;
+    const layout = layoutLabel(label.rect, label.text, plan.viewport, label.side);
+    const { shaft, head } = arrowPaths(layout.from, layout.to, bendFor(label.seed));
+    const shaftPhase = strokePhase(time, label.time + TIMING.arrowDelay, TIMING.arrowDraw, label.hold - TIMING.arrowDelay);
+    const headPhase = strokePhase(time, label.time + TIMING.arrowDelay + TIMING.arrowDraw, TIMING.headDraw,
+      label.hold - TIMING.arrowDelay - TIMING.arrowDraw);
+    if (shaftPhase) strokes.push({ d: shaft, ...shaftPhase });
+    if (headPhase) strokes.push({ d: head, ...headPhase });
+    bubbles.push({ rect: layout.bubble, lines: layout.lines, ...bubble });
+  }
+  return { cursor: cursorAt(time, plan), strokes, bubbles };
+}
+
+function bubbleAt(time: number, label: Label): { opacity: number; scale: number } | null {
+  const elapsed = time - label.time;
+  if (elapsed < 0) return null;
+  const enter = Math.min(1, elapsed / TIMING.labelPop);
+  const opacity = elapsed < label.hold ? enter : 1 - (elapsed - label.hold) / TIMING.fade;
+  if (opacity <= 0) return null;
+  return { opacity, scale: 0.85 + 0.15 * easeOutCubic(enter) };
+}
+
+export function labelVisible(time: number, label: Label): boolean {
+  return bubbleAt(time, label) !== null;
 }
 
 function cursorAt(time: number, plan: EffectsPlan): Scene['cursor'] {

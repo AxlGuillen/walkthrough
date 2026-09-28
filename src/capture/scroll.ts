@@ -37,6 +37,18 @@ export function scrollPositionAt({ from, to, start, duration }: ScrollAnimation,
   return { x: from.x + (to.x - from.x) * eased, y: from.y + (to.y - from.y) * eased };
 }
 
+// One animation per container at a time: a newer one cuts the running one short and
+// starts from wherever it had got to, so two never fight over the same scroll position.
+export function queueScroll(animations: ScrollAnimation[], plan: ScrollPlan, start: number, duration: number): void {
+  let from = plan.from;
+  for (const running of animations) {
+    if (running.key !== plan.key || running.start + running.duration <= start) continue;
+    from = scrollPositionAt(running, start);
+    running.duration = Math.max(0, start - running.start);
+  }
+  animations.push({ ...plan, from, start, duration });
+}
+
 // An animation needs applying on every frame it overlaps, including the one it ends in,
 // so it always lands exactly on its target.
 export function scrollsDue(animations: readonly ScrollAnimation[], previous: number, time: number): ScrollAnimation[] {

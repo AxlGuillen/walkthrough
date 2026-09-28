@@ -56,6 +56,14 @@ describe('prepSchedule', () => {
     expect(prepSchedule([at(0.3), at(0.6)], 1.6).map(s => s.prepAt)).toEqual([0, 0.3]);
   });
 
+  it('waits for a scroll to finish, and never prepares after the action itself', () => {
+    const scroll = (time: number, duration?: number): TimedAction => ({
+      time, segment: 0, action: { kind: 'scroll', to: '.x', within: undefined, duration, at: undefined },
+    });
+    expect(prepSchedule([scroll(1, 2), highlight(2.5)], 1.6).map(s => s.prepAt)).toEqual([2.5]);
+    expect(prepSchedule([scroll(1), highlight(3)], 1.6).map(s => s.prepAt)).toEqual([1.8]);
+  });
+
   it('covers every selector action, marking which move the cursor and which want centering', () => {
     const steps = prepSchedule([zoomAt(1), highlight(2), at(3), { ...zoomAt(4), action: { ...zoomAt(4).action, to: '.card' } as TimedAction['action'] }]);
     expect(steps.map(s => [s.target, s.pointer, s.center])).toEqual([['.h', false, false], ['.a', true, false], ['.card', false, true]]);

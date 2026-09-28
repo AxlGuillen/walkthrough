@@ -10,6 +10,7 @@ import { parseTour } from '../tour/load.ts';
 import { captureTour } from './capture.ts';
 import { installClock } from './clock.ts';
 import { deviceProfile } from './devices.ts';
+import { layoutLabel } from '../effects/label.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const fixture = (name: string) => pathToFileURL(path.join(ROOT, 'tests/fixtures', name, 'index.html')).href;
@@ -121,6 +122,9 @@ segments:
   - hold: 1
     do:
       - click: "#row"
+  - hold: 1.5
+    do:
+      - label: { on: "#toggle", text: "Botón nuevo" }
 `);
     const file = path.join(dir, 'effects.mp4');
     await captureTour({ root: ROOT, tour, timeline: buildTimeline(tour, []), file, fps: 30 });
@@ -151,6 +155,13 @@ segments:
     const rowCenter = { x: center(row).x - 40, y: row.y - 30, width: 80, height: row.height + 60 };
     expect(count(file, 4.9, rowText, cyan)).toBeGreaterThan(30);
     expect(count(file, 4.9, rowCenter, cyan)).toBe(0);
+
+    // The label's bubble lands where the pure layout says, filled with the accent.
+    const { bubble } = layoutLabel(toggle, 'Botón nuevo', deviceProfile('desktop').viewport);
+    const inner = { x: bubble.x + 4, y: bubble.y + 4, width: bubble.width - 8, height: bubble.height - 8 };
+    const area = Math.round(inner.width * 1.2) * Math.round(inner.height * 1.2);
+    expect(count(file, 6.4, inner, cyan) / area).toBeGreaterThan(0.5);
+    expect(count(file, 4.0, inner, cyan)).toBe(0);
   }, 120_000);
 });
 

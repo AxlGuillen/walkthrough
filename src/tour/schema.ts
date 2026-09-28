@@ -59,6 +59,16 @@ const highlight = z.strictObject({
   ]),
 }).transform(({ highlight }) => ({ kind: 'highlight' as const, ...highlight }));
 
+const label = z.strictObject({
+  label: z.strictObject({
+    on: selector,
+    text: z.string().trim().min(1),
+    side: z.enum(['top', 'bottom', 'left', 'right']).optional(),
+    duration: z.number().positive().optional(),
+    ...timed,
+  }),
+}).transform(({ label }) => ({ kind: 'label' as const, ...label }));
+
 const scrollTarget = z.union([z.literal('top'), z.literal('bottom'), selector]);
 const scroll = z.strictObject({
   scroll: z.union([
@@ -74,7 +84,7 @@ const wait = z.strictObject({
   ]),
 }).transform(({ wait }) => ({ kind: 'wait' as const, ...wait }));
 
-const action = z.union([goto, click, hover, type, zoom, highlight, scroll, wait]);
+const action = z.union([goto, click, hover, type, zoom, highlight, label, scroll, wait]);
 export type Action = z.infer<typeof action>;
 
 // An HTML page laid over the video. params reach it as a query string, so one

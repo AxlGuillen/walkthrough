@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scrollDuration, scrollPositionAt, scrollsDue } from './scroll.ts';
+import { queueScroll, scrollDuration, scrollPositionAt, scrollsDue, type ScrollAnimation } from './scroll.ts';
 
 const plan = (y: number) => ({ key: 'window', from: { x: 0, y: 0 }, to: { x: 0, y } });
 
@@ -33,3 +33,24 @@ describe('scrollsDue', () => {
     expect(scrollsDue([animation], 2.01, 2.05)).toEqual([]);
   });
 });
+
+describe('queueScroll', () => {
+  it('cuts a running scroll of the same container and continues from where it got to', () => {
+    const animations: ScrollAnimation[] = [];
+    queueScroll(animations, plan(1000), 0, 2);
+    queueScroll(animations, { key: 'window', from: { x: 0, y: 999 }, to: { x: 0, y: 200 } }, 1, 0.5);
+    expect(animations[0]!.duration).toBe(1);
+    expect(animations[1]!.from.y).toBeCloseTo(500);
+    expect(scrollsDue(animations, 1.2, 1.25)).toEqual([animations[1]]);
+  });
+
+  it('leaves other containers and finished scrolls alone', () => {
+    const animations: ScrollAnimation[] = [];
+    queueScroll(animations, plan(1000), 0, 1);
+    queueScroll(animations, { ...plan(300), key: 'board' }, 0.5, 1);
+    queueScroll(animations, plan(50), 2, 1);
+    expect(animations.map(a => a.duration)).toEqual([1, 1, 1]);
+    expect(animations[2]!.from).toEqual({ x: 0, y: 0 });
+  });
+});
+

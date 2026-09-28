@@ -1,5 +1,5 @@
 import { bendFor, cursorPosition, TIMING, travelTime } from '../effects/scene.ts';
-import { planScroll, scrollDuration } from './scroll.ts';
+import { planScroll, queueScroll, scrollDuration } from './scroll.ts';
 import type { Stage } from './stage.ts';
 import { aimAt } from './targets.ts';
 
@@ -26,7 +26,7 @@ export async function prepareTargets(stage: Stage): Promise<void> {
     if (planned && planned.plans.length > 0) {
       const room = step.action.time - time - (step.pointer ? TIMING.travelMin : 0);
       const duration = Math.max(MIN_SCROLL, Math.min(scrollDuration(planned.plans), room));
-      for (const plan of planned.plans) scrolls.push({ ...plan, start: time, duration });
+      for (const plan of planned.plans) queueScroll(scrolls, plan, time, duration);
       log.push({ kind: 'scroll', time, duration });
       shift = planned.shift;
       ready = time + duration;

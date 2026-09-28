@@ -1,9 +1,9 @@
-import { clickVisible, ringVisible, TIMING } from '../effects/scene.ts';
+import { clickVisible, labelVisible, ringVisible, TIMING } from '../effects/scene.ts';
 import type { TimedAction } from '../timeline/build.ts';
 import { fullFrame } from '../timeline/camera.ts';
 import { charsDue } from './schedule.ts';
 import type { Stage } from './stage.ts';
-import { planScroll, scrollDuration, type ScrollMode } from './scroll.ts';
+import { planScroll, queueScroll, scrollDuration, type ScrollMode } from './scroll.ts';
 import { aimAt, visibleBox, zoomRect } from './targets.ts';
 
 const ZOOM_DURATION = 0.8;
@@ -30,7 +30,7 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       const mode: ScrollMode = edge ? (action.to as ScrollMode) : 'center';
       const planned = await planScroll(page, edge ? null : action.to, mode, action.within);
       const duration = action.duration ?? scrollDuration(planned.plans);
-      for (const plan of planned.plans) stage.scrolls.push({ ...plan, start: stage.time, duration });
+      for (const plan of planned.plans) queueScroll(stage.scrolls, plan, stage.time, duration);
       if (planned.plans.length) log.push({ kind: 'scroll', time: stage.time, duration });
       return;
     }
@@ -62,6 +62,15 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       log.push({ kind: 'ring', time: stage.time });
       return;
     }
+    case 'label': {
+      const box = await visibleBox(page.locator(action.on).first(), `label target "${action.on}"`);
+      effects.labels.push({
+        time: stage.time, rect: box, text: action.text, hold: action.duration ?? TIMING.labelHold, seed, track: action.on,
+        ...(action.side ? { side: action.side } : {}),
+      });
+      log.push({ kind: 'label', time: stage.time });
+      return;
+    }
   }
 }
 
@@ -87,6 +96,11 @@ export async function retrackMarks({ page, time, effects }: Stage): Promise<void
     if (!ring.track || !ringVisible(time, ring)) continue;
     const box = await page.locator(ring.track).first().boundingBox().catch(() => null);
     if (box) ring.rect = box;
+  }
+  for (const label of effects.labels) {
+    if (!label.track || !labelVisible(time, label)) continue;
+    const box = await page.locator(label.track).first().boundingBox().catch(() => null);
+    if (box) label.rect = box;
   }
   for (const click of effects.clicks) {
     if (!click.track || !clickVisible(time, click)) continue;

@@ -9,6 +9,10 @@ segments:
   - say: Esto es uws-tasks, la app donde vemos nuestro trabajo de Jira de un vistazo.
     do:
       - goto: /dashboard
+    overlays:
+      - src: overlays/lower-third.html
+        from: 0.4
+        params: { title: uws-tasks, subtitle: Recorrido para el equipo }
 
   - say: El dashboard resume la semana. Las horas registradas, los tickets resueltos y los que siguen abiertos.
     do:
@@ -53,3 +57,6 @@ segments:
       - highlight: { on: "[data-tour=pending]", at: última, duration: 3 }
 
   - say: Así de simple. Cualquier duda, me escriben.
+    overlays:
+      - src: overlays/lower-third.html
+        params: { title: uws-tasks.vercel.app, subtitle: Entra con tu cuenta de Google }

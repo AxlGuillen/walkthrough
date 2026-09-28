@@ -5,16 +5,22 @@ export interface EncoderOptions {
   fps: number;
   output: Size;
   file: string;
+  alpha?: boolean;
 }
 
 // Frames arrive as PNGs of varying size (the camera crop); ffmpeg rebuilds the scale
 // filter on each size change, so every frame lands at the output size.
-export function encoderArgs({ fps, output, file }: EncoderOptions): string[] {
+// With alpha, frames are stored losslessly as PNG inside a .mov so compose can lay
+// them over the capture.
+export function encoderArgs({ fps, output, file, alpha = false }: EncoderOptions): string[] {
+  const scale = `scale=${output.width}:${output.height}:flags=lanczos,setsar=1`;
+  const codec = alpha
+    ? ['-vf', `${scale},format=rgba`, '-c:v', 'png']
+    : ['-vf', `${scale},format=yuv420p`, '-c:v', 'libx264', '-preset', 'medium', '-crf', '12'];
   return [
     '-y', '-v', 'error',
     '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-',
-    '-vf', `scale=${output.width}:${output.height}:flags=lanczos,setsar=1,format=yuv420p`,
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', '12', '-r', String(fps),
+    ...codec, '-r', String(fps),
     file,
   ];
 }

@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 100vw; height: 100vh; }
+  .card {
+    position: absolute; left: 96px; bottom: 220px;
+    display: flex; gap: 22px; align-items: stretch;
+    padding: 26px 40px 28px 28px; border-radius: 20px;
+    background: rgba(24, 16, 52, 0.92);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    font-family: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+    animation: enter 600ms cubic-bezier(0.2, 0.8, 0.2, 1) 100ms both;
+  }
+  .bar { width: 6px; border-radius: 3px; background: linear-gradient(#8b6cff, #5b3fd9); }
+  .title { color: #fff; font-size: 46px; font-weight: 700; letter-spacing: -0.5px; line-height: 1.1; }
+  .subtitle { margin-top: 8px; color: #cbc4ea; font-size: 26px; font-weight: 500; }
+  .subtitle:empty { display: none; }
+  @keyframes enter { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="bar"></div>
+    <div>
+      <div class="title"></div>
+      <div class="subtitle"></div>
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(location.search);
+    document.querySelector('.title').textContent = params.get('title') ?? '';
+    document.querySelector('.subtitle').textContent = params.get('subtitle') ?? '';
+  </script>
+</body>
+</html>

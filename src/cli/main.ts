@@ -2,9 +2,11 @@ import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
-import { captureTour } from '../capture/capture.ts';
+import { captureTour, DEFAULT_FPS } from '../capture/capture.ts';
 import { login } from '../capture/session.ts';
 import { composeTour } from '../compose/compose.ts';
+import { deviceProfile } from '../capture/devices.ts';
+import { renderOverlays } from '../overlays/render.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
 import { tourPaths } from '../tour/paths.ts';
@@ -17,7 +19,8 @@ const USAGE = `usage:
   walkthrough login <session> <url>   sign in by hand once; the profile is reused by renders
   walkthrough voice <tour.yaml>       synthesize narration and write the timeline
   walkthrough render <tour.yaml>      voice, timeline, capture and compose into video.mp4
-      --from=compose                  reuse capture.mp4 and only rebuild the final video`;
+      --from=overlays                 reuse capture.mp4; re-render overlays and compose
+      --from=compose                  reuse capture.mp4 and overlays; only rebuild the final video`;
 
 async function voice(tourFile: string) {
   const paths = tourPaths(tourFile, ROOT);
@@ -40,10 +43,10 @@ async function voice(tourFile: string) {
 }
 
 async function render(tourFile: string, from: string | undefined): Promise<void> {
-  if (from !== undefined && from !== 'compose') throw new Error(`unknown --from value: ${from}`);
+  if (from !== undefined && from !== 'overlays' && from !== 'compose') throw new Error(`unknown --from value: ${from}`);
   const { tour, paths, timeline } = await voice(tourFile);
 
-  if (from !== 'compose') {
+  if (from === undefined) {
     const started = Date.now();
     const { frames } = await captureTour({
       root: ROOT, tour, timeline, file: path.join(paths.outDir, 'capture.mp4'),
@@ -52,7 +55,16 @@ async function render(tourFile: string, from: string | undefined): Promise<void>
     process.stderr.write('\n');
     console.log(`${frames} frames in ${((Date.now() - started) / 1000).toFixed(1)}s`);
   } else if (!existsSync(path.join(paths.outDir, 'capture.mp4'))) {
-    throw new Error('no capture.mp4 to compose; run render without --from first');
+    throw new Error('no capture.mp4 to reuse; run render without --from first');
+  }
+
+  if (from !== 'compose') {
+    await renderOverlays({
+      overlays: timeline.overlays, tourDir: paths.dir, outDir: paths.outDir,
+      output: deviceProfile(tour.device).output, fps: DEFAULT_FPS,
+      onFrame: (overlay, frame, total) => process.stderr.write(`\r  overlay ${overlay}: ${frame}/${total}   `),
+    });
+    if (timeline.overlays.length) process.stderr.write('\n');
   }
 
   const video = await composeTour(tour, timeline, paths.outDir, paths.dir);

@@ -24,6 +24,7 @@ export interface TimedAction {
 
 export interface TimedOverlay {
   src: string;
+  params: Record<string, string>;
   start: number;
   end: number;
   fade: number;
@@ -84,7 +85,7 @@ export function buildTimeline(
       const from = resolve(overlay.from, start, `overlay ${overlay.src}`);
       const to = resolve(overlay.to, end, `overlay ${overlay.src}`);
       if (to <= from) throw new TimelineError(`${label}: overlay ${overlay.src} ends before it starts`);
-      timeline.overlays.push({ src: overlay.src, start: from, end: to, fade: overlay.fade, segment: index });
+      timeline.overlays.push({ src: overlay.src, params: overlay.params, start: from, end: to, fade: overlay.fade, segment: index });
     }
 
     if (spoken && speechStart !== null) {

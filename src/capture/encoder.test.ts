@@ -15,4 +15,10 @@ describe('encoderArgs', () => {
   it('writes to the requested file last', () => {
     expect(args.at(-1)).toBe('out.mp4');
   });
+
+  it('keeps transparency losslessly for overlays', () => {
+    const overlay = encoderArgs({ fps: 30, output: { width: 1920, height: 1080 }, file: 'o.mov', alpha: true });
+    expect(overlay[overlay.indexOf('-vf') + 1]).toMatch(/format=rgba$/);
+    expect(overlay.slice(overlay.indexOf('-vf') + 2, overlay.indexOf('-vf') + 4)).toEqual(['-c:v', 'png']);
+  });
 });

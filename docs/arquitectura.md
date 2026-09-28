@@ -131,9 +131,27 @@ El plan B (screencast de Chrome) queda descartado mientras esto aguante.
 
 ## Overlays
 
-Cada overlay es un HTML propio en la carpeta del tour, con sus assets. Se renderiza en una página aparte, a tamaño de salida y con fondo transparente, cuadro a cuadro durante su intervalo. ffmpeg lo pone encima con `overlay`.
+Cada overlay es un HTML propio en la carpeta del tour, con sus assets (imágenes, fuentes, `<video>`):
 
-Por vivir fuera de la app: no le afecta su CSS, no se escala con la cámara y cambiarlo no obliga a recapturar.
+```yaml
+overlays:
+  - src: overlays/lower-third.html
+    from: tarjeta            # como `at`: segundos o palabra; por defecto, el inicio del segmento
+    to: 2.5                  # por defecto, el fin del segmento
+    fade: 0.3                # fade de entrada y salida, en segundos
+    params: { title: Tablero, subtitle: Semana 38 }   # llegan como query string
+```
+
+- **Render aparte** (`src/overlays/render.ts`): cada overlay se abre en su propia página, al tamaño de salida, con `deviceScaleFactor: 1` y fondo transparente (`omitBackground`). Se guarda como `overlays/NN.mov` con PNG por cuadro, sin pérdida y con alfa.
+- **Reloj propio que empieza en cero.** La página se carga con el reloj congelado, no vía `settle()`, así que sus animaciones de entrada arrancan justo cuando el overlay aparece en el video. Antes del primer cuadro se espera a las fuentes, imágenes y videos, por evento, porque los timers están congelados.
+- **`params`** reutiliza una plantilla con distintos textos: el HTML los lee con `URLSearchParams`.
+- **Montaje:** `setpts` desplaza el overlay a su inicio, `fade` con `alpha=1` lo desvanece y `overlay=eof_action=pass` lo compone en el orden del tour. Los subtítulos van encima de todo.
+- **Lo que no le afecta:** el CSS de la app ni la cámara. Cambiar un overlay solo requiere `render --from=overlays`.
+- **El lienzo** es el video completo (1920×1080 o 1080×1920). La posición la decide el CSS del overlay; los subtítulos ocupan la franja inferior.
+
+## Video dentro de la página
+
+`<video>` tampoco obedece a `page.clock`: corría con el reloj real y en la captura se veía acelerado. La misma sincronía que fija las animaciones CSS lo pausa y lo busca (`currentTime`) al instante exacto de cada cuadro, y espera `seeked` antes del screenshot. Respeta `loop`. Aplica a la app y a los overlays.
 
 ## Montaje (compose)
 
@@ -172,7 +190,7 @@ interface VoiceProvider {
 ```
 walkthrough login  <session> <url>     iniciar sesión a mano, una vez
 walkthrough voice  <tour>              solo voz: para oírla y revisar tiempos
-walkthrough render <tour> [--from=compose]
+walkthrough render <tour> [--from=overlays|compose]
 ```
 
 ## Estructura

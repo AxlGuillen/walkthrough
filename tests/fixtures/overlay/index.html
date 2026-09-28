@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; }
+  #box { position: absolute; left: 100px; top: 100px; width: 200px; height: 200px; background: #ff00ff; animation: grow 1s linear both; }
+  @keyframes grow { from { transform: scale(0); } to { transform: scale(1); } }
+</style>
+</head>
+<body>
+  <div id="box"></div>
+  <script>
+    const color = new URLSearchParams(location.search).get('color');
+    if (color) document.getElementById('box').style.background = color;
+  </script>
+</body>
+</html>

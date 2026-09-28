@@ -1,20 +1,21 @@
 declare global {
   interface Window {
-    __walkthrough?: { syncAnimations?(): void; draw?(markup: string): void };
+    __walkthrough?: { syncAnimations?(): Promise<void>; draw?(markup: string): void };
   }
 }
 
 // Both functions run inside the page, so they must stay self-contained: Playwright
 // serializes them as source.
 
-// page.clock does not drive CSS animations or transitions; this pins each one to the fake
+// page.clock drives neither CSS animations nor <video>; this pins both to the fake
 // performance.now() before a frame is taken.
 export function animationSync(): void {
   const origins = new WeakMap<Animation, number>();
+  const videoOrigins = new WeakMap<HTMLVideoElement, number>();
   let lastSync = performance.now();
   window.__walkthrough = {
     ...window.__walkthrough,
-    syncAnimations() {
+    async syncAnimations() {
       const now = performance.now();
       for (const animation of document.getAnimations()) {
         if (!origins.has(animation)) {
@@ -30,6 +31,27 @@ export function animationSync(): void {
         if (typeof end === 'number' && Number.isFinite(end) && time >= end) animation.finish();
         else animation.currentTime = time;
       }
+
+      // Same idea for video: pause it and seek to the frame for this instant. Seeking is
+      // async, so wait for every frame to decode before the screenshot.
+      const seeks: Promise<unknown>[] = [];
+      for (const video of document.querySelectorAll('video')) {
+        if (video.readyState < 1) continue;
+        if (!videoOrigins.has(video)) {
+          videoOrigins.set(video, now - Math.min(video.currentTime * 1000, now - lastSync));
+          video.pause();
+        }
+        let target = (now - videoOrigins.get(video)!) / 1000;
+        if (Number.isFinite(video.duration)) {
+          target = video.loop ? target % video.duration : Math.min(target, video.duration);
+        }
+        if (!video.paused) video.pause();
+        if (Math.abs(video.currentTime - target) > 0.001) {
+          seeks.push(new Promise(resolve => video.addEventListener('seeked', resolve, { once: true })));
+          video.currentTime = target;
+        }
+      }
+      await Promise.all(seeks);
       lastSync = now;
     },
   };

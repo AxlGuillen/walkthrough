@@ -37,6 +37,20 @@ segments:
     ]);
   });
 
+  it('passes overlay params through as strings', () => {
+    const tour = parseTour(`
+title: Board
+url: https://example.com
+segments:
+  - say: Hola
+    overlays:
+      - { src: overlays/lower-third.html, params: { title: Tablero, week: 38 } }
+`);
+    expect(tour.segments[0]!.overlays[0]).toEqual({
+      src: 'overlays/lower-third.html', fade: 0.3, params: { title: 'Tablero', week: '38' },
+    });
+  });
+
   it('rejects a silent segment without hold', () => {
     expect(() => parseTour(`
 title: Board

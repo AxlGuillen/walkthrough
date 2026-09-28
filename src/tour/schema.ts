@@ -57,11 +57,14 @@ const highlight = z.strictObject({
 const action = z.union([goto, click, hover, type, zoom, highlight]);
 export type Action = z.infer<typeof action>;
 
+// An HTML page laid over the video. params reach it as a query string, so one
+// template (a lower third, a title card) serves many texts.
 const overlay = z.strictObject({
   src: z.string().min(1),
   from: anchor.optional(),
   to: anchor.optional(),
   fade: z.number().nonnegative().default(0.3),
+  params: z.record(z.string(), z.union([z.string(), z.number()]).transform(String)).default({}),
 });
 export type Overlay = z.infer<typeof overlay>;
 

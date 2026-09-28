@@ -58,7 +58,7 @@ describe('buildTimeline', () => {
 
   it('defaults overlays to run until the end of their segment', () => {
     expect(timeline.overlays).toEqual([
-      { src: 'overlays/new.html', start: 4.5, end: 7, fade: 0.3, segment: 1 },
+      { src: 'overlays/new.html', params: {}, start: 4.5, end: 7, fade: 0.3, segment: 1 },
     ]);
   });
 

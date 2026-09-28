@@ -61,7 +61,9 @@ Convierte en comando los scripts improvisados que usé para explorar uws-tasks.
 - **Reúne por ruta:** enlaces de navegación; anclas estables (`data-tour`, `data-testid`, `aria-label`, roles); encabezados, botones y campos; diálogos u onboardings abiertos; contenedores con scroll horizontal o vertical.
 - **Salida:** un reporte Markdown con captura por pantalla en la carpeta de trabajo. Es la base para que Claude escriba tours nuevos (dymmsa, portafolio, Reel Express).
 
-## Fase 2 — Mejor video
+## Fase 2 — Mejor video ✅ (28/sep/2026)
+
+Detalle en `docs/arquitectura.md`: «Cámara virtual», «Movimiento y scroll» y «Transiciones entre pantallas». El centrado horizontal contra un borde sin scroll (el sidebar) sigue siendo un límite: ahí no hay píxeles fuera de la pantalla.
 
 ### 2.1 Encuadre de la cámara
 

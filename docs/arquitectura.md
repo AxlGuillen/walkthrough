@@ -70,8 +70,9 @@ segments:
       - goto: /board
   - say: "Aquí está la tarjeta del ticket, con su estimado."
     do:
-      - zoom: { to: "[data-ticket='UWS-142']", at: "tarjeta" }
-      - click: { on: "[data-ticket='UWS-142']", at: "estimado" }
+      - zoom: { to: "[data-tour=card] >> nth=0", at: "tarjeta", follow: true }
+      - click: { on: "[data-tour=card] >> nth=0", at: "estimado", wait: "[data-tour=detail]" }
+      - scroll: { to: "[data-tour=column-done]", within: "[data-tour=board]" }
     overlays:
       - { src: overlays/nuevo.html, from: "tarjeta" }
   - hold: 1.5               # segmento sin voz
@@ -102,12 +103,26 @@ Todo lo que viene después solo ejecuta lo que dice la timeline; nadie más calc
 El zoom no toca la página:
 1. Se captura con la densidad justa para que el zoom máximo quede a un píxel de origen por píxel de salida: desktop es un viewport de 1600×900 a 2,4× (3840×2160) para salir a 1920×1080; mobile es 405×720 a 5,33× para salir a 1080×1920.
 2. La cámara es un rectángulo en px CSS: cada cuadro es un `screenshot({ clip })` de ese rectángulo, y ffmpeg lo escala a la salida (reconstruye el filtro `scale` cuando cambia el tamaño del recorte).
-3. El destino de un zoom es el `boundingBox()` del selector, con margen, ajustado a la proporción del video y limitado a la pantalla.
-4. Entre destinos, la cámara interpola con easing.
-
-El zoom máximo sin pérdida es 2×. Calcular el rectángulo por cuadro (`cameraAt`) y ajustar un destino (`fitRect`) son funciones puras.
+3. **Zoom proporcional** (`fitRect`): el objetivo ocupa ~60 % del cuadro (`FILL`), con zoom entre 1,2× (`MIN_ZOOM`) y 2× (`MAX_ZOOM`). Si ni a 1,2× cabe, no se hace zoom: un acercamiento tan leve se lee como temblor. `zoom: { to, scale }` fija el zoom a mano.
+4. **Centrado:** antes de un zoom, el objetivo se centra con scroll suave si la página o su contenedor lo permiten. Contra un borde que no hace scroll (el sidebar, por ejemplo) la cámara sigue topando con el límite de la pantalla, porque ahí no hay píxeles.
+5. **Seguimiento** (`zoom: { to, follow: true }`): mientras dura ese zoom, la cámara se desplaza lo justo para mantener el cursor dentro de una zona segura (18 % de margen). La transición siguiente parte del cuadro ya desplazado, así que salir del zoom no brinca.
+6. Entre destinos la cámara interpola con easing.
 
 El anillo de resaltado y el clic dibujado **sí** van en la página: se inyectan en el DOM y quedan dentro del recorte de forma natural.
+
+## Movimiento y scroll
+
+- **Preparación anticipada** (`prepSchedule`, `prep.ts`): cada acción con selector se prepara hasta 1,6 s antes (`PREP_LEAD`), nunca antes de la acción anterior, porque esa puede cambiar de pantalla.
+  1. Si el objetivo está fuera de la vista (o descentrado, en un zoom), se programa un scroll suave que termina antes de la acción.
+  2. El cursor viaja hacia la posición que tendrá el objetivo *después* del scroll.
+- **Cursor natural:** trayectoria Bézier con una comba lateral de 8–18 % (sembrada por acción) y duración según la distancia, entre 0,35 s y 0,9 s. El movimiento arranca justo a tiempo para llegar cuando corre la acción.
+- **Scroll determinista:** Node interpola cada contenedor (la ventana o un elemento con `overflow` que se marca con `data-walkthrough-scroll`) cuadro por cuadro con easing de seno, y lo aplica con `scrollTo({ behavior: 'instant' })`. Así el `scroll-behavior: smooth` del CSS de la app, que correría en tiempo real, nunca interviene. El seno tiene una velocidad pico de ~1,6 veces la promedio; el cúbico, de 3, y se veía como un jalón.
+- **Acción `scroll`:** `scroll: { to: <selector> | top | bottom, within: <contenedor>, duration }`. Sirve para recorrer contenedores horizontales como las columnas del Board.
+- **Marcas que siguen al contenido:** mientras hay scroll, los anillos y círculos visibles se vuelven a medir para no quedar flotando.
+
+## Transiciones entre pantallas
+
+`click: { on, wait: <selector> }` y la acción `wait: { until: <selector> }` esperan a que la siguiente pantalla muestre ese elemento con el reloj corriendo, fuera del tiempo del video, como `goto`. En el video, el elemento ya está en el cuadro del clic: no se ven estados de carga a medias.
 
 ## Efectos en la página
 
@@ -115,7 +130,7 @@ Cursor, circulito de clic y anillo de resaltado.
 
 - **La página no guarda estado.** En cada cuadro, Node calcula la escena a partir del tiempo del video (`src/effects/`, funciones puras) y la página solo pinta el SVG que recibe (`effectsLayer` en `src/capture/runtime.ts`). Así sobreviven a navegaciones y se prueban sin navegador.
 - **La capa es un `popover` en el top layer**, con `pointer-events: none`. Se vuelve a mostrar en cada cuadro para quedar encima de los diálogos que abra la app.
-- **El cursor sale antes** (`TIMING.travel`, 0,7 s) para llegar al objetivo justo cuando corre la acción, sin salir antes de la acción de puntero anterior. Si el objetivo aparece tarde, salta.
+- **El cursor sale antes** para llegar al objetivo justo cuando corre la acción; la trayectoria y el tiempo están en «Movimiento y scroll». Si el objetivo aparece tarde, el viaje se acorta.
 - **Se apunta al texto del elemento**, no a su centro geométrico. El centro de una fila de ancho completo puede quedar lejos de lo que se lee, e incluso fuera de la cámara. Playwright hace el clic o el hover en ese mismo punto.
 - **Trazos a mano:** círculo con 1,1 vueltas y rectángulo redondeado con ruido suave y sembrado por acción (siempre igual en cada render). Se dibujan con `pathLength` + `stroke-dashoffset`.
 - **Mobile:** sin cursor; solo el circulito en cada toque.

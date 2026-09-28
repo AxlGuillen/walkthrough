@@ -16,7 +16,7 @@ export function selectorFor(el: ElementInfo): string | null {
 }
 
 export function looksGenerated(id: string): boolean {
-  return /^[:_]|^radix-|^headlessui-|^(mui|react|ember|v)-?\d|\d{3,}|[a-f0-9]{8,}/i.test(id);
+  return /^[:_]|^(radix|headlessui|base-ui|react-aria|chakra|mantine)[-_]|^(mui|react|ember|v)-?\d|_R_|:r[0-9a-z]+:|\d{3,}|[a-f0-9]{8,}/i.test(id);
 }
 
 // A selector naming a ticket key or a long number breaks as soon as the data moves on.

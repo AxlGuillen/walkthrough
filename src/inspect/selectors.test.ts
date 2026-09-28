@@ -30,7 +30,7 @@ describe('selectorFor', () => {
 
 describe('looksGenerated', () => {
   it('spots framework-generated ids', () => {
-    expect(['radix-12', ':r1:', 'mui-42', 'a1b2c3d4e5', 'item-2024'].map(looksGenerated)).toEqual([true, true, true, true, true]);
+    expect(['radix-12', ':r1:', 'mui-42', 'a1b2c3d4e5', 'item-2024', 'base-ui-_R_uo1t5fivb_'].map(looksGenerated)).toEqual([true, true, true, true, true, true]);
     expect(['filters', 'main-nav', 'tickets'].map(looksGenerated)).toEqual([false, false, false]);
   });
 });

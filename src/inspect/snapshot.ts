@@ -25,7 +25,7 @@ export interface PageSnapshot {
   title: string;
   headings: { level: number; text: string }[];
   elements: ElementInfo[];
-  links: { href: string; text: string }[];
+  links: { href: string; text: string; inNav: boolean }[];
   dialogs: string[];
   scrollers: Scroller[];
   storageKeys: string[];
@@ -62,9 +62,13 @@ export function snapshotPage(page: Page): Promise<PageSnapshot> {
     const elements = [...document.querySelectorAll(interesting)].slice(0, max).map(describe);
 
     const links = [...document.querySelectorAll('a[href]')]
-      .map(a => ({ href: new URL(a.getAttribute('href')!, location.href), text: clean(a.textContent) }))
+      .map(a => ({
+        href: new URL(a.getAttribute('href')!, location.href),
+        text: clean(a.textContent),
+        inNav: !!a.closest('nav,aside,header,[role=navigation]'),
+      }))
       .filter(({ href }) => href.origin === location.origin)
-      .map(({ href, text }) => ({ href: href.pathname + href.search, text }));
+      .map(({ href, text, inNav }) => ({ href: href.pathname + href.search, text, inNav }));
 
     const dialogs = [...document.querySelectorAll('[role=dialog],[role=alertdialog],[aria-modal=true],dialog[open],:popover-open')]
       .filter(el => visible(el) && el.id !== '__walkthrough-effects')

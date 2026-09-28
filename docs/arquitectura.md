@@ -204,12 +204,30 @@ interface VoiceProvider {
 
 **No sirve la sesión del Chrome personal.** Ese perfil está bloqueado mientras Chrome está abierto, y automatizarlo mezclaría la navegación real con la herramienta.
 
+## Iterar sin renderizar
+
+- **`walkthrough check <tour>`** recorre el tour con el reloj normal y sin capturar cuadros, así que tarda segundos: el de uws-tasks, 9 s. Hace los mismos clics que el render y reporta por acción:
+  - ✗ si un selector no existe, con sugerencias sacadas de las anclas estables de la pantalla;
+  - ✗ si está oculto;
+  - ✗ si una navegación terminó en un login (sesión caducada);
+  - ⚠ si hay varios resultados, si el selector depende de datos (una clave de ticket, un número largo) o si hay un diálogo abierto.
+
+  Antes de declarar que algo no existe espera hasta 5 s: las pantallas a las que se llega con un clic del lado del cliente no disparan `load`. Sale con código 1 si hay fallas.
+- **`walkthrough inspect <url> [--session] [--device]`** es solo lectura: navega sin hacer clics y escribe un reporte Markdown con captura en `~/Library/Caches/walkthrough/inspect/<host>/`. Por pantalla lista encabezados, anclas estables (`data-tour` > `data-testid` > enlaces internos > `aria-label` > ids no generados > texto corto), diálogos abiertos, zonas con scroll y claves de `localStorage` que parecen de onboarding.
+  - Sigue solo los enlaces de navegación y una vez por ruta, ignorando el query.
+  - Los controles por fila («Edit <título>») se agrupan en un selector de prefijo, porque llevan datos en la etiqueta.
+- **`walkthrough render --preview`** mantiene el viewport (la app se ve idéntica) y reduce la salida a la mitad y a 15 fps. Los overlays se diseñan sobre el lienzo completo y se escalan. Queda en `…/<tour>/preview/`, fuera de `~/Movies`, y la galería lo muestra en «Vistas previas». Comparte voz y timeline con el render final.
+  - En uws-tasks tardó 2 min 10 s contra unos 11 min del final: 5× más rápido.
+  - Por cuadro ya domina el costo fijo (sincronía, efectos, reloj) más que los píxeles: 132 ms contra ~360 ms.
+
 ## CLI
 
 ```
 walkthrough login  <session> <url>     iniciar sesión a mano, una vez
 walkthrough voice  <tour>              solo voz: para oírla y revisar tiempos
-walkthrough render <tour> [--from=overlays|compose]
+walkthrough check  <tour>               validar sin renderizar
+walkthrough inspect <url> [--session=<s>] [--device=mobile]
+walkthrough render <tour> [--preview] [--from=overlays|compose]
 walkthrough gallery [--no-open]           ver los videos generados
 walkthrough clean [--voice] [--keep=<n>]  limpiar caché y renders viejos
 ```

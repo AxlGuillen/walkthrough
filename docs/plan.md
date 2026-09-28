@@ -30,7 +30,9 @@ De paso apareció y se corrigió una carrera al congelar el reloj: `pauseAt` rec
 | Dividir el CLI | Un archivo por comando en `src/cli/commands/`. |
 | Commits sanos | Cada commit pasa `tsc` y las pruebas por sí solo. |
 
-## Fase 1 — Iterar barato
+## Fase 1 — Iterar barato ✅ (28/sep/2026)
+
+Resultados en uws-tasks: `check` en 9 s (18 ✓, 1 ⚠ por el selector `UWS-8324`), `inspect` de 6 rutas en 45 s y vista previa en 2 min 10 s contra ~11 min del render final.
 
 ### 1.1 `walkthrough check <tour>`
 

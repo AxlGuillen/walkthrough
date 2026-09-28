@@ -45,6 +45,7 @@ El detalle vive en `docs/arquitectura.md`. Lo que no se puede olvidar:
 - **Overlays en ffmpeg.** Cada HTML se renderiza aparte, con fondo transparente y su propio reloj desde cero, y se compone encima; nunca se inyecta en la app. `params` llegan como query string.
 - **`<video>` sincronizado.** Tampoco obedece a `page.clock`: la sincronía lo pausa y lo busca al instante de cada cuadro, en la app y en los overlays.
 - **Captura determinista.** El reloj de la página se congela y avanza 1/fps por cuadro; las esperas de red ocurren fuera del tiempo del video.
+- **Antes de un render largo:** `walkthrough check <tour>` (segundos) y `walkthrough render --preview` (~5× más rápido). Para un proyecto nuevo, `walkthrough inspect <url> --session=<s>` da las anclas estables con las que escribir el tour.
 - **Dispositivo:** `desktop` → 16:9, `mobile` → 9:16 con emulación.
 
 ## Sesión y secretos

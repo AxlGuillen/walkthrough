@@ -26,7 +26,7 @@ tour.yaml ──┐
 voice ──────┘   (pure)      frames     ffmpeg
 ```
 
-| Etapa | Entrada | Salida en `out/<project>/<tour>/` | ¿Pura? |
+| Etapa | Entrada | Salida en la carpeta de trabajo del tour | ¿Pura? |
 |---|---|---|---|
 | **voice** | narración de cada segmento | `voice/NN.wav` + `voice/NN.json` (palabras) | No: red, con caché |
 | **timeline** | tour + resultado de voz | `timeline.json` | **Sí** |
@@ -35,6 +35,22 @@ voice ──────┘   (pure)      frames     ffmpeg
 | **compose** | todo lo anterior | `video.mp4` | No: ffmpeg; los argumentos se construyen con funciones puras |
 
 Cada etapa lee solo archivos de la anterior, así que se puede repetir por separado. Cambiar un overlay repite `overlays` y `compose`, sin volver a entrar a la app.
+
+## Almacenamiento
+
+Nada generado vive en el repo:
+
+| Qué | Dónde | Se puede borrar |
+|---|---|---|
+| Archivos de trabajo (voz por segmento, timeline, captura, overlays) | `~/Library/Caches/walkthrough/tours/<project>/<tour>/` | Sí; se regeneran |
+| Caché de voz | `~/Library/Caches/walkthrough/voice/` | Sí; cuesta volver a pedir la voz |
+| Videos finales | `~/Movies/walkthrough/<project>/<tour>/<fecha_hora>.mp4` + `.json` con título, duración, dispositivo y tamaño | Solo a la Papelera |
+
+- Se cambian con `WALKTHROUGH_WORK` y `WALKTHROUGH_VIDEOS`.
+- **Cada render es un archivo nuevo**, así se pueden comparar versiones.
+- **`walkthrough gallery`** abre `http://localhost:4717`, una página local para ver los videos por proyecto, mostrarlos en Finder, mandarlos a la Papelera o limpiar la caché. Solo escucha en `127.0.0.1` y rechaza acciones cuyo `Origin` no sea el suyo, para que otra página no pueda borrar nada. Sirve el video con `Range`, que Safari exige para reproducir.
+- **`walkthrough clean`** borra los archivos de trabajo. Con `--voice` también borra la caché de voz, y con `--keep=<n>` manda a la Papelera todo menos los *n* renders más nuevos de cada tour. La carpeta vieja `out/` del repo, si existe, también va a la Papelera.
+- **Nunca se borra un video de forma permanente**: va a `~/.Trash` con un nombre que no pisa lo que ya haya ahí.
 
 ## El tour
 
@@ -124,7 +140,7 @@ El video no se graba en tiempo real. El tiempo del video avanza solo cuando se t
 | Esperas de red | `clock.resume()`, esperar a que la app esté lista y `pauseAt()` de nuevo | ✅ sin spinners en el video |
 
 - **Costo:** ~180 ms por cuadro a 3840×2160 (desktop con zoom máximo 2×): unos 5,5 s reales por segundo de video. Un tour de un minuto tarda unos 5–6 minutos.
-- **Animaciones que aparecen entre dos sincronías.** Hasta que la sincronía las ve, corren con el reloj real. Al verlas por primera vez, se les reconoce como máximo el tiempo de video transcurrido desde la sincronía anterior. Sin ese tope, la velocidad de captura se filtraba al cuadro: hasta ~50 ms de adelanto con la máquina cargada.
+- **Animaciones y videos nuevos.** Hasta que la sincronía los ve, corren con el reloj real. Al pasar cuadro a cuadro arrancan en el cuadro en que aparecen: es exacto para lo que disparan las acciones y tiene menos de un cuadro de error para los timers. Justo después de un `settle()`, cuando la página corrió libre, se usa el tiempo real, que ahí es el correcto. Tomar siempre el tiempo real filtraba la velocidad de captura al cuadro: hasta ~50 ms de diferencia entre corridas.
 - **El reloj falso arranca en la hora real** (`clock.install({ time: Date.now() })`). Con la fecha por defecto, Supabase daría el token por inválido.
 
 El plan B (screencast de Chrome) queda descartado mientras esto aguante.
@@ -155,13 +171,15 @@ overlays:
 
 ## Montaje (compose)
 
-Una sola pasada de ffmpeg, ejecutada desde `out/<project>/<tour>/` con rutas relativas, porque las reglas de escape del filtro `ass` vuelven frágiles las rutas absolutas.
+Una sola pasada de ffmpeg, ejecutada desde la carpeta de trabajo del tour con rutas relativas, porque las reglas de escape del filtro `ass` vuelven frágiles las rutas absolutas.
 
 - **Video:** `capture.mp4` + subtítulos karaoke (`subs.ass`) quemados con libass.
 - **Karaoke:** líneas de hasta 3 palabras; una pausa de más de 0,5 s abre línea nueva. Cada palabra pasa de blanco al `accent` mientras se dice, y `{\k}` dura hasta que empieza la siguiente. En vertical la letra es más grande y más alta, para no quedar bajo la interfaz de las redes. Se desactivan con `subtitles: none`.
 - **Voz:** cada clip entra con `adelay` en el `speechStart` de su segmento.
-- **Música opcional** (`music: { track, volume }`, ruta relativa a la carpeta del tour): en loop, con fade de entrada y salida y ducking con `sidechaincompress` bajo la voz.
-- **Loudness:** todo se normaliza a −16 LUFS con `loudnorm`.
+- **Música opcional** (`music: { track, volume }`, ruta relativa a la carpeta del tour; `volume` 0,055 por defecto, que deja la música unos 12 dB bajo la voz en las pausas): en loop, con fade de entrada y salida y ducking con `sidechaincompress` bajo la voz.
+- **Efectos de sonido** (`sfx: true` por defecto): «tic» en cada `click` y `type`, rasgueo de plumón al dibujar un `highlight` (dura lo mismo que el trazo) y «pop» al aparecer un overlay. Se sintetizan con ffmpeg (`aevalsrc`, `anoisesrc` con semilla fija): sin licencias, sin archivos y sonando igual en cada render. Entran después del ducking, así que no bajan la música. ⚠️ Cada evento tiene su propia fuente: en ffmpeg 8.1, `asplit` → `adelay` → `amix` se queda girando para siempre, incluso con dos eventos.
+- **Loudness en dos pasadas.** Primero se mide solo el audio (`loudnorm` con `print_format=json`) y luego se monta aplicando esa medición con `linear=true`: una sola ganancia hasta −16 LUFS que respeta la proporción entre voz, música y efectos. En una pasada, `loudnorm` actúa como control automático de ganancia y levanta los pasajes quietos: bajar la música no se notaba.
+- **Tiempo máximo.** El montaje tiene un límite de 10 veces la duración (mínimo 2 minutos) y se mata con SIGKILL: un grafo atorado ignora SIGTERM.
 - **Repetir solo el montaje:** `render --from=compose` reutiliza `capture.mp4`. Sirve para cambiar subtítulos, música o color sin recapturar.
 
 ## Voz
@@ -173,7 +191,8 @@ interface VoiceProvider {
 // Speech = { audio: Buffer, words: { text, start, end }[] }
 ```
 
-- **Caché** en `out/.cache/voice/<sha256>`. La clave incluye proveedor, modelo, voz, idioma, texto y prosodia.
+- **Una sola voz en todo el tour.** Sin `reference_id`, Fish puede elegir una voz distinta en cada llamada. El adaptador expone `defaultVoice` («Drez», `47a92a11ad4a4b79aac40ad587fa61b1`, español, narrador calmado) y un tour la cambia con `voice:`.
+- **Caché** en `~/Library/Caches/walkthrough/voice/<sha256>`. La clave incluye proveedor, modelo, voz, idioma, texto y prosodia.
 - **Duración real** calculada de los bytes de PCM, después de reconstruir la cabecera WAV del stream.
 - **Etiquetas de expresión** (`[excited]`) filtradas de las palabras dentro del adaptador.
 
@@ -191,6 +210,8 @@ interface VoiceProvider {
 walkthrough login  <session> <url>     iniciar sesión a mano, una vez
 walkthrough voice  <tour>              solo voz: para oírla y revisar tiempos
 walkthrough render <tour> [--from=overlays|compose]
+walkthrough gallery [--no-open]           ver los videos generados
+walkthrough clean [--voice] [--keep=<n>]  limpiar caché y renders viejos
 ```
 
 ## Estructura
@@ -206,7 +227,7 @@ src/
   compose/      ffmpeg args, subtitles (ASS), music
 tests/fixtures/ local page for integration tests
 tours/<project>/<tour>.yaml + overlays/ + assets/
-.auth/<session>/  out/  .env   ignored by git
+.auth/<session>/  .env          ignored by git
 ```
 
 ## Pruebas

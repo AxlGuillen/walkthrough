@@ -32,9 +32,12 @@ El detalle vive en `docs/arquitectura.md`. Lo que no se puede olvidar:
 
 - **Stack:** TypeScript sobre Node 24 (`.node-version`, vía `fnm`), `playwright-core` con el Chrome del sistema, YAML + zod, ffmpeg del sistema, esbuild para el script que se inyecta en la página, Vitest.
 - **Type stripping:** Node ejecuta los `.ts` directo, así que solo vale sintaxis borrable. Nada de `enum`, `namespace` ni parameter properties; imports con extensión `.ts` e `import type` para tipos.
-- **Pipeline:** voice → timeline → capture → overlays → compose. Cada etapa escribe en `out/<project>/<tour>/` y solo lee lo de la anterior.
+- **Pipeline:** voice → timeline → capture → overlays → compose → publish. Cada etapa escribe en la carpeta de trabajo del tour y solo lee lo de la anterior.
+- **Nada generado en el repo.** El trabajo y la caché de voz van a `~/Library/Caches/walkthrough/`; los videos finales, uno por render, a `~/Movies/walkthrough/<project>/<tour>/` con un `.json` al lado. `walkthrough gallery` los muestra y `walkthrough clean` limpia. Los videos solo se mandan a la Papelera, nunca se borran.
 - **La timeline es la única que calcula tiempos.** Es una función pura; las demás etapas ejecutan lo que dice.
-- **Voz intercambiable.** Todo proveedor implementa `VoiceProvider.synthesize()` y devuelve audio + palabras con tiempos. Nada fuera de `src/voice/<provider>/` conoce al proveedor.
+- **Voz intercambiable.** Todo proveedor implementa `VoiceProvider.synthesize()` y devuelve audio + palabras con tiempos. Nada fuera de `src/voice/<provider>/` conoce al proveedor. Su `defaultVoice` (hoy «Drez» en Fish) mantiene una sola voz en toda la narración.
+- **Efectos de sonido sintetizados** con ffmpeg en `src/compose/sfx.ts` (clic, trazo, pop), sin archivos ni licencias. Una fuente por evento: `asplit` → `adelay` → `amix` cuelga ffmpeg 8.1.
+- **Loudness en dos pasadas** (medir, luego `linear=true`). En una pasada `loudnorm` es un AGC y deshace los cambios de volumen de la música.
 - **Zoom = cámara virtual.** Se captura con densidad alta (`deviceScaleFactor` calculado en `devices.ts`) y cada cuadro es un `screenshot({ clip })` del rectángulo de la cámara; la página nunca se transforma. El anillo y el clic dibujado sí van en el DOM.
 - **Efectos sin estado en la página.** Node calcula la escena de cada cuadro (`src/effects/`) y la página solo pinta el SVG en una capa `popover` del top layer. El cursor y la acción apuntan al centro del texto del elemento, no a su centro geométrico.
 - **Overlays en ffmpeg.** Cada HTML se renderiza aparte, con fondo transparente y su propio reloj desde cero, y se compone encima; nunca se inyecta en la app. `params` llegan como query string.

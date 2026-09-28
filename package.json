@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc",
-    "walkthrough": "node src/cli/main.ts"
+    "walkthrough": "node src/cli/main.ts",
+    "gallery": "node src/cli/main.ts gallery"
   },
   "dependencies": {
     "playwright-core": "^1.63.0",

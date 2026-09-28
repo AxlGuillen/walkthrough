@@ -11,13 +11,17 @@ declare global {
 // performance.now() before a frame is taken.
 export function animationSync(): void {
   const origins = new WeakMap<Animation, number>();
+  let lastSync = performance.now();
   window.__walkthrough = {
     ...window.__walkthrough,
     syncAnimations() {
       const now = performance.now();
       for (const animation of document.getAnimations()) {
         if (!origins.has(animation)) {
-          origins.set(animation, now - Number(animation.currentTime ?? 0));
+          // Until first seen, an animation runs on wall time. Credit it no more than the
+          // video time since the last sync, so capture speed never leaks into the frame.
+          const elapsed = Math.min(Number(animation.currentTime ?? 0), now - lastSync);
+          origins.set(animation, now - elapsed);
           animation.pause();
         }
         const time = now - origins.get(animation)!;
@@ -26,6 +30,7 @@ export function animationSync(): void {
         if (typeof end === 'number' && Number.isFinite(end) && time >= end) animation.finish();
         else animation.currentTime = time;
       }
+      lastSync = now;
     },
   };
 }

@@ -124,7 +124,7 @@ El video no se graba en tiempo real. El tiempo del video avanza solo cuando se t
 | Esperas de red | `clock.resume()`, esperar a que la app esté lista y `pauseAt()` de nuevo | ✅ sin spinners en el video |
 
 - **Costo:** ~180 ms por cuadro a 3840×2160 (desktop con zoom máximo 2×): unos 5,5 s reales por segundo de video. Un tour de un minuto tarda unos 5–6 minutos.
-- **Adelanto de las animaciones ya presentes al cargar.** Corren con el reloj real hasta que la primera sincronía las pausa: unos milisegundos, hasta ~50 ms con la máquina cargada. Las que dispara una acción se sincronizan en el mismo cuadro.
+- **Animaciones que aparecen entre dos sincronías.** Hasta que la sincronía las ve, corren con el reloj real. Al verlas por primera vez, se les reconoce como máximo el tiempo de video transcurrido desde la sincronía anterior. Sin ese tope, la velocidad de captura se filtraba al cuadro: hasta ~50 ms de adelanto con la máquina cargada.
 - **El reloj falso arranca en la hora real** (`clock.install({ time: Date.now() })`). Con la fecha por defecto, Supabase daría el token por inválido.
 
 El plan B (screencast de Chrome) queda descartado mientras esto aguante.

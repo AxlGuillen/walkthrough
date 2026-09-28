@@ -51,12 +51,11 @@ describe('virtual clock', () => {
       for (const [id, x] of Object.entries(sample)) expect(Math.abs(x - slow[i]![id]!), `${id} at sample ${i}`).toBeLessThanOrEqual(4);
     }
     // At 1s the rAF box and the looping animation moved 200px; the 1s transition fired
-    // at 0.5s is halfway. CSS animations already running at load get a wall-clock head
-    // start until the first sync pauses them: a few ms, up to ~50ms on a busy machine.
+    // at 0.5s is halfway. rAF ticks every 16ms, so it may trail by one tick.
     const [raf, transition, keyframes] = ['raf', 'transition', 'keyframes'].map(id => fast[3]![id]!);
-    expect(Math.abs(raf! - 200)).toBeLessThan(12);
-    expect(Math.abs(transition! - 200)).toBeLessThan(12);
-    expect(Math.abs(keyframes! - 200)).toBeLessThan(12);
+    expect(Math.abs(raf! - 200)).toBeLessThan(5);
+    expect(Math.abs(transition! - 200)).toBeLessThan(5);
+    expect(Math.abs(keyframes! - 200)).toBeLessThan(5);
   }, 60_000);
 });
 

@@ -85,6 +85,6 @@ Un caso de punta a punta antes de construir andamiaje, sobre uws-tasks en deskto
 4. Dos frases narradas con Fish.
 5. MP4 montado con ffmpeg.
 
-## Pregunta técnica abierta
+## Pregunta técnica resuelta
 
-**¿Funciona la captura determinista sobre una app viva?** Es decir, congelar el reloj de la página y avanzar cuadro a cuadro. Lo valida el primer hito; el plan B está en `docs/arquitectura.md`.
+La captura determinista funciona sobre una app viva: se validó con uws-tasks el 28/sep/2026. El detalle está en `docs/arquitectura.md`, «Captura determinista».

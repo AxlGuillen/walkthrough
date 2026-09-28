@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; background: #111; font-family: sans-serif; }
+  .box { position: absolute; width: 40px; height: 40px; }
+  #raf { top: 20px; left: 0; background: tomato; }
+  #transition { top: 100px; left: 0; background: gold; transition: transform 1s linear; }
+  #transition.moved { transform: translateX(400px); }
+  #keyframes { top: 180px; left: 0; background: deepskyblue; animation: slide 2s linear infinite; }
+  @keyframes slide { from { transform: translateX(0); } to { transform: translateX(400px); } }
+</style>
+</head>
+<body>
+  <div id="raf" class="box"></div>
+  <div id="transition" class="box"></div>
+  <div id="keyframes" class="box"></div>
+  <script>
+    const start = performance.now();
+    const raf = document.getElementById('raf');
+    (function tick(now) {
+      raf.style.transform = `translateX(${(now - start) * 0.2}px)`;
+      requestAnimationFrame(tick);
+    })(start);
+    setTimeout(() => document.getElementById('transition').classList.add('moved'), 500);
+  </script>
+</body>
+</html>

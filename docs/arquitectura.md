@@ -100,7 +100,18 @@ El video no se graba en tiempo real. El tiempo del video avanza solo cuando se t
 - **Las esperas** (navegación, red, carga de una pantalla) ocurren fuera del tiempo del video: la app corre libre hasta quedar lista y la captura sigue. Los spinners no salen en el video.
 - **Los efectos inyectados** (anillo, clic) se animan con el mismo reloj, así que también son deterministas.
 
-⚠️ **Es la hipótesis más riesgosa y la valida el primer hito.** Plan B: screencast de Chrome (`Page.startScreencast`), más simple pero con fps irregulares.
+**Validado el 28/sep/2026** contra una página fixture y contra uws-tasks real (`/tickets`: lista → hover → vista Board, 105 cuadros):
+
+| Qué | Cómo se controla | Resultado |
+|---|---|---|
+| Timers, `Date`, `performance.now`, `requestAnimationFrame` | `page.clock` de Playwright | ✅ ±1 tick de rAF (< 1 cuadro) |
+| Animaciones y transiciones CSS / WAAPI | **No** las controla `page.clock`. Un script en la página las pausa y fija su `currentTime` con `performance.now()` antes de cada cuadro; al pasar su fin llama a `finish()` para que salgan los eventos `transitionend`/`finish` | ✅ idénticas con o sin esperas aleatorias entre cuadros |
+| Esperas de red | `clock.resume()`, esperar a que la app esté lista y `pauseAt()` de nuevo | ✅ sin spinners en el video |
+
+- **Costo:** ~114 ms por cuadro a 3200×1800 PNG, unos 3,5 s reales por segundo de video.
+- **El reloj falso arranca en la hora real** (`clock.install({ time: Date.now() })`). Con la fecha por defecto, Supabase daría el token por inválido.
+
+El plan B (screencast de Chrome) queda descartado mientras esto aguante.
 
 ## Overlays
 

@@ -67,4 +67,8 @@ Lo aprendido allá que aplica aquí:
 - **Render determinista.** Allá las animaciones se renderizan cuadro a cuadro con seeks exactos en vez de grabar en tiempo real, así no se pierden frames. Es el enfoque preferido aquí si se puede aplicar a una app viva.
 - **Karaoke.** Los subtítulos se generan en ASS con `{\k}`, en líneas de 3 palabras. En vertical, la letra y el margen inferior son mayores para no quedar bajo la interfaz de las redes.
 - **Música con ducking.** Se hace con `sidechaincompress`. Referencia: voz a unos −16 LUFS y música entre −26 y −30 LUFS. Se cierra con `loudnorm`.
+- **Captura determinista** (validada el 28/sep/2026):
+  - `page.clock` controla timers, `Date`, `performance.now` y rAF, pero **no las animaciones CSS**. Esas las pausa y avanza un script en la página vía `document.getAnimations()`.
+  - Instalar el reloj con la hora real: con la fecha por defecto, Supabase invalida la sesión.
+  - En headless con perfil persistente, `document.hidden` es `false`, así que las animaciones corren.
 - **Pestañas ocultas.** Con `document.hidden`, `requestAnimationFrame` no corre y las View Transitions se abortan. En headless, verificar que la página se considere visible.

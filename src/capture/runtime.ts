@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    __walkthrough?: { syncAnimations?(): Promise<void>; draw?(markup: string): void };
+    __walkthrough?: { syncAnimations?(afterSettle: boolean): Promise<void>; draw?(markup: string): void };
   }
 }
 
@@ -15,14 +15,15 @@ export function animationSync(): void {
   let lastSync = performance.now();
   window.__walkthrough = {
     ...window.__walkthrough,
-    async syncAnimations() {
+    // afterSettle: the page just ran freely (loading), so wall time is the truth. Otherwise
+    // the clock only stepped a frame, and anything new starts at this very frame.
+    async syncAnimations(afterSettle) {
       const now = performance.now();
+      const credit = (wallMs: number) => (afterSettle ? Math.min(wallMs, now - lastSync) : 0);
       for (const animation of document.getAnimations()) {
         if (!origins.has(animation)) {
-          // Until first seen, an animation runs on wall time. Credit it no more than the
-          // video time since the last sync, so capture speed never leaks into the frame.
-          const elapsed = Math.min(Number(animation.currentTime ?? 0), now - lastSync);
-          origins.set(animation, now - elapsed);
+          // Until first seen, an animation runs on wall time; capture speed must not leak in.
+          origins.set(animation, now - credit(Number(animation.currentTime ?? 0)));
           animation.pause();
         }
         const time = now - origins.get(animation)!;
@@ -38,7 +39,7 @@ export function animationSync(): void {
       for (const video of document.querySelectorAll('video')) {
         if (video.readyState < 1) continue;
         if (!videoOrigins.has(video)) {
-          videoOrigins.set(video, now - Math.min(video.currentTime * 1000, now - lastSync));
+          videoOrigins.set(video, now - credit(video.currentTime * 1000));
           video.pause();
         }
         let target = (now - videoOrigins.get(video)!) / 1000;

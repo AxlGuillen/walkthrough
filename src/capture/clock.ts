@@ -16,16 +16,19 @@ export async function installClock(page: Page): Promise<VirtualClock> {
 
   const freeze = async () => page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1);
   await freeze();
+  let settled = false;
 
   return {
     async syncAnimations() {
-      await page.evaluate(() => window.__walkthrough?.syncAnimations?.());
+      await page.evaluate(afterSettle => window.__walkthrough?.syncAnimations?.(afterSettle), settled);
+      settled = false;
     },
     async advance(ms) {
       await page.clock.runFor(ms);
     },
     // Loading happens off the video clock: the app runs freely until it is ready.
     async settle(work) {
+      settled = true;
       await page.clock.resume();
       try {
         await work();

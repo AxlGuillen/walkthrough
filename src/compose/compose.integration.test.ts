@@ -28,6 +28,7 @@ describe('composeTour', () => {
 title: Fixture
 url: https://example.com
 music: { track: music.mp3 }
+subtitles: karaoke
 segments:
   - say: Hola mundo
     hold: 3

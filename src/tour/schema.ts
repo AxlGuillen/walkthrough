@@ -89,7 +89,7 @@ export const tourSchema = z.strictObject({
     track: z.string().min(1),
     volume: z.number().min(0).max(1).default(0.055),
   }).optional(),
-  subtitles: z.enum(['karaoke', 'none']).default('karaoke'),
+  subtitles: z.enum(['karaoke', 'none']).default('none'),
   sfx: z.boolean().default(true),
   accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'use a #RRGGBB color').default('#FF3B5C'),
   segments: z.array(segment).min(1),

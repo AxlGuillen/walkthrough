@@ -11,7 +11,7 @@ segments:
 describe('parseTour', () => {
   it('applies defaults', () => {
     const tour = parseTour(minimal);
-    expect(tour).toMatchObject({ device: 'desktop', language: 'es', subtitles: 'karaoke' });
+    expect(tour).toMatchObject({ device: 'desktop', language: 'es', subtitles: 'none' });
     expect(tour.segments[0]).toEqual({ say: 'Hola', do: [], overlays: [] });
   });
 

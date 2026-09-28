@@ -51,8 +51,8 @@ Nada fuera del adaptador sabe qué proveedor se usa. Si uno futuro no da timesta
 **Repo privado.** Los tours de todos los proyectos, clientes incluidos, viven aquí en `tours/<proyecto>/`.
 
 **Sesión.** uws-tasks usa Google; dymmsa y Reel Express, correo y contraseña. En todos los casos:
-- Un script abre un navegador visible, **el autor inicia sesión a mano** y se guarda el estado (cookies + localStorage) en un archivo ignorado por git.
-- Cada render restaura ese estado; nunca teclea credenciales.
+- Un comando abre Chrome con un perfil propio, **el autor inicia sesión a mano** y el perfil queda guardado en `.auth/`, ignorado por git.
+- Cada render reutiliza ese perfil; nunca teclea credenciales.
 - Credenciales y estados de sesión nunca van al repo ni al guion.
 
 ## Relación con presentations

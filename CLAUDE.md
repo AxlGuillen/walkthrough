@@ -43,7 +43,7 @@ El detalle vive en `docs/arquitectura.md`. Lo que no se puede olvidar:
 ## Sesión y secretos
 
 - `FISH_API_KEY` y cualquier otra clave van en `.env`, nunca al repo.
-- **Login.** Un script abre el navegador visible, el autor inicia sesión a mano y se guarda el estado (cookies + localStorage) en un archivo ignorado por git. Los renders restauran ese estado.
+- **Login.** `walkthrough login <session> <url>` abre Chrome con un perfil propio en `.auth/<session>/` (ignorado por git). El autor inicia sesión a mano y cierra la ventana; los renders reutilizan ese perfil. Es un perfil persistente y no una foto con `storageState`, porque Supabase rota el refresh token en cada uso y una foto caduca tras el primer render. Un perfil admite un solo navegador a la vez.
 - Claude nunca teclea credenciales en sitios reales. Las credenciales no van en tours, en código ni en commits.
 
 ## Relación con `presentations`

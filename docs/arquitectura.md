@@ -8,7 +8,7 @@ Decidida el 28/sep/2026. Complementa a `docs/arranque.md` (qué y para qué); aq
 |---|---|---|
 | Lenguaje | TypeScript estricto sobre **Node 24** | Node 24 ejecuta `.ts` directo (type stripping): sin paso de build. |
 | Versión de Node | `fnm` + `.node-version` | Node 24 solo para este repo; el Node global de los otros proyectos no se toca. |
-| Navegador | `playwright-core` con el Chrome del sistema (`channel: 'chrome'`) | Emulación de dispositivos, `storageState`, locators, `boundingBox()`, control del reloj. No descarga navegadores. |
+| Navegador | `playwright-core` con el Chrome del sistema (`channel: 'chrome'`) | Emulación de dispositivos, perfiles persistentes, locators, `boundingBox()`, control del reloj. No descarga navegadores. |
 | Tours | YAML (`yaml`) validado con `zod` | Cómodo de revisar a mano; zod da errores claros y los tipos salen del esquema. |
 | Voz | Adaptador Fish Audio + caché en disco | Un cambio de cámara no vuelve a pedir la voz. |
 | Montaje | `ffmpeg` / `ffprobe` del sistema | Llamados directo con `execFile`, sin wrappers. |
@@ -123,12 +123,16 @@ interface VoiceProvider {
 
 ## Sesión
 
-`walkthrough login <session> <url>` abre Chrome visible; el autor inicia sesión a mano y al cerrar se guarda `storageState` en `.auth/<session>.json` (ignorado por git). La captura lo restaura.
+`walkthrough login <session> <url>` abre Chrome con un perfil propio en `.auth/<session>/`, ignorado por git. El autor inicia sesión a mano y cierra la ventana. La captura abre ese mismo perfil con `launchPersistentContext`.
+
+**Por qué un perfil y no `storageState`.** Supabase rota el refresh token cada vez que lo usa. Una foto de la sesión quedaría vieja después del primer render, y el perfil se mantiene al día solo. El costo es un navegador a la vez por perfil.
+
+**No sirve la sesión del Chrome personal.** Ese perfil está bloqueado mientras Chrome está abierto, y automatizarlo mezclaría la navegación real con la herramienta.
 
 ## CLI
 
 ```
-walkthrough login  <session> <url>     guardar sesión
+walkthrough login  <session> <url>     iniciar sesión a mano, una vez
 walkthrough voice  <tour>              solo voz: para oírla y revisar tiempos
 walkthrough render <tour> [--from=capture|overlays|compose]
 ```
@@ -146,7 +150,7 @@ src/
   compose/      ffmpeg args, subtitles (ASS), music
 tests/fixtures/ local page for integration tests
 tours/<project>/<tour>.yaml + overlays/ + assets/
-.auth/  out/  .env            ignored by git
+.auth/<session>/  out/  .env   ignored by git
 ```
 
 ## Pruebas

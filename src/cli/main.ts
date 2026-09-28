@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
+import { login } from '../capture/session.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
 import { tourPaths } from '../tour/paths.ts';
@@ -11,7 +12,8 @@ import { synthesizeTour } from '../voice/stage.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const USAGE = `usage:
-  walkthrough voice <tour.yaml>   synthesize narration and write the timeline`;
+  walkthrough login <session> <url>   sign in by hand once; the profile is reused by renders
+  walkthrough voice <tour.yaml>       synthesize narration and write the timeline`;
 
 async function voice(tourFile: string): Promise<void> {
   const paths = tourPaths(tourFile, ROOT);
@@ -33,11 +35,16 @@ async function voice(tourFile: string): Promise<void> {
 }
 
 const { positionals } = parseArgs({ allowPositionals: true });
-const [command, target] = positionals;
+const [command, target, url] = positionals;
 if (existsSync(path.join(ROOT, '.env'))) process.loadEnvFile(path.join(ROOT, '.env'));
 
 try {
   if (command === 'voice' && target) await voice(target);
+  else if (command === 'login' && target && url) {
+    console.log(`Sign in to ${url} in the Chrome window, then close it. The session is kept in .auth/${target}.`);
+    await login(ROOT, target, url);
+    console.log('Session saved.');
+  }
   else {
     console.error(USAGE);
     process.exitCode = 1;

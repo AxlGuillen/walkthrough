@@ -1,21 +1,55 @@
-title: Tablero de uws-tasks
+title: Recorrido por uws-tasks
 url: https://uws-tasks.vercel.app
 session: uws-tasks
 device: desktop
 language: es
+music: { track: assets/music/corporate-calm-background.mp3, volume: 0.15 }
 
 segments:
-  - say: Esta es la pantalla de entrada de uws-tasks. Se inicia sesión con la cuenta de Google.
+  - say: Esto es uws-tasks, la app donde vemos nuestro trabajo de Jira de un vistazo.
     do:
-      - goto: /
-  - say: Ya dentro, el tablero muestra los tickets de la semana, ordenados por estado.
+      - goto: /dashboard
+
+  - say: El dashboard resume la semana. Las horas registradas, los tickets resueltos y los que siguen abiertos.
     do:
-      - goto: /board
-  # Selectors are placeholders until the app is explored.
-  - say: Cada tarjeta resume un ticket, con su estimado y las horas registradas.
+      - zoom: { to: '[data-bento]:has-text("Hours logged")', at: horas }
+      - zoom: { to: out, at: resueltos }
+      - highlight: { on: '[data-bento]:has-text("Open tickets")', at: abiertos }
+
+  - say: Arriba cambias el periodo. Los últimos siete días, treinta días, esta semana o este mes.
     do:
-      - zoom: { to: "[data-ticket]", at: tarjeta }
-      - highlight: { on: "[data-ticket]", at: estimado }
-  - hold: 1
+      - highlight: { on: "[data-tour=range]", at: periodo, duration: 2.5 }
+
+  - say: En Tickets está todo lo que el equipo está trabajando, con filtros por persona, estado y prioridad.
+    do:
+      - click: { on: 'a[href="/tickets"]', at: 0.3 }
+      - highlight: { on: 'text="Everyone"', at: persona, duration: 0.8 }
+      - highlight: { on: 'button:has-text("Any status")', at: estado, duration: 0.8 }
+      - highlight: { on: 'button:has-text("Any priority")', at: prioridad, duration: 0.8 }
+
+  - say: La vista de tablero agrupa los tickets por estado, igual que en Jira.
+    do:
+      - click: { on: '[data-tour=views] >> text="Board"', at: tablero }
+      - zoom: { to: '[data-tour=card]:has-text("UWS-8324")', at: estado }
+
+  - hold: 0.8
     do:
       - zoom: out
+
+  - say: Workload muestra cómo se reparte el trabajo entre las personas. Qué se está moviendo, qué espera y qué ya se cerró.
+    do:
+      - click: { on: 'a[href="/workload"]', at: 0.3 }
+      - highlight: { on: "[data-tour=people]", at: personas, duration: 3 }
+
+  - say: Reports arma el corte semanal, de martes a lunes, y con un clic lo copias para mandarlo.
+    do:
+      - click: { on: 'a[href="/reports"]', at: 0.3 }
+      - highlight: { on: 'text="Current week"', at: semanal }
+      - highlight: { on: "[data-tour=copy]", at: clic }
+
+  - say: Y en Sync history ves cuándo fue la última sincronización. No hay llave de Jira, la sincronización la hace Claude por MCP.
+    do:
+      - click: { on: 'a[href="/syncs"]', at: 0.3 }
+      - highlight: { on: "[data-tour=pending]", at: última, duration: 3 }
+
+  - say: Así de simple. Cualquier duda, me escriben.

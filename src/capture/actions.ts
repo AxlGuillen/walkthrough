@@ -28,8 +28,12 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       return;
     }
     case 'zoom': {
-      const rect = action.to === 'out' ? fullFrame(device.viewport) : await zoomRect(page, action.to, device, action.padding);
-      camera.push({ time, duration: action.duration ?? ZOOM_DURATION, rect });
+      const fit = {
+        ...(action.padding === undefined ? {} : { padding: action.padding }),
+        ...(action.scale === undefined ? {} : { scale: action.scale }),
+      };
+      const rect = action.to === 'out' ? fullFrame(device.viewport) : await zoomRect(page, action.to, device, fit);
+      camera.push({ time, duration: action.duration ?? ZOOM_DURATION, rect, follow: action.follow ?? false });
       return;
     }
     case 'highlight': {

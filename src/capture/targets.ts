@@ -1,6 +1,6 @@
 import type { Locator, Page } from 'playwright-core';
 import type { Point } from '../effects/sketch.ts';
-import { fitRect, type Rect } from '../timeline/camera.ts';
+import { fitRect, type FitOptions, type Rect } from '../timeline/camera.ts';
 import type { DeviceProfile } from './devices.ts';
 
 export interface Aim {
@@ -36,9 +36,9 @@ export async function visibleBox(target: Locator, what: string): Promise<Rect> {
   return box;
 }
 
-export async function zoomRect(page: Page, selector: string, device: DeviceProfile, padding?: number): Promise<Rect> {
+export async function zoomRect(page: Page, selector: string, device: DeviceProfile, fit: FitOptions): Promise<Rect> {
   const target = page.locator(selector).first();
   await target.scrollIntoViewIfNeeded();
   const box = await visibleBox(target, `zoom target "${selector}"`);
-  return fitRect(box, device.viewport, padding === undefined ? {} : { padding });
+  return fitRect(box, device.viewport, fit);
 }

@@ -1,7 +1,7 @@
-import { sceneAt } from '../effects/scene.ts';
+import { cursorPosition, sceneAt } from '../effects/scene.ts';
 import { renderScene } from '../effects/svg.ts';
 import type { Timeline } from '../timeline/build.ts';
-import { cameraAt, fullFrame } from '../timeline/camera.ts';
+import { cameraAt, followCursor, fullFrame } from '../timeline/camera.ts';
 import type { Tour } from '../tour/schema.ts';
 import { continueTyping, perform } from './actions.ts';
 import { installClock } from './clock.ts';
@@ -54,7 +54,8 @@ export async function captureTour({
       await clock.syncAnimations();
       const markup = renderScene(sceneAt(stage.time, stage.effects), tour.accent);
       await page.evaluate(markup => window.__walkthrough?.draw?.(markup), markup);
-      await encoder.write(await page.screenshot({ clip: cameraAt(stage.time, stage.camera, home) }));
+      const follow = (rect: typeof home, at: number) => followCursor(rect, cursorPosition(at, stage.effects), device.viewport);
+      await encoder.write(await page.screenshot({ clip: cameraAt(stage.time, stage.camera, home, follow) }));
       await clock.advance(1000 / fps);
       onFrame?.(frame + 1, total);
     }

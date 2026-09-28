@@ -37,10 +37,12 @@ const type = z.strictObject({
 const zoomTarget = z.union([z.literal('out'), selector]);
 const zoom = z.strictObject({
   zoom: z.union([
-    zoomTarget.transform(to => ({ to, padding: undefined, duration: undefined, at: undefined })),
+    zoomTarget.transform(to => ({ to, padding: undefined, scale: undefined, follow: undefined, duration: undefined, at: undefined })),
     z.strictObject({
       to: zoomTarget,
       padding: z.number().nonnegative().optional(),
+      scale: z.number().min(1).max(2).optional(),
+      follow: z.boolean().optional(),
       duration: z.number().positive().optional(),
       ...timed,
     }),

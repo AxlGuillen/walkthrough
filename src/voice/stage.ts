@@ -19,7 +19,8 @@ export async function synthesizeTour(
       continue;
     }
     const request: SpeechRequest = { text: segment.say, language: tour.language };
-    if (tour.voice !== undefined) request.voice = tour.voice;
+    const voice = tour.voice ?? provider.defaultVoice;
+    if (voice !== undefined) request.voice = voice;
 
     const { audio, ...timing } = await provider.synthesize(request);
     const base = path.join(dir, String(index + 1).padStart(2, '0'));

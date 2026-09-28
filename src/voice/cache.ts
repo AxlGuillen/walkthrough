@@ -13,6 +13,7 @@ export function cacheKey(providerId: string, { text, language, voice }: SpeechRe
 export function withCache(provider: VoiceProvider, dir: string): VoiceProvider {
   return {
     id: provider.id,
+    ...(provider.defaultVoice ? { defaultVoice: provider.defaultVoice } : {}),
     async synthesize(request) {
       const base = path.join(dir, cacheKey(provider.id, request));
       // The JSON is written last, so its presence means the entry is complete.

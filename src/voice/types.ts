@@ -23,5 +23,7 @@ export interface SpeechRequest {
 
 export interface VoiceProvider {
   readonly id: string;
+  // Used when a tour names no voice, so every narration keeps the same voice.
+  readonly defaultVoice?: string;
   synthesize(request: SpeechRequest): Promise<Speech>;
 }

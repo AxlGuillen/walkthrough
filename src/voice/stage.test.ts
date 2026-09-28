@@ -34,7 +34,13 @@ describe('synthesizeTour', () => {
     expect(existsSync(path.join(dir, 'voice', '02.wav'))).toBe(false);
   });
 
-  it('leaves the voice out of the request when the tour has none', async () => {
+  it("falls back to the provider's default voice, so every segment sounds the same", async () => {
+    const fake = { ...provider(), defaultVoice: 'narrator' };
+    await synthesizeTour(parseTour('title: x\nurl: https://a.com\nsegments:\n  - say: Hola\n  - say: Adiós\n'), fake, dir);
+    expect(fake.synthesize.mock.calls.map(([request]) => request.voice)).toEqual(['narrator', 'narrator']);
+  });
+
+  it('leaves the voice out when neither the tour nor the provider has one', async () => {
     const fake = provider();
     await synthesizeTour(parseTour('title: x\nurl: https://a.com\nsegments:\n  - say: Hola\n'), fake, dir);
     expect(fake.synthesize).toHaveBeenCalledWith({ text: 'Hola', language: 'es' });

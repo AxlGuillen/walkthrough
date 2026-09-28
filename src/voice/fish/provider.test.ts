@@ -24,6 +24,11 @@ describe('createFishProvider', () => {
     expect(JSON.parse(init.body as string)).toMatchObject({ text: 'Hola', format: 'wav', reference_id: 'abc' });
   });
 
+  it('exposes Drez as the default voice unless told otherwise', () => {
+    expect(createFishProvider({ apiKey: 'k' }).defaultVoice).toBe('47a92a11ad4a4b79aac40ad587fa61b1');
+    expect(createFishProvider({ apiKey: 'k', voice: 'other' }).defaultVoice).toBe('other');
+  });
+
   it('includes the status and body when the API refuses', async () => {
     const fetch = vi.fn(async () => new Response('Insufficient API credit', { status: 402 }));
     const provider = createFishProvider({ apiKey: 'test-key', fetch });

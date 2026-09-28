@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Check fixture</title></head>
+<body>
+  <nav><a href="welcome.html">Welcome</a> <a href="private.html">Private</a></nav>
+  <section data-tour="panel"><h1>Resumen</h1><p>UWS-142 · Estimado 3h</p></section>
+  <p class="dup">Uno</p><p class="dup">Dos</p>
+  <button id="ghost" style="display:none">Oculto</button>
+  <button>Guardar cambios</button>
+  <script>
+    // Like a client-side route: the element shows up a moment after the page is ready.
+    setTimeout(() => document.body.insertAdjacentHTML('beforeend', '<aside data-tour="late">Tarde</aside>'), 800);
+  </script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
+import { check } from './commands/check.ts';
 import { cleanUp } from './commands/clean.ts';
 import { gallery } from './commands/gallery.ts';
 import { login } from './commands/login.ts';
@@ -11,6 +12,7 @@ import { ROOT, STORAGE } from './context.ts';
 const USAGE = `usage:
   walkthrough login <session> <url>   sign in by hand once; the profile is reused by renders
   walkthrough voice <tour.yaml>       synthesize narration and write the timeline
+  walkthrough check <tour.yaml>       walk the tour without recording: selectors, session, dialogs
   walkthrough render <tour.yaml>      voice, timeline, capture, overlays and compose
       --from=overlays                 reuse the capture; re-render overlays and compose
       --from=compose                  reuse capture and overlays; only rebuild the final video
@@ -31,6 +33,7 @@ if (existsSync(path.join(ROOT, '.env'))) process.loadEnvFile(path.join(ROOT, '.e
 
 try {
   if (command === 'voice' && target) await voice(target);
+  else if (command === 'check' && target) await check(target);
   else if (command === 'render' && target) await render(target, values.from);
   else if (command === 'gallery') await gallery(!values['no-open']);
   else if (command === 'clean') await cleanUp(values.voice ?? false, values.keep);

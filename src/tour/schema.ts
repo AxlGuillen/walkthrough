@@ -87,6 +87,7 @@ export const tourSchema = z.strictObject({
     volume: z.number().min(0).max(1).default(0.15),
   }).optional(),
   subtitles: z.enum(['karaoke', 'none']).default('karaoke'),
+  accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'use a #RRGGBB color').default('#FF3B5C'),
   segments: z.array(segment).min(1),
 });
 export type Tour = z.infer<typeof tourSchema>;

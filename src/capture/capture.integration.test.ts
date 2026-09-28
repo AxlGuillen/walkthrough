@@ -51,12 +51,12 @@ describe('virtual clock', () => {
       for (const [id, x] of Object.entries(sample)) expect(Math.abs(x - slow[i]![id]!), `${id} at sample ${i}`).toBeLessThanOrEqual(4);
     }
     // At 1s the rAF box and the looping animation moved 200px; the 1s transition fired
-    // at 0.5s is halfway.
-    expect(fast[3]).toMatchObject({
-      raf: expect.closeTo(200, -1),
-      transition: expect.closeTo(200, -1),
-      keyframes: expect.closeTo(200, -1),
-    });
+    // at 0.5s is halfway. CSS animations already running at load get a wall-clock head
+    // start until the first sync pauses them: a few ms, up to ~50ms on a busy machine.
+    const [raf, transition, keyframes] = ['raf', 'transition', 'keyframes'].map(id => fast[3]![id]!);
+    expect(Math.abs(raf! - 200)).toBeLessThan(12);
+    expect(Math.abs(transition! - 200)).toBeLessThan(12);
+    expect(Math.abs(keyframes! - 200)).toBeLessThan(12);
   }, 60_000);
 });
 
@@ -102,6 +102,57 @@ segments:
     expect(dominant(at(0.9, edge.x * 2, edge.y * 2))).toBe('black');
     expect(dominant(at(3.4, edge.x * 2, edge.y * 2))).toBe('gray');
   }, 120_000);
+
+  it('draws the cursor, click circles and highlight rings without blocking clicks', async () => {
+    const tour = parseTour(`
+title: Fixture
+url: ${fixture('app')}
+accent: "#00FFFF"
+segments:
+  - hold: 1.2
+    do:
+      - goto: ${fixture('app')}
+      - hover: { on: "#card", at: 0.8 }
+  - hold: 1.3
+    do:
+      - click: { on: "#toggle", at: 0.2 }
+  - hold: 2
+    do:
+      - highlight: "#card"
+  - hold: 1
+    do:
+      - click: "#row"
+`);
+    const file = path.join(dir, 'effects.mp4');
+    await captureTour({ root: ROOT, tour, timeline: buildTimeline(tour, []), file, fps: 30 });
+
+    const boxes = await layout(fixture('app'), ['#card', '#toggle', '#row']);
+    const card = boxes['#card']!;
+    const toggle = boxes['#toggle']!;
+    const row = boxes['#row']!;
+    const cyan = ([r, g, b]: number[]) => r! < 90 && g! > 170 && b! > 170;
+    const white = ([r, g, b]: number[]) => r! > 200 && g! > 200 && b! > 200;
+
+    // The white arrow hangs below-right of its tip, which rests on the last target's center.
+    const belowToggleCenter = { x: center(toggle).x + 1, y: center(toggle).y + 2, width: 10, height: 14 };
+    expect(count(file, 0.05, belowToggleCenter, white)).toBe(0);
+    expect(count(file, 3.2, belowToggleCenter, white)).toBeGreaterThan(20);
+
+    const aroundToggle = { x: center(toggle).x - 40, y: center(toggle).y - 40, width: 80, height: 80 };
+    expect(count(file, 1.3, aroundToggle, cyan)).toBe(0);
+    expect(count(file, 2.0, aroundToggle, cyan)).toBeGreaterThan(50);
+    expect(dominant(pixel(file, 2.0, Math.round((toggle.x + 4) * 1.2), Math.round(center(toggle).y * 1.2)))).toBe('green');
+
+    const leftOfCard = { x: card.x - 14, y: card.y, width: 12, height: card.height };
+    expect(count(file, 2.4, leftOfCard, cyan)).toBe(0);
+    expect(count(file, 3.2, leftOfCard, cyan)).toBeGreaterThan(20);
+
+    // A wide element with short text is aimed at its text, not at its geometric center.
+    const rowText = { x: row.x, y: row.y - 30, width: 80, height: row.height + 60 };
+    const rowCenter = { x: center(row).x - 40, y: row.y - 30, width: 80, height: row.height + 60 };
+    expect(count(file, 4.9, rowText, cyan)).toBeGreaterThan(30);
+    expect(count(file, 4.9, rowCenter, cyan)).toBe(0);
+  }, 120_000);
 });
 
 async function layout(url: string, selectors: string[]) {
@@ -123,6 +174,17 @@ function pixel(file: string, time: number, x: number, y: number): [number, numbe
   const rgb = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(time), '-i', file, '-frames:v', '1',
     '-vf', `format=rgb24,crop=1:1:${x}:${y}`, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-']);
   return [rgb[0]!, rgb[1]!, rgb[2]!];
+}
+
+// Counts output pixels matching `match` inside a rect given in CSS pixels at full frame.
+function count(file: string, time: number, rect: { x: number; y: number; width: number; height: number }, match: (rgb: number[]) => boolean) {
+  const scale = 1920 / deviceProfile('desktop').viewport.width;
+  const [x, y, w, h] = [rect.x, rect.y, rect.width, rect.height].map(v => Math.round(v * scale));
+  const rgb = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(time), '-i', file, '-frames:v', '1',
+    '-vf', `format=rgb24,crop=${w}:${h}:${x}:${y}`, '-f', 'rawvideo', '-pix_fmt', 'rgb24', '-']);
+  let matches = 0;
+  for (let i = 0; i + 2 < rgb.length; i += 3) if (match([rgb[i]!, rgb[i + 1]!, rgb[i + 2]!])) matches++;
+  return matches;
 }
 
 function dominant([r, g, b]: [number, number, number]): string {

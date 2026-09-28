@@ -19,7 +19,7 @@ export async function installClock(page: Page): Promise<VirtualClock> {
 
   return {
     async syncAnimations() {
-      await page.evaluate(() => window.__walkthrough?.syncAnimations());
+      await page.evaluate(() => window.__walkthrough?.syncAnimations?.());
     },
     async advance(ms) {
       await page.clock.runFor(ms);

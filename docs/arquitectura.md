@@ -93,6 +93,21 @@ El zoom máximo sin pérdida es 2×. Calcular el rectángulo por cuadro (`camera
 
 El anillo de resaltado y el clic dibujado **sí** van en la página: se inyectan en el DOM y quedan dentro del recorte de forma natural.
 
+## Efectos en la página
+
+Cursor, circulito de clic y anillo de resaltado.
+
+- **La página no guarda estado.** En cada cuadro, Node calcula la escena a partir del tiempo del video (`src/effects/`, funciones puras) y la página solo pinta el SVG que recibe (`effectsLayer` en `src/capture/runtime.ts`). Así sobreviven a navegaciones y se prueban sin navegador.
+- **La capa es un `popover` en el top layer**, con `pointer-events: none`. Se vuelve a mostrar en cada cuadro para quedar encima de los diálogos que abra la app.
+- **El cursor sale antes** (`TIMING.travel`, 0,7 s) para llegar al objetivo justo cuando corre la acción, sin salir antes de la acción de puntero anterior. Si el objetivo aparece tarde, salta.
+- **Se apunta al texto del elemento**, no a su centro geométrico. El centro de una fila de ancho completo puede quedar lejos de lo que se lee, e incluso fuera de la cámara. Playwright hace el clic o el hover en ese mismo punto.
+- **Trazos a mano:** círculo con 1,1 vueltas y rectángulo redondeado con ruido suave y sembrado por acción (siempre igual en cada render). Se dibujan con `pathLength` + `stroke-dashoffset`.
+- **Mobile:** sin cursor; solo el circulito en cada toque.
+- **Tecleo visible:** `type` escribe a 14 caracteres por segundo, repartidos entre cuadros.
+- **Color:** `accent` del tour (`#FF3B5C` por defecto).
+
+⚠️ La capa usa `innerHTML`: una app con Trusted Types estrictos la bloquearía.
+
 ## Captura determinista
 
 El video no se graba en tiempo real. El tiempo del video avanza solo cuando se toma un cuadro:
@@ -109,6 +124,7 @@ El video no se graba en tiempo real. El tiempo del video avanza solo cuando se t
 | Esperas de red | `clock.resume()`, esperar a que la app esté lista y `pauseAt()` de nuevo | ✅ sin spinners en el video |
 
 - **Costo:** ~180 ms por cuadro a 3840×2160 (desktop con zoom máximo 2×): unos 5,5 s reales por segundo de video. Un tour de un minuto tarda unos 5–6 minutos.
+- **Adelanto de las animaciones ya presentes al cargar.** Corren con el reloj real hasta que la primera sincronía las pausa: unos milisegundos, hasta ~50 ms con la máquina cargada. Las que dispara una acción se sincronizan en el mismo cuadro.
 - **El reloj falso arranca en la hora real** (`clock.install({ time: Date.now() })`). Con la fecha por defecto, Supabase daría el token por inválido.
 
 El plan B (screencast de Chrome) queda descartado mientras esto aguante.

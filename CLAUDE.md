@@ -36,6 +36,7 @@ El detalle vive en `docs/arquitectura.md`. Lo que no se puede olvidar:
 - **La timeline es la única que calcula tiempos.** Es una función pura; las demás etapas ejecutan lo que dice.
 - **Voz intercambiable.** Todo proveedor implementa `VoiceProvider.synthesize()` y devuelve audio + palabras con tiempos. Nada fuera de `src/voice/<provider>/` conoce al proveedor.
 - **Zoom = cámara virtual.** Se captura con densidad alta (`deviceScaleFactor` calculado en `devices.ts`) y cada cuadro es un `screenshot({ clip })` del rectángulo de la cámara; la página nunca se transforma. El anillo y el clic dibujado sí van en el DOM.
+- **Efectos sin estado en la página.** Node calcula la escena de cada cuadro (`src/effects/`) y la página solo pinta el SVG en una capa `popover` del top layer. El cursor y la acción apuntan al centro del texto del elemento, no a su centro geométrico.
 - **Overlays en ffmpeg.** Se renderizan aparte con fondo transparente y se componen encima; nunca se inyectan en la app.
 - **Captura determinista.** El reloj de la página se congela y avanza 1/fps por cuadro; las esperas de red ocurren fuera del tiempo del video.
 - **Dispositivo:** `desktop` → 16:9, `mobile` → 9:16 con emulación.

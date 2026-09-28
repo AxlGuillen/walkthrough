@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { TimedAction } from '../timeline/build.ts';
-import { dueActions, frameCount } from './schedule.ts';
+import { charsDue, dueActions, frameCount, pointerSchedule } from './schedule.ts';
 
-const at = (time: number): TimedAction => ({ time, segment: 0, action: { kind: 'click', on: '.a' } });
+const at = (time: number): TimedAction => ({ time, segment: 0, action: { kind: 'click', on: '.a', at: undefined } });
+const zoomAt = (time: number): TimedAction => ({
+  time, segment: 0, action: { kind: 'zoom', to: 'out', padding: undefined, duration: undefined, at: undefined },
+});
 
 describe('frameCount', () => {
   it('covers the whole duration', () => {
@@ -37,5 +40,28 @@ describe('dueActions', () => {
       previous = time;
     }
     expect(runs).toEqual([0, 15, 15, 30]);
+  });
+});
+
+describe('pointerSchedule', () => {
+  it('leaves early enough to land on the target at the action time', () => {
+    expect(pointerSchedule([at(2)], 0.7).map(s => s.moveStart)).toEqual([1.3]);
+  });
+
+  it('never leaves before the previous pointer action or the start', () => {
+    expect(pointerSchedule([at(0.3), at(0.6)], 0.7).map(s => s.moveStart)).toEqual([0, 0.3]);
+  });
+
+  it('ignores actions without a pointer target', () => {
+    expect(pointerSchedule([zoomAt(1), at(2)], 0.7).map(s => s.action.time)).toEqual([2]);
+  });
+});
+
+describe('charsDue', () => {
+  it('types the first character immediately and then at a steady rate', () => {
+    expect(charsDue(5, 1, 0.9, 10)).toBe(0);
+    expect(charsDue(5, 1, 1, 10)).toBe(1);
+    expect(charsDue(5, 1, 1.25, 10)).toBe(3);
+    expect(charsDue(5, 1, 9, 10)).toBe(5);
   });
 });

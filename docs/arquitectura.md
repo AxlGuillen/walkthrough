@@ -118,7 +118,17 @@ El anillo de resaltado y el clic dibujado **sí** van en la página: se inyectan
 - **Cursor natural:** trayectoria Bézier con una comba lateral de 8–18 % (sembrada por acción) y duración según la distancia, entre 0,35 s y 0,9 s. El movimiento arranca justo a tiempo para llegar cuando corre la acción.
 - **Scroll determinista:** Node interpola cada contenedor (la ventana o un elemento con `overflow` que se marca con `data-walkthrough-scroll`) cuadro por cuadro con easing de seno, y lo aplica con `scrollTo({ behavior: 'instant' })`. Así el `scroll-behavior: smooth` del CSS de la app, que correría en tiempo real, nunca interviene. El seno tiene una velocidad pico de ~1,6 veces la promedio; el cúbico, de 3, y se veía como un jalón.
 - **Acción `scroll`:** `scroll: { to: <selector> | top | bottom, within: <contenedor>, duration }`. Sirve para recorrer contenedores horizontales como las columnas del Board.
+- **Un scroll por contenedor a la vez:** uno nuevo corta al que está en curso y arranca desde donde iba, y la preparación de la siguiente acción espera a que termine un `scroll` explícito. Si no, dos animaciones se peleaban cuadro a cuadro por la misma posición.
 - **Marcas que siguen al contenido:** mientras hay scroll, los anillos y círculos visibles se vuelven a medir para no quedar flotando.
+
+## Etiquetas
+
+`label: { on, text, side, duration }` dibuja en la capa de efectos una burbuja del color de acento, con letra tipo plumón (Marker Felt, que viene con macOS), y una flecha a mano hacia el elemento.
+
+- **Colocación:** una función pura (`layoutLabel`) prueba arriba, abajo, derecha e izquierda y se queda con el primer lado donde cabe; `side` lo fija a mano. El ancho del texto se estima en Node, antes de que exista.
+- **Texto:** se ajusta por palabras, con 3 líneas como máximo.
+- **Animación:** la burbuja aparece con un pop, la flecha se traza y al final su punta; todo se desvanece junto.
+- **Movimiento:** como va en la capa de efectos y no como overlay, se mueve con la cámara y sigue al elemento durante el scroll.
 
 ## Transiciones entre pantallas
 
@@ -173,6 +183,16 @@ overlays:
     params: { title: Tablero, subtitle: Semana 38 }   # llegan como query string
 ```
 
+- **Plantillas compartidas** en `templates/overlays/`. `src` busca primero en la carpeta del tour y después ahí, así que un proyecto puede reemplazar cualquiera. Todas reciben `accent` (el del tour) y `base` (la carpeta del tour, para que `asset()` cargue sus imágenes), y comparten `base.css` y `params.js`. Usan `vmin`, así que sirven en 16:9 y en 9:16.
+
+  | Plantilla | Params |
+  |---|---|
+  | `lower-third.html` | `title`, `subtitle` |
+  | `title-card.html` (pantalla completa) | `eyebrow`, `title`, `subtitle` |
+  | `outro.html` | `title`, `subtitle`, `url` |
+  | `chapter.html` | `index`, `total`, `label`, `position` (`top-right` por defecto; en uws-tasks conviene `bottom-right`, porque arriba tapa «New ticket») |
+  | `shortcut.html` | `keys` («⌘ + K»), `label` |
+  | `compare.html` | `before`, `after` (imágenes del tour), `beforeLabel`, `afterLabel` |
 - **Render aparte** (`src/overlays/render.ts`): cada overlay se abre en su propia página, al tamaño de salida, con `deviceScaleFactor: 1` y fondo transparente (`omitBackground`). Se guarda como `overlays/NN.mov` con PNG por cuadro, sin pérdida y con alfa.
 - **Reloj propio que empieza en cero.** La página se carga con el reloj congelado, no vía `settle()`, así que sus animaciones de entrada arrancan justo cuando el overlay aparece en el video. Antes del primer cuadro se espera a las fuentes, imágenes y videos, por evento, porque los timers están congelados.
 - **`params`** reutiliza una plantilla con distintos textos: el HTML los lee con `URLSearchParams`.
@@ -192,8 +212,21 @@ Una sola pasada de ffmpeg, ejecutada desde la carpeta de trabajo del tour con ru
 - **Karaoke:** líneas de hasta 3 palabras; una pausa de más de 0,5 s abre línea nueva. Cada palabra pasa de blanco al `accent` mientras se dice, y `{\k}` dura hasta que empieza la siguiente. En vertical la letra es más grande y más alta, para no quedar bajo la interfaz de las redes. Se desactivan con `subtitles: none`.
 - **Voz:** cada clip entra con `adelay` en el `speechStart` de su segmento.
 - **Música opcional** (`music: { track, volume }`, ruta relativa a la carpeta del tour; `volume` 0,055 por defecto, que deja la música unos 12 dB bajo la voz en las pausas): en loop, con fade de entrada y salida y ducking con `sidechaincompress` bajo la voz.
-- **Efectos de sonido** (`sfx: true` por defecto): «tic» en cada `click` y `type`, rasgueo de plumón al dibujar un `highlight` (dura lo mismo que el trazo) y «pop» al aparecer un overlay. Se sintetizan con ffmpeg (`aevalsrc`, `anoisesrc` con semilla fija): sin licencias, sin archivos y sonando igual en cada render. Entran después del ducking, así que no bajan la música. ⚠️ Cada evento tiene su propia fuente: en ffmpeg 8.1, `asplit` → `adelay` → `amix` se queda girando para siempre, incluso con dos eventos.
+- **Efectos de sonido** (`sfx: true | false | { volume, mute: [...] }`), todos sintetizados con ffmpeg (`aevalsrc`, `anoisesrc` con semilla fija): sin licencias, sin archivos y sonando igual en cada render. Entran después del ducking, así que no bajan la música.
+
+  | Sonido | Cuándo |
+  |---|---|
+  | `click` | cada clic y al entrar a escribir; 3 variantes elegidas por acción |
+  | `keys` | cada carácter de `type` |
+  | `draw` | anillos y etiquetas, mientras se trazan |
+  | `pop` | al aparecer un overlay; 2 variantes |
+  | `whoosh` | zoom: crece al acercar, se apaga al alejar |
+  | `swipe` | cambio de pantalla (`goto` después del inicio, `click` con `wait`) |
+  | `scroll` | durante cada scroll de 0,3 s o más |
+
+  ⚠️ Cada evento tiene su propia fuente: en ffmpeg 8.1, `asplit` → `adelay` → `amix` se queda girando para siempre, incluso con dos eventos.
 - **Loudness en dos pasadas.** Primero se mide solo el audio (`loudnorm` con `print_format=json`) y luego se monta aplicando esa medición con `linear=true`: una sola ganancia hasta −16 LUFS que respeta la proporción entre voz, música y efectos. En una pasada, `loudnorm` actúa como control automático de ganancia y levanta los pasajes quietos: bajar la música no se notaba.
+- **Efectos desde lo que pasó:** la captura escribe `events.json` (clics, tecleo, anillos, etiquetas, zooms, scrolls y navegaciones), y el montaje saca de ahí los sonidos. Así también suenan los scrolls automáticos, que la timeline no conoce. Una captura sin ese archivo se aproxima desde la timeline.
 - **Tiempo máximo.** El montaje tiene un límite de 10 veces la duración (mínimo 2 minutos) y se mata con SIGKILL: un grafo atorado ignora SIGTERM.
 - **Repetir solo el montaje:** `render --from=compose` reutiliza `capture.mp4`. Sirve para cambiar subtítulos, música o color sin recapturar.
 

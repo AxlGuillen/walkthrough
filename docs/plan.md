@@ -87,7 +87,9 @@ Detalle en `docs/arquitectura.md`: «Cámara virtual», «Movimiento y scroll» 
 
 - `click: { on, wait: <selector> }` y una acción `wait` esperan a que la siguiente pantalla esté lista fuera del tiempo del video, como ya hace `goto`. Así no aparecen estados de carga a medias.
 
-## Fase 3 — Variedad
+## Fase 3 — Variedad ✅ (28/sep/2026)
+
+Detalle en `docs/arquitectura.md`: «Montaje» (efectos), «Overlays» (plantillas) y «Etiquetas».
 
 ### 3.1 Efectos de sonido
 

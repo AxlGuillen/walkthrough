@@ -17,12 +17,14 @@ Cada fase termina con pruebas en verde, documentación al día y commits que com
 
 ---
 
-## Fase 0 — Limpieza
+## Fase 0 — Limpieza ✅ (28/sep/2026)
+
+De paso apareció y se corrigió una carrera al congelar el reloj: `pauseAt` rechazaba el objetivo cuando la máquina tardaba más de 1 ms entre leer y pausar. Ahora usa un margen de 25 ms y reintenta.
 
 | Tarea | Detalle |
 |---|---|
 | Subtítulos apagados | `subtitles: none` por defecto; un tour puede pedir `karaoke`. |
-| Node 24 | Instalar `fnm` y Node 24 (necesita `sudo` del autor). Hasta entonces `npm run walkthrough` no corre en Node 22.14. |
+| Node 24 | Instalado con `fnm` (v24.21.0, `arm64`, con `FNM_ARCH=arm64`). |
 | Documentación | Quitar esbuild del stack (no se usa: el runtime se serializa como función) y marcar el primer hito de `arranque.md` como hecho. |
 | Dividir `capture.ts` | Separar en `actions.ts` (qué hace cada acción), `cursor.ts` (plan del puntero) y el ciclo de cuadros. |
 | Dividir el CLI | Un archivo por comando en `src/cli/commands/`. |

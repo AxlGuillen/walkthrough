@@ -18,6 +18,7 @@ const USAGE = `usage:
       --session=<name>                use a saved login
       --device=mobile                 inspect with the phone viewport
   walkthrough render <tour.yaml>      voice, timeline, capture, overlays and compose
+      --preview                       half size at 15 fps, kept out of ~/Movies, shown in the gallery
       --from=overlays                 reuse the capture; re-render overlays and compose
       --from=compose                  reuse capture and overlays; only rebuild the final video
   walkthrough gallery                 browse, reveal and trash generated videos
@@ -32,7 +33,7 @@ const { positionals, values } = parseArgs({
   allowPositionals: true,
   options: {
     from: { type: 'string' }, voice: { type: 'boolean' }, keep: { type: 'string' }, 'no-open': { type: 'boolean' },
-    session: { type: 'string' }, device: { type: 'string' },
+    session: { type: 'string' }, device: { type: 'string' }, preview: { type: 'boolean' },
   },
 });
 const [command, target, url] = positionals;
@@ -42,7 +43,7 @@ try {
   if (command === 'voice' && target) await voice(target);
   else if (command === 'check' && target) await check(target);
   else if (command === 'inspect' && target) await inspect(target, values.session, values.device);
-  else if (command === 'render' && target) await render(target, values.from);
+  else if (command === 'render' && target) await render(target, values.from, values.preview ?? false);
   else if (command === 'gallery') await gallery(!values['no-open']);
   else if (command === 'clean') await cleanUp(values.voice ?? false, values.keep);
   else if (command === 'login' && target && url) await login(target, url);

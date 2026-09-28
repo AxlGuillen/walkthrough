@@ -2,6 +2,9 @@ import { devices } from 'playwright-core';
 import { MAX_ZOOM, type Size } from '../timeline/camera.ts';
 
 export type Device = 'desktop' | 'mobile';
+export type Quality = 'final' | 'preview';
+
+export const FPS: Record<Quality, number> = { final: 30, preview: 15 };
 
 export interface DeviceProfile {
   viewport: Size;
@@ -29,7 +32,11 @@ const PRESETS: Record<Device, Omit<DeviceProfile, 'deviceScaleFactor'>> = {
 };
 
 // Rendering at this scale keeps the tightest zoom at one source pixel per output pixel.
-export function deviceProfile(device: Device, maxZoom = MAX_ZOOM): DeviceProfile {
+// A preview keeps the viewport, so the app lays out exactly as in the final video, and
+// only halves the output: a quarter of the pixels per frame.
+export function deviceProfile(device: Device, quality: Quality = 'final', maxZoom = MAX_ZOOM): DeviceProfile {
   const preset = PRESETS[device];
-  return { ...preset, deviceScaleFactor: (preset.output.width * maxZoom) / preset.viewport.width };
+  const scale = quality === 'preview' ? 0.5 : 1;
+  const output = { width: preset.output.width * scale, height: preset.output.height * scale };
+  return { ...preset, output, deviceScaleFactor: (output.width * maxZoom) / preset.viewport.width };
 }

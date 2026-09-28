@@ -21,4 +21,9 @@ describe('encoderArgs', () => {
     expect(overlay[overlay.indexOf('-vf') + 1]).toMatch(/format=rgba$/);
     expect(overlay.slice(overlay.indexOf('-vf') + 2, overlay.indexOf('-vf') + 4)).toEqual(['-c:v', 'png']);
   });
+
+  it('trades quality for speed on drafts', () => {
+    const draft = encoderArgs({ fps: 15, output: { width: 960, height: 540 }, file: 'p.mp4', draft: true }).join(' ');
+    expect(draft).toContain('-preset veryfast -crf 23');
+  });
 });

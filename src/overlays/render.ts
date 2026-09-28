@@ -23,14 +23,16 @@ export interface OverlayRenderOptions {
   overlays: readonly TimedOverlay[];
   tourDir: string;
   outDir: string;
+  canvas: Size;
   output: Size;
   fps: number;
   onFrame?: (overlay: number, frame: number, total: number) => void;
 }
 
 // Each overlay gets its own clock starting at zero, so its entrance animations begin
-// exactly when it appears in the video.
-export async function renderOverlays({ overlays, tourDir, outDir, output, fps, onFrame }: OverlayRenderOptions): Promise<void> {
+// exactly when it appears in the video. It is laid out on the full canvas and scaled to
+// the output, so a preview shows the same design, only smaller.
+export async function renderOverlays({ overlays, tourDir, outDir, canvas, output, fps, onFrame }: OverlayRenderOptions): Promise<void> {
   await rm(path.join(outDir, 'overlays'), { recursive: true, force: true });
   if (overlays.length === 0) return;
   await mkdir(path.join(outDir, 'overlays'), { recursive: true });
@@ -41,7 +43,7 @@ export async function renderOverlays({ overlays, tourDir, outDir, output, fps, o
       const source = path.resolve(tourDir, overlay.src);
       if (!existsSync(source)) throw new Error(`overlay not found: ${source}`);
 
-      const context = await browser.newContext({ viewport: output, deviceScaleFactor: 1 });
+      const context = await browser.newContext({ viewport: canvas, deviceScaleFactor: 1 });
       const encoder = startEncoder({ fps, output, file: path.join(outDir, overlayFile(index)), alpha: true });
       try {
         const page = await context.newPage();

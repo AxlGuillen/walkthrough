@@ -38,6 +38,13 @@ describe('composeArgs', () => {
   });
 });
 
+describe('composeArgs for drafts', () => {
+  it('encodes previews fast and final videos carefully', () => {
+    expect(composeArgs({ ...inputs, draft: true }, loudness).join(' ')).toContain('-preset veryfast -crf 26');
+    expect(composeArgs(inputs, loudness).join(' ')).toContain('-preset medium -crf 18');
+  });
+});
+
 describe('parseLoudness', () => {
   it('reads the JSON block loudnorm prints at the end', () => {
     const stderr = `[Parsed_loudnorm_3 @ 0x1] \n{\n\t"input_i" : "-21.30",\n\t"input_tp" : "-4.10",\n\t"input_lra" : "7.00",\n\t"input_thresh" : "-31.80",\n\t"output_i" : "-16.0",\n\t"target_offset" : "0.20"\n}\n`;

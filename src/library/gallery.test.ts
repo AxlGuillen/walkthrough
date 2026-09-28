@@ -3,7 +3,7 @@ import type http from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parseRange, resolveVideo, startGallery } from './gallery.ts';
+import { parseRange, resolvePreview, resolveVideo, startGallery } from './gallery.ts';
 import { publishVideo } from './library.ts';
 import { escapeHtml, formatBytes, formatDuration, galleryPage } from './page.ts';
 
@@ -14,6 +14,16 @@ describe('resolveVideo', () => {
     expect(resolveVideo('/v', '/v/../x.mp4')).toBeNull();
     expect(resolveVideo('/v', 'uws/a.json')).toBeNull();
     expect(resolveVideo('/v', 42)).toBeNull();
+  });
+});
+
+describe('resolvePreview', () => {
+  it('maps project/tour to its preview and nothing else', () => {
+    expect(resolvePreview('/w', 'uws-tasks/tablero')).toBe('/w/tours/uws-tasks/tablero/preview/video.mp4');
+    expect(resolvePreview('/w', '../etc')).toBeNull();
+    expect(resolvePreview('/w', 'a/../b')).toBeNull();
+    expect(resolvePreview('/w', 'a/b/c')).toBeNull();
+    expect(resolvePreview('/w', null)).toBeNull();
   });
 });
 
@@ -44,6 +54,12 @@ describe('galleryPage', () => {
     expect(page).toContain('&lt;b&gt;Tour&lt;/b&gt;');
     expect(page).toContain('src="/video?file=uws-tasks%2Ftablero%2Fa.mp4"');
     expect(page).toContain('1:05');
+  });
+
+  it('shows previews in their own section, served from the cache', () => {
+    const page = galleryPage({ videos: [], previews: [{ ...video, key: 'uws-tasks/tablero' }], cacheBytes: 0, videosRoot: '/v' });
+    expect(page).toContain('<h2>Vistas previas</h2>');
+    expect(page).toContain('src="/video?preview=uws-tasks%2Ftablero"');
   });
 
   it('explains how to make the first video when there are none', () => {

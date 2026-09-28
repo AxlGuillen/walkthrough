@@ -35,6 +35,28 @@ export async function publishVideo(
   return entry;
 }
 
+export function previewMetaFile(video: string): string {
+  return video.replace(/\.mp4$/, '.json');
+}
+
+// Previews live in the working cache, one per tour, replaced by each preview render.
+export async function listPreviews(workRoot: string): Promise<(VideoEntry & { key: string })[]> {
+  const toursDir = path.join(workRoot, 'tours');
+  if (!existsSync(toursDir)) return [];
+  const previews: (VideoEntry & { key: string })[] = [];
+  for (const project of await readdir(toursDir)) {
+    if (!existsSync(path.join(toursDir, project)) || !(await stat(path.join(toursDir, project))).isDirectory()) continue;
+    for (const tour of await readdir(path.join(toursDir, project))) {
+      const file = path.join(toursDir, project, tour, 'preview', 'video.mp4');
+      const sidecar = previewMetaFile(file);
+      if (!existsSync(file) || !existsSync(sidecar)) continue;
+      const meta = JSON.parse(await readFile(sidecar, 'utf8')) as Omit<VideoMeta, 'bytes'>;
+      previews.push({ ...meta, file, bytes: (await stat(file)).size, key: `${project}/${tour}` });
+    }
+  }
+  return previews.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
 export async function listVideos(videosRoot: string): Promise<VideoEntry[]> {
   if (!existsSync(videosRoot)) return [];
   const entries: VideoEntry[] = [];

@@ -6,31 +6,32 @@ import type { Tour } from '../tour/schema.ts';
 import { continueTyping, perform } from './actions.ts';
 import { installClock } from './clock.ts';
 import { prepareCursor } from './cursor.ts';
-import { deviceProfile } from './devices.ts';
+import { deviceProfile, FPS, type Quality } from './devices.ts';
 import { startEncoder } from './encoder.ts';
 import { effectsLayer } from './runtime.ts';
 import { dueActions, frameCount } from './schedule.ts';
 import { openContext } from './session.ts';
 import { createStage } from './stage.ts';
 
-export const DEFAULT_FPS = 30;
+export const DEFAULT_FPS = FPS.final;
 
 export interface CaptureOptions {
   root: string;
   tour: Tour;
   timeline: Timeline;
   file: string;
+  quality?: Quality;
   fps?: number;
   headless?: boolean;
   onFrame?: (frame: number, total: number) => void;
 }
 
 export async function captureTour({
-  root, tour, timeline, file, fps = DEFAULT_FPS, headless = true, onFrame,
+  root, tour, timeline, file, quality = 'final', fps = FPS[quality], headless = true, onFrame,
 }: CaptureOptions): Promise<{ frames: number }> {
-  const device = deviceProfile(tour.device);
+  const device = deviceProfile(tour.device, quality);
   const context = await openContext(root, { headless, device, ...(tour.session ? { session: tour.session } : {}) });
-  const encoder = startEncoder({ fps, output: device.output, file });
+  const encoder = startEncoder({ fps, output: device.output, file, draft: quality === 'preview' });
   const total = frameCount(timeline.duration, fps);
 
   try {

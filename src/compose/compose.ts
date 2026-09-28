@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { deviceProfile } from '../capture/devices.ts';
+import { deviceProfile, type Quality } from '../capture/devices.ts';
 import type { Timeline } from '../timeline/build.ts';
 import { overlayFile } from '../overlays/render.ts';
 import type { Tour } from '../tour/schema.ts';
@@ -23,6 +23,7 @@ export interface ComposeInputs {
   subtitles?: string;
   duration: number;
   output: string;
+  draft?: boolean;
 }
 
 function graphs({ capture, clips, music, overlays = [], sfx = [], subtitles, duration }: ComposeInputs, loudness?: Loudness) {
@@ -54,24 +55,32 @@ export function composeArgs(compose: ComposeInputs, loudness: Loudness): string[
     '-y', '-v', 'error', ...inputs,
     '-filter_complex', `${video};${audio}`,
     '-map', '[vout]', '-map', '[aout]', '-t', compose.duration.toFixed(3),
-    '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p',
+    '-c:v', 'libx264', ...(compose.draft ? ['-preset', 'veryfast', '-crf', '26'] : ['-preset', 'medium', '-crf', '18']), '-pix_fmt', 'yuv420p',
     '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart',
     compose.output,
   ];
 }
 
+export interface ComposeOptions {
+  quality?: Quality;
+  // Relative to outDir: a preview lives in a subfolder and reuses the tour's voice.
+  voiceDir?: string;
+}
+
 // Runs from outDir with relative paths: the ass filter's own escaping rules make
 // absolute paths fragile.
-export async function composeTour(tour: Tour, timeline: Timeline, outDir: string, tourDir: string): Promise<string> {
+export async function composeTour(
+  tour: Tour, timeline: Timeline, outDir: string, tourDir: string, { quality = 'final', voiceDir = 'voice' }: ComposeOptions = {},
+): Promise<string> {
   const clips = timeline.segments.flatMap(segment => segment.speechStart === null ? [] : [{
-    file: path.join('voice', `${String(segment.index + 1).padStart(2, '0')}.wav`),
+    file: path.join(voiceDir, `${String(segment.index + 1).padStart(2, '0')}.wav`),
     start: segment.speechStart,
   }]);
 
   let subtitles: string | undefined;
   if (tour.subtitles === 'karaoke') {
     subtitles = 'subs.ass';
-    await writeFile(path.join(outDir, subtitles), karaokeAss(timeline.words, deviceProfile(tour.device).output, tour.accent));
+    await writeFile(path.join(outDir, subtitles), karaokeAss(timeline.words, deviceProfile(tour.device, quality).output, tour.accent));
   }
 
   let music: ComposeInputs['music'];
@@ -87,7 +96,7 @@ export async function composeTour(tour: Tour, timeline: Timeline, outDir: string
 
   const output = 'video.mp4';
   const inputs: ComposeInputs = {
-    capture: 'capture.mp4', clips, overlays, duration: timeline.duration, output,
+    capture: 'capture.mp4', clips, overlays, duration: timeline.duration, output, draft: quality === 'preview',
     sfx: tour.sfx ? soundEvents(timeline) : [],
     ...(subtitles ? { subtitles } : {}),
     ...(music ? { music } : {}),

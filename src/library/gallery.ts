@@ -5,7 +5,7 @@ import http from 'node:http';
 import path from 'node:path';
 import type { Storage } from '../tour/paths.ts';
 import { clean } from './clean.ts';
-import { listVideos, sizeOf, trashVideo } from './library.ts';
+import { listPreviews, listVideos, sizeOf, trashVideo } from './library.ts';
 import { galleryPage } from './page.ts';
 
 export const GALLERY_PORT = 4717;
@@ -15,6 +15,13 @@ export function resolveVideo(videosRoot: string, relative: unknown): string | nu
   if (typeof relative !== 'string' || !relative.endsWith('.mp4')) return null;
   const file = path.resolve(videosRoot, relative);
   return file.startsWith(path.resolve(videosRoot) + path.sep) ? file : null;
+}
+
+export function resolvePreview(workRoot: string, key: unknown): string | null {
+  if (typeof key !== 'string') return null;
+  const parts = key.split('/');
+  if (parts.length !== 2 || !parts.every(part => /^[\w.-]+$/.test(part) && part !== '.' && part !== '..')) return null;
+  return path.join(workRoot, 'tours', parts[0]!, parts[1]!, 'preview', 'video.mp4');
 }
 
 export function parseRange(header: string | undefined, size: number): { start: number; end: number } | null {
@@ -50,14 +57,17 @@ export function startGallery(storage: Storage, port = GALLERY_PORT): Promise<htt
 
 async function sendPage(storage: Storage, response: http.ServerResponse) {
   const videos = (await listVideos(storage.videos)).map(v => ({ ...v, relative: path.relative(storage.videos, v.file) }));
-  const page = galleryPage({ videos, cacheBytes: await sizeOf(path.join(storage.work, 'tours')), videosRoot: storage.videos });
+  const previews = await listPreviews(storage.work);
+  const page = galleryPage({ videos, previews, cacheBytes: await sizeOf(path.join(storage.work, 'tours')), videosRoot: storage.videos });
   response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
   response.end(page);
 }
 
 // Browsers seek video through Range requests; Safari refuses to play without them.
 async function sendVideo(storage: Storage, url: URL, request: http.IncomingMessage, response: http.ServerResponse) {
-  const file = resolveVideo(storage.videos, url.searchParams.get('file'));
+  const file = url.searchParams.has('preview')
+    ? resolvePreview(storage.work, url.searchParams.get('preview'))
+    : resolveVideo(storage.videos, url.searchParams.get('file'));
   if (!file || !existsSync(file)) return reply(response, 404, 'not found');
   const { size } = await stat(file);
   const range = parseRange(request.headers.range, size);

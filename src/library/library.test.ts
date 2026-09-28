@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clean } from './clean.ts';
-import { listVideos, moveToTrash, olderThanKept, publishVideo, stamp, type VideoEntry } from './library.ts';
+import { listPreviews, listVideos, moveToTrash, olderThanKept, publishVideo, stamp, type VideoEntry } from './library.ts';
 
 let dir: string;
 let storage: { work: string; videos: string };
@@ -46,6 +46,23 @@ describe('publishVideo and listVideos', () => {
     await writeFile(path.join(storage.videos, 'orphan.json'), '{}');
     expect(await listVideos(storage.videos)).toEqual([]);
     expect(await listVideos(path.join(dir, 'nope'))).toEqual([]);
+  });
+});
+
+describe('listPreviews', () => {
+  it('finds the one preview per tour in the cache, skipping unfinished ones', async () => {
+    const done = path.join(storage.work, 'tours', 'uws-tasks', 'tablero', 'preview');
+    const unfinished = path.join(storage.work, 'tours', 'uws-tasks', 'otro', 'preview');
+    await mkdir(done, { recursive: true });
+    await mkdir(unfinished, { recursive: true });
+    await writeFile(path.join(done, 'video.mp4'), Buffer.alloc(7));
+    await writeFile(path.join(done, 'video.json'), JSON.stringify({ ...meta, createdAt: '2026-09-28T12:00:00Z' }));
+    await writeFile(path.join(unfinished, 'video.mp4'), Buffer.alloc(3));
+
+    expect(await listPreviews(storage.work)).toEqual([
+      { ...meta, createdAt: '2026-09-28T12:00:00Z', file: path.join(done, 'video.mp4'), bytes: 7, key: 'uws-tasks/tablero' },
+    ]);
+    expect(await listPreviews(path.join(dir, 'nope'))).toEqual([]);
   });
 });
 

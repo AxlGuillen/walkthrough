@@ -15,11 +15,19 @@ describe('deviceProfile', () => {
   });
 
   it('renders enough pixels for the tightest zoom', () => {
-    const { viewport, output, deviceScaleFactor } = deviceProfile('desktop', 2);
+    const { viewport, output, deviceScaleFactor } = deviceProfile('desktop', 'final', 2);
     expect((viewport.width / 2) * deviceScaleFactor).toBe(output.width);
   });
 
   it('emulates a phone on mobile', () => {
     expect(deviceProfile('mobile')).toMatchObject({ isMobile: true, hasTouch: true, userAgent: expect.stringContaining('iPhone') });
+  });
+
+  it('halves the output but keeps the viewport for previews', () => {
+    const preview = deviceProfile('desktop', 'preview');
+    expect(preview.viewport).toEqual(deviceProfile('desktop').viewport);
+    expect(preview.output).toEqual({ width: 960, height: 540 });
+    expect((preview.viewport.width / 2) * preview.deviceScaleFactor).toBe(preview.output.width);
+    expect(deviceProfile('mobile', 'preview').output).toEqual({ width: 540, height: 960 });
   });
 });

@@ -2,6 +2,7 @@ import type { VideoEntry } from './library.ts';
 
 export interface GalleryData {
   videos: readonly (VideoEntry & { relative: string })[];
+  previews?: readonly (VideoEntry & { key: string })[];
   cacheBytes: number;
   videosRoot: string;
 }
@@ -21,7 +22,7 @@ export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 
-export function galleryPage({ videos, cacheBytes, videosRoot }: GalleryData): string {
+export function galleryPage({ videos, previews = [], cacheBytes, videosRoot }: GalleryData): string {
   const projects = new Map<string, (typeof videos)[number][]>();
   for (const video of videos) projects.set(video.project, [...(projects.get(video.project) ?? []), video]);
   const total = videos.reduce((sum, v) => sum + v.bytes, 0);
@@ -45,6 +46,22 @@ export function galleryPage({ videos, cacheBytes, videosRoot }: GalleryData): st
         </article>`).join('')}
       </div>
     </section>`).join('');
+
+  const previewSection = previews.length ? `
+    <section>
+      <h2>Vistas previas</h2>
+      <p class="hint">Media resolución a 15 fps, para revisar ritmo y encuadre. Cada una se reemplaza con la siguiente vista previa del tour.</p>
+      <div class="grid">${previews.map(preview => `
+        <article class="${preview.device}">
+          <video controls preload="metadata" src="/video?preview=${encodeURIComponent(preview.key)}"></video>
+          <div class="meta">
+            <h3>${escapeHtml(preview.title)}</h3>
+            <p>${escapeHtml(preview.key)} · ${date(preview.createdAt)}</p>
+            <p class="facts"><span>${formatDuration(preview.duration)}</span><span>${formatBytes(preview.bytes)}</span></p>
+          </div>
+        </article>`).join('')}
+      </div>
+    </section>` : '';
 
   return `<!doctype html>
 <html lang="es">
@@ -75,6 +92,7 @@ export function galleryPage({ videos, cacheBytes, videosRoot }: GalleryData): st
   button:hover { border-color: var(--accent); color: var(--accent); }
   button.danger:hover { border-color: var(--danger); color: var(--danger); }
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .hint { color: var(--muted); font-size: 13px; margin: -6px 0 12px; }
   .empty { padding: 48px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; }
   code { font-size: 13px; overflow-wrap: anywhere; }
   header > div { min-width: 0; }
@@ -91,6 +109,7 @@ export function galleryPage({ videos, cacheBytes, videosRoot }: GalleryData): st
       <button data-action="clean" class="primary">Limpiar caché (${formatBytes(cacheBytes)})</button>
     </div>
   </header>
+  ${previewSection}
   ${sections || '<p class="empty">Todavía no hay videos. Genera uno con <code>walkthrough render tours/&lt;proyecto&gt;/&lt;tour&gt;.yaml</code>.</p>'}
 </main>
 <script>

@@ -55,7 +55,7 @@ segments:
       - { src: clip.html, from: 1, to: 3.5, fade: 0 }
 `);
     const timeline = buildTimeline(tour, []);
-    await renderOverlays({ overlays: timeline.overlays, tourDir: dir, outDir: dir, output, fps: 30 });
+    await renderOverlays({ overlays: timeline.overlays, tourDir: dir, outDir: dir, canvas: output, output, fps: 30 });
     await composeTour(tour, timeline, dir, dir);
 
     // The box grows from its center over its first second on screen, starting at 1s.

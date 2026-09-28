@@ -7,12 +7,12 @@ Decidida el 28/sep/2026. Complementa a `docs/arranque.md` (qué y para qué); aq
 | Pieza | Elección | Por qué |
 |---|---|---|
 | Lenguaje | TypeScript estricto sobre **Node 24** | Node 24 ejecuta `.ts` directo (type stripping): sin paso de build. |
-| Versión de Node | `fnm` + `.node-version` | Node 24 solo para este repo; el Node global de los otros proyectos no se toca. |
+| Versión de Node | `fnm` + `.node-version`, con `FNM_ARCH=arm64` | Node 24 solo para este repo; el Node global de los otros proyectos no se toca. Sin `FNM_ARCH`, un fnm de Homebrew Intel baja Node x64 y corre en Rosetta. |
 | Navegador | `playwright-core` con el Chrome del sistema (`channel: 'chrome'`) | Emulación de dispositivos, perfiles persistentes, locators, `boundingBox()`, control del reloj. No descarga navegadores. |
 | Tours | YAML (`yaml`) validado con `zod` | Cómodo de revisar a mano; zod da errores claros y los tipos salen del esquema. |
 | Voz | Adaptador Fish Audio + caché en disco | Un cambio de cámara no vuelve a pedir la voz. |
 | Montaje | `ffmpeg` / `ffprobe` del sistema | Llamados directo con `execFile`, sin wrappers. |
-| Efectos en página | TypeScript propio empaquetado con `esbuild` | Se inyecta como un solo script; sin CDN ni GSAP. |
+| Código en la página | Funciones TypeScript autocontenidas que Playwright serializa (`addInitScript`) | Sin build ni CDN. Si algún día necesita módulos o dependencias, se empaqueta con esbuild. |
 | Pruebas | Vitest | Lógica pura sin navegador; integración contra una página fixture local. |
 | CLI | `node:util` `parseArgs` | Pocos comandos, cero dependencias. |
 

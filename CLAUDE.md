@@ -30,7 +30,9 @@ Convencionales (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`), conci
 
 El detalle vive en `docs/arquitectura.md`. Lo que no se puede olvidar:
 
-- **Stack:** TypeScript sobre Node 24 (`.node-version`, vía `fnm`), `playwright-core` con el Chrome del sistema, YAML + zod, ffmpeg del sistema, esbuild para el script que se inyecta en la página, Vitest.
+- **Stack:** TypeScript sobre Node 24 (`.node-version`, vía `fnm`), `playwright-core` con el Chrome del sistema, YAML + zod, ffmpeg del sistema, Vitest. El código que corre en la página son funciones autocontenidas que Playwright serializa, sin paso de build.
+- **Node 24 nativo:** `fnm` instala Intel si su binario es Intel (Homebrew en `/usr/local`), así que `FNM_ARCH=arm64` va en `~/.zshrc`. Los shells no interactivos no cargan fnm: antepón `eval "$(fnm env --shell bash)" && fnm use`.
+- **`npm run verify`** (typecheck + todas las pruebas) pasa antes de cada commit, y cada commit pasa por sí solo.
 - **Type stripping:** Node ejecuta los `.ts` directo, así que solo vale sintaxis borrable. Nada de `enum`, `namespace` ni parameter properties; imports con extensión `.ts` e `import type` para tipos.
 - **Pipeline:** voice → timeline → capture → overlays → compose → publish. Cada etapa escribe en la carpeta de trabajo del tour y solo lee lo de la anterior.
 - **Nada generado en el repo.** El trabajo y la caché de voz van a `~/Library/Caches/walkthrough/`; los videos finales, uno por render, a `~/Movies/walkthrough/<project>/<tour>/` con un `.json` al lado. `walkthrough gallery` los muestra y `walkthrough clean` limpia. Los videos solo se mandan a la Papelera, nunca se borran.

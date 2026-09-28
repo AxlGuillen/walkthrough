@@ -75,9 +75,9 @@ De narrated-web-app-demo (sobre `splitbrain/ndemo`) se toma la arquitectura, no 
 - Commits convencionales, concisos, en inglés, sin atribución a IA.
 - Sin dependencias en runtime por CDN; se vendoriza.
 
-## Primer hito
+## Primer hito — hecho el 28/sep/2026
 
-Un caso de punta a punta antes de construir andamiaje, sobre uws-tasks en desktop:
+Un caso de punta a punta antes de construir andamiaje, sobre uws-tasks en desktop. Resultó en `tours/uws-tasks/tablero.yaml`: 55 s con voz, música, efectos y overlays. Lo siguiente está en `docs/plan.md`.
 
 1. Sesión restaurada.
 2. Dos pantallas: login y tablero.

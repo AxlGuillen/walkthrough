@@ -1,8 +1,9 @@
 import type { Rect } from '../timeline/camera.ts';
-import { sketchCircle, sketchRect, type Point } from './sketch.ts';
+import { random, sketchCircle, sketchRect, type Point } from './sketch.ts';
 
 export const TIMING = {
-  travel: 0.7,
+  travelMin: 0.35,
+  travelMax: 0.9,
   cursorFade: 0.2,
   press: 0.18,
   circleDraw: 0.4,
@@ -20,6 +21,23 @@ export interface CursorMove {
   end: number;
   from: Point;
   to: Point;
+  // Sideways sag of the path, as a fraction of its length; the sign picks the side.
+  bend: number;
+}
+
+const TRAVEL_PX_PER_SECOND = 1500;
+const MAX_BEND = 0.18;
+
+// Short hops are quick and long crossings take longer, the way a hand moves a mouse.
+export function travelTime(from: Point, to: Point): number {
+  const distance = Math.hypot(to.x - from.x, to.y - from.y);
+  return Math.min(TIMING.travelMax, Math.max(TIMING.travelMin, TIMING.travelMin + distance / TRAVEL_PX_PER_SECOND));
+}
+
+export function bendFor(seed: number): number {
+  const next = random(seed);
+  const magnitude = 0.08 + next() * (MAX_BEND - 0.08);
+  return next() < 0.5 ? -magnitude : magnitude;
 }
 
 export interface ClickMark {
@@ -64,9 +82,20 @@ export function cursorPosition(time: number, { moves, home }: EffectsPlan): Poin
     if (time < move.start) break;
     const span = move.end - move.start;
     const t = span <= 0 ? 1 : Math.min(1, (time - move.start) / span);
-    position = lerp(move.from, move.to, easeInOutCubic(t));
+    position = curve(move, easeInOutCubic(t));
   }
   return position;
+}
+
+function curve({ from, to, bend }: CursorMove, t: number): Point {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const control = { x: (from.x + to.x) / 2 - dy * bend, y: (from.y + to.y) / 2 + dx * bend };
+  const u = 1 - t;
+  return {
+    x: u * u * from.x + 2 * u * t * control.x + t * t * to.x,
+    y: u * u * from.y + 2 * u * t * control.y + t * t * to.y,
+  };
 }
 
 export function sceneAt(time: number, plan: EffectsPlan): Scene {
@@ -103,10 +132,6 @@ export function strokePhase(time: number, start: number, draw: number, hold: num
 
 function pad(rect: Rect, by: number): Rect {
   return { x: rect.x - by, y: rect.y - by, width: rect.width + by * 2, height: rect.height + by * 2 };
-}
-
-function lerp(a: Point, b: Point, t: number): Point {
-  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
 }
 
 function easeInOutCubic(t: number): number {

@@ -25,6 +25,6 @@ export function createStage(page: Page, clock: VirtualClock, tour: Tour, device:
   return {
     page, clock, tour, device, time: 0, camera: [], typing: null,
     effects: emptyPlan(device.isMobile ? 'touch' : 'mouse', { x: home.width / 2, y: home.height / 2 }),
-    pending: device.isMobile ? [] : pointerSchedule(timeline.actions, TIMING.travel),
+    pending: device.isMobile ? [] : pointerSchedule(timeline.actions, TIMING.travelMax),
   };
 }

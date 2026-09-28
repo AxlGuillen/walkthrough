@@ -76,7 +76,7 @@ export function buildTimeline(
     };
 
     const actions = segment.do
-      .map(action => ({ time: resolve(anchorOf(action), start, action.kind), segment: index, action }))
+      .map(action => ({ time: resolve(action.at, start, action.kind), segment: index, action }))
       .sort((a, b) => a.time - b.time);
     timeline.actions.push(...actions);
 
@@ -100,8 +100,4 @@ export function buildTimeline(
   });
 
   return timeline;
-}
-
-function anchorOf(action: Action): Anchor | undefined {
-  return 'at' in action ? action.at : undefined;
 }

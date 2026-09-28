@@ -35,7 +35,7 @@ El detalle vive en `docs/arquitectura.md`. Lo que no se puede olvidar:
 - **Pipeline:** voice → timeline → capture → overlays → compose. Cada etapa escribe en `out/<project>/<tour>/` y solo lee lo de la anterior.
 - **La timeline es la única que calcula tiempos.** Es una función pura; las demás etapas ejecutan lo que dice.
 - **Voz intercambiable.** Todo proveedor implementa `VoiceProvider.synthesize()` y devuelve audio + palabras con tiempos. Nada fuera de `src/voice/<provider>/` conoce al proveedor.
-- **Zoom = cámara virtual.** Se captura a 2× y la cámara recorta; la página nunca se transforma. El anillo y el clic dibujado sí van en el DOM.
+- **Zoom = cámara virtual.** Se captura con densidad alta (`deviceScaleFactor` calculado en `devices.ts`) y cada cuadro es un `screenshot({ clip })` del rectángulo de la cámara; la página nunca se transforma. El anillo y el clic dibujado sí van en el DOM.
 - **Overlays en ffmpeg.** Se renderizan aparte con fondo transparente y se componen encima; nunca se inyectan en la app.
 - **Captura determinista.** El reloj de la página se congela y avanza 1/fps por cuadro; las esperas de red ocurren fuera del tiempo del video.
 - **Dispositivo:** `desktop` → 16:9, `mobile` → 9:16 con emulación.

@@ -6,25 +6,26 @@ const selector = z.string().trim().min(1);
 const anchor = z.union([z.number().nonnegative(), z.string().trim().min(1)]);
 export type Anchor = z.infer<typeof anchor>;
 
+// Shorthands spell out every optional key so both forms of an action share one type.
 const timed = { at: anchor.optional() };
 
 const goto = z.strictObject({
   goto: z.union([
-    z.string().min(1).transform(url => ({ url })),
+    z.string().min(1).transform(url => ({ url, at: undefined })),
     z.strictObject({ url: z.string().min(1), ...timed }),
   ]),
 }).transform(({ goto }) => ({ kind: 'goto' as const, ...goto }));
 
 const click = z.strictObject({
   click: z.union([
-    selector.transform(on => ({ on })),
+    selector.transform(on => ({ on, at: undefined })),
     z.strictObject({ on: selector, ...timed }),
   ]),
 }).transform(({ click }) => ({ kind: 'click' as const, ...click }));
 
 const hover = z.strictObject({
   hover: z.union([
-    selector.transform(on => ({ on })),
+    selector.transform(on => ({ on, at: undefined })),
     z.strictObject({ on: selector, ...timed }),
   ]),
 }).transform(({ hover }) => ({ kind: 'hover' as const, ...hover }));
@@ -36,7 +37,7 @@ const type = z.strictObject({
 const zoomTarget = z.union([z.literal('out'), selector]);
 const zoom = z.strictObject({
   zoom: z.union([
-    zoomTarget.transform(to => ({ to })),
+    zoomTarget.transform(to => ({ to, padding: undefined, duration: undefined, at: undefined })),
     z.strictObject({
       to: zoomTarget,
       padding: z.number().nonnegative().optional(),
@@ -48,7 +49,7 @@ const zoom = z.strictObject({
 
 const highlight = z.strictObject({
   highlight: z.union([
-    selector.transform(on => ({ on })),
+    selector.transform(on => ({ on, duration: undefined, at: undefined })),
     z.strictObject({ on: selector, duration: z.number().positive().optional(), ...timed }),
   ]),
 }).transform(({ highlight }) => ({ kind: 'highlight' as const, ...highlight }));

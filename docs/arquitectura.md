@@ -30,7 +30,7 @@ voice ──────┘   (pure)      frames     ffmpeg
 |---|---|---|---|
 | **voice** | narración de cada segmento | `voice/NN.wav` + `voice/NN.json` (palabras) | No: red, con caché |
 | **timeline** | tour + resultado de voz | `timeline.json` | **Sí** |
-| **capture** | timeline + sesión | `frames/` | No: navegador |
+| **capture** | timeline + sesión | `capture.mp4` (solo video, a tamaño de salida) | No: navegador |
 | **overlays** | timeline + HTML de overlays | `overlays/` (cuadros con alfa) | No: navegador |
 | **compose** | todo lo anterior | `video.mp4` | No: ffmpeg; los argumentos se construyen con funciones puras |
 
@@ -84,8 +84,8 @@ Todo lo que viene después solo ejecuta lo que dice la timeline; nadie más calc
 ## Cámara virtual
 
 El zoom no toca la página:
-1. Se captura a doble resolución (`deviceScaleFactor: 2`).
-2. La cámara es un rectángulo sobre esa captura: para cada cuadro se recorta y se escala a la salida.
+1. Se captura con la densidad justa para que el zoom máximo quede a un píxel de origen por píxel de salida: desktop es un viewport de 1600×900 a 2,4× (3840×2160) para salir a 1920×1080; mobile es 405×720 a 5,33× para salir a 1080×1920.
+2. La cámara es un rectángulo en px CSS: cada cuadro es un `screenshot({ clip })` de ese rectángulo, y ffmpeg lo escala a la salida (reconstruye el filtro `scale` cuando cambia el tamaño del recorte).
 3. El destino de un zoom es el `boundingBox()` del selector, con margen, ajustado a la proporción del video y limitado a la pantalla.
 4. Entre destinos, la cámara interpola con easing.
 
@@ -108,7 +108,7 @@ El video no se graba en tiempo real. El tiempo del video avanza solo cuando se t
 | Animaciones y transiciones CSS / WAAPI | **No** las controla `page.clock`. Un script en la página las pausa y fija su `currentTime` con `performance.now()` antes de cada cuadro; al pasar su fin llama a `finish()` para que salgan los eventos `transitionend`/`finish` | ✅ idénticas con o sin esperas aleatorias entre cuadros |
 | Esperas de red | `clock.resume()`, esperar a que la app esté lista y `pauseAt()` de nuevo | ✅ sin spinners en el video |
 
-- **Costo:** ~114 ms por cuadro a 3200×1800 PNG, unos 3,5 s reales por segundo de video.
+- **Costo:** ~180 ms por cuadro a 3840×2160 (desktop con zoom máximo 2×): unos 5,5 s reales por segundo de video. Un tour de un minuto tarda unos 5–6 minutos.
 - **El reloj falso arranca en la hora real** (`clock.install({ time: Date.now() })`). Con la fecha por defecto, Supabase daría el token por inválido.
 
 El plan B (screencast de Chrome) queda descartado mientras esto aguante.

@@ -1,26 +1,42 @@
 import path from 'node:path';
-import { chromium, type BrowserContext } from 'playwright-core';
+import { chromium, type BrowserContext, type BrowserContextOptions } from 'playwright-core';
+import type { DeviceProfile } from './devices.ts';
 
 export function profileDir(root: string, session: string): string {
   return path.join(root, '.auth', session);
 }
 
+export interface ContextOptions {
+  headless: boolean;
+  session?: string;
+  device?: DeviceProfile;
+}
+
 // A persistent profile instead of a storageState snapshot: Supabase rotates refresh
 // tokens on use, so a snapshot goes stale after the first render.
-export async function openSession(
-  root: string,
-  session: string,
-  options: { headless: boolean; viewport?: { width: number; height: number } },
-): Promise<BrowserContext> {
-  return chromium.launchPersistentContext(profileDir(root, session), {
-    channel: 'chrome',
-    headless: options.headless,
-    viewport: options.viewport ?? null,
-  });
+export async function openContext(root: string, { headless, session, device }: ContextOptions): Promise<BrowserContext> {
+  const options: BrowserContextOptions = { viewport: null };
+  if (device) {
+    Object.assign(options, {
+      viewport: device.viewport,
+      deviceScaleFactor: device.deviceScaleFactor,
+      isMobile: device.isMobile,
+      hasTouch: device.hasTouch,
+    });
+    if (device.userAgent) options.userAgent = device.userAgent;
+  }
+
+  if (session) {
+    return chromium.launchPersistentContext(profileDir(root, session), { channel: 'chrome', headless, ...options });
+  }
+  const browser = await chromium.launch({ channel: 'chrome', headless });
+  const context = await browser.newContext(options);
+  context.on('close', () => void browser.close());
+  return context;
 }
 
 export async function login(root: string, session: string, url: string): Promise<void> {
-  const context = await openSession(root, session, { headless: false });
+  const context = await openContext(root, { headless: false, session });
   const page = context.pages()[0] ?? (await context.newPage());
   await page.goto(url);
   // On macOS, Chrome keeps running after its last window closes, so watch the pages instead.

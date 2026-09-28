@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
+import { captureTour } from '../capture/capture.ts';
 import { login } from '../capture/session.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
@@ -13,9 +14,10 @@ import { synthesizeTour } from '../voice/stage.ts';
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const USAGE = `usage:
   walkthrough login <session> <url>   sign in by hand once; the profile is reused by renders
-  walkthrough voice <tour.yaml>       synthesize narration and write the timeline`;
+  walkthrough voice <tour.yaml>       synthesize narration and write the timeline
+  walkthrough render <tour.yaml>      voice, timeline and capture into capture.mp4`;
 
-async function voice(tourFile: string): Promise<void> {
+async function voice(tourFile: string) {
   const paths = tourPaths(tourFile, ROOT);
   const tour = parseTour(await readFile(path.resolve(ROOT, tourFile), 'utf8'));
 
@@ -32,6 +34,19 @@ async function voice(tourFile: string): Promise<void> {
     console.log(`  ${segment.index + 1}. ${segment.start.toFixed(2)}s → ${segment.end.toFixed(2)}s  (${words} words)`);
   }
   console.log(`${paths.project}/${paths.name}: ${timeline.duration.toFixed(2)}s → ${path.relative(ROOT, paths.outDir)}`);
+  return { tour, paths, timeline };
+}
+
+async function render(tourFile: string): Promise<void> {
+  const { tour, paths, timeline } = await voice(tourFile);
+  const file = path.join(paths.outDir, 'capture.mp4');
+  const started = Date.now();
+  const { frames } = await captureTour({
+    root: ROOT, tour, timeline, file,
+    onFrame: (frame, total) => process.stderr.write(`\r  capturing ${frame}/${total}`),
+  });
+  process.stderr.write('\n');
+  console.log(`${frames} frames in ${((Date.now() - started) / 1000).toFixed(1)}s → ${path.relative(ROOT, file)}`);
 }
 
 const { positionals } = parseArgs({ allowPositionals: true });
@@ -40,6 +55,7 @@ if (existsSync(path.join(ROOT, '.env'))) process.loadEnvFile(path.join(ROOT, '.e
 
 try {
   if (command === 'voice' && target) await voice(target);
+  else if (command === 'render' && target) await render(target);
   else if (command === 'login' && target && url) {
     console.log(`Sign in to ${url} in the Chrome window, then close it. The session is kept in .auth/${target}.`);
     await login(ROOT, target, url);

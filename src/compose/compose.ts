@@ -7,7 +7,8 @@ import { deviceProfile } from '../capture/devices.ts';
 import type { Timeline } from '../timeline/build.ts';
 import { overlayFile } from '../overlays/render.ts';
 import type { Tour } from '../tour/schema.ts';
-import { audioGraph } from './audio.ts';
+import { audioGraph, type Loudness } from './audio.ts';
+import { soundEvents, type SoundEvent } from './sfx.ts';
 import { karaokeAss } from './subtitles.ts';
 import { videoGraph } from './video.ts';
 
@@ -18,12 +19,13 @@ export interface ComposeInputs {
   clips: { file: string; start: number }[];
   music?: { file: string; volume: number };
   overlays?: { file: string; start: number; end: number; fade: number }[];
+  sfx?: SoundEvent[];
   subtitles?: string;
   duration: number;
   output: string;
 }
 
-export function composeArgs({ capture, clips, music, overlays = [], subtitles, duration, output }: ComposeInputs): string[] {
+function graphs({ capture, clips, music, overlays = [], sfx = [], subtitles, duration }: ComposeInputs, loudness?: Loudness) {
   const inputs = ['-i', capture, ...clips.flatMap(clip => ['-i', clip.file])];
   if (music) inputs.push('-stream_loop', '-1', '-i', music.file);
   const firstOverlay = 1 + clips.length + (music ? 1 : 0);
@@ -32,17 +34,29 @@ export function composeArgs({ capture, clips, music, overlays = [], subtitles, d
   const audio = audioGraph({
     clips: clips.map((clip, i) => ({ input: i + 1, start: clip.start })),
     duration,
+    sfx,
+    ...(loudness ? { loudness } : {}),
     ...(music ? { music: { input: clips.length + 1, volume: music.volume } } : {}),
   });
   const video = videoGraph(overlays.map((overlay, i) => ({ ...overlay, input: firstOverlay + i })), subtitles);
+  return { inputs, audio, video };
+}
 
+// loudnorm's first pass: the audio alone, measured and discarded.
+export function measureArgs(compose: ComposeInputs): string[] {
+  const { inputs, audio } = graphs(compose);
+  return ['-hide_banner', '-nostats', ...inputs, '-filter_complex', audio, '-map', '[aout]', '-f', 'null', '-'];
+}
+
+export function composeArgs(compose: ComposeInputs, loudness: Loudness): string[] {
+  const { inputs, audio, video } = graphs(compose, loudness);
   return [
     '-y', '-v', 'error', ...inputs,
     '-filter_complex', `${video};${audio}`,
-    '-map', '[vout]', '-map', '[aout]', '-t', duration.toFixed(3),
+    '-map', '[vout]', '-map', '[aout]', '-t', compose.duration.toFixed(3),
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p',
     '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart',
-    output,
+    compose.output,
   ];
 }
 
@@ -72,11 +86,25 @@ export async function composeTour(tour: Tour, timeline: Timeline, outDir: string
   if (missing) throw new Error(`${missing.file} is missing; render without --from=compose first`);
 
   const output = 'video.mp4';
-  const args = composeArgs({
+  const inputs: ComposeInputs = {
     capture: 'capture.mp4', clips, overlays, duration: timeline.duration, output,
+    sfx: tour.sfx ? soundEvents(timeline) : [],
     ...(subtitles ? { subtitles } : {}),
     ...(music ? { music } : {}),
-  });
-  await run('ffmpeg', args, { cwd: outDir, maxBuffer: 16 * 1024 * 1024 });
+  };
+  // A stuck filter graph ignores SIGTERM and would spin forever; kill it hard instead.
+  const timeout = Math.round(Math.max(120, timeline.duration * 10) * 1000);
+  const options = { cwd: outDir, maxBuffer: 16 * 1024 * 1024, timeout, killSignal: 'SIGKILL' as const };
+
+  const { stderr } = await run('ffmpeg', measureArgs(inputs), options);
+  await run('ffmpeg', composeArgs(inputs, parseLoudness(stderr)), options);
   return path.join(outDir, output);
+}
+
+export function parseLoudness(stderr: string): Loudness {
+  const json = stderr.slice(stderr.lastIndexOf('{'), stderr.lastIndexOf('}') + 1);
+  const measured = JSON.parse(json) as Partial<Loudness>;
+  const keys = ['input_i', 'input_tp', 'input_lra', 'input_thresh', 'target_offset'] as const;
+  if (keys.some(key => measured[key] === undefined)) throw new Error('loudnorm did not report its measurement');
+  return measured as Loudness;
 }

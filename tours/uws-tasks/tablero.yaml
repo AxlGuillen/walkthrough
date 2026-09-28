@@ -3,7 +3,7 @@ url: https://uws-tasks.vercel.app
 session: uws-tasks
 device: desktop
 language: es
-music: { track: assets/music/corporate-calm-background.mp3, volume: 0.15 }
+music: { track: assets/music/corporate-calm-background.mp3 }
 
 segments:
   - say: Esto es uws-tasks, la app donde vemos nuestro trabajo de Jira de un vistazo.

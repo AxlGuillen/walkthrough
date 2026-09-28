@@ -22,4 +22,14 @@ describe('audioGraph', () => {
   it('produces silence for tours without narration', () => {
     expect(audioGraph({ clips: [], duration: 3 })).toContain('anullsrc=r=48000:cl=stereo,atrim=0:3.000[voice]');
   });
+
+  it('measures on the first pass and applies one linear gain on the second', () => {
+    expect(audioGraph({ clips: [], duration: 1 })).toContain('loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json');
+    const second = audioGraph({
+      clips: [], duration: 1,
+      loudness: { input_i: '-22.1', input_tp: '-3.0', input_lra: '6.2', input_thresh: '-32.5', target_offset: '0.4' },
+    });
+    expect(second).toContain('measured_I=-22.1:measured_TP=-3.0:measured_LRA=6.2:measured_thresh=-32.5:offset=0.4:linear=true');
+    expect(second).not.toContain('print_format');
+  });
 });

@@ -41,6 +41,29 @@ segments:
     expect(readFileSync(path.join(dir, 'subs.ass'), 'utf8')).toContain('{\\k50}Hola');
   }, 60_000);
 
+  it('finishes with several effects of the same kind under music', async () => {
+    const tour = parseTour(`
+title: Fixture
+url: https://example.com
+music: { track: music.mp3 }
+subtitles: none
+segments:
+  - say: Hola mundo
+    hold: 3
+    do:
+      - highlight: ".a"
+      - highlight: { on: ".b", at: 1 }
+      - click: { on: ".c", at: 1.5 }
+      - click: { on: ".d", at: 2 }
+    overlays: []
+`);
+    const timeline = buildTimeline(tour, [{ duration: 1, words: [{ text: 'Hola', start: 0, end: 0.4 }, { text: 'mundo', start: 0.5, end: 1 }] }]);
+    const started = Date.now();
+    await composeTour(tour, timeline, dir, dir);
+    expect(Date.now() - started).toBeLessThan(20_000);
+    expect(Number(probe('video.mp4', 'format=duration'))).toBeCloseTo(3, 1);
+  }, 60_000);
+
   it('fails clearly when the music track is missing', async () => {
     const tour = parseTour('title: x\nurl: https://example.com\nmusic: { track: nope.mp3 }\nsegments:\n  - hold: 1\n');
     await expect(composeTour(tour, buildTimeline(tour, []), dir, dir)).rejects.toThrow(/music track not found/);

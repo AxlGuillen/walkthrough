@@ -9,7 +9,8 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "walkthrough": "node src/cli/main.ts"
   },
   "dependencies": {
     "yaml": "^2.9.1",

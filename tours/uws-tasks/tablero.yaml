@@ -1,0 +1,21 @@
+title: Tablero de uws-tasks
+url: https://uws-tasks.vercel.app
+session: uws-tasks
+device: desktop
+language: es
+
+segments:
+  - say: Esta es la pantalla de entrada de uws-tasks. Se inicia sesión con la cuenta de Google.
+    do:
+      - goto: /
+  - say: Ya dentro, el tablero muestra los tickets de la semana, ordenados por estado.
+    do:
+      - goto: /board
+  # Selectors are placeholders until the app is explored.
+  - say: Cada tarjeta resume un ticket, con su estimado y las horas registradas.
+    do:
+      - zoom: { to: "[data-ticket]", at: tarjeta }
+      - highlight: { on: "[data-ticket]", at: estimado }
+  - hold: 1
+    do:
+      - zoom: out

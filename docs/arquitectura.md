@@ -118,7 +118,7 @@ interface VoiceProvider {
 ```
 
 - **Caché** en `out/.cache/voice/<sha256>`. La clave incluye proveedor, modelo, voz, idioma, texto y prosodia.
-- **Duración real** con `ffprobe`.
+- **Duración real** calculada de los bytes de PCM, después de reconstruir la cabecera WAV del stream.
 - **Etiquetas de expresión** (`[excited]`) filtradas de las palabras dentro del adaptador.
 
 ## Sesión

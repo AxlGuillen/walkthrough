@@ -56,8 +56,13 @@ Lo aprendido allá que aplica aquí:
   - Endpoint: `POST https://api.fish.audio/v1/tts/stream/with-timestamp` con header `model: s2.1-pro-free`. Es gratis y devuelve timestamps por palabra en eventos SSE, agrupados por chunk con `chunk_audio_offset_sec`.
   - Qué cobra: el modelo `s1` y el ASR (`/v1/asr`).
   - Las voces del catálogo (`reference_id`) también son gratis y también devuelven timestamps.
-- **La duración real del audio se mide con `ffprobe`**, no con la que reporta la API.
-- **Etiquetas de expresión.** Fish acepta etiquetas como `[excited]` o `[break]` en el texto. Pueden volver como «palabras» en el alignment y hay que filtrarlas de los subtítulos.
+- **El stream de Fish** (verificado el 28/sep/2026):
+  - Solo el primer pedazo de audio trae cabecera WAV, y su tamaño es un placeholder (`0xFFFFFFxx`).
+  - Los pedazos siguientes son PCM crudo y **no siguen al `chunk_seq`** de las palabras.
+  - Las palabras vienen acumuladas por chunk; la última de cada `chunk_seq` es la completa, desplazada por `chunk_audio_offset_sec`.
+  - Por eso el adaptador junta todo el PCM y reescribe la cabecera. **La duración sale de los bytes de PCM**, no de la que reporta la API.
+  - Las palabras llegan sin puntuación, y las etiquetas `[excited]` ya no aparecen en `content`.
+- **Etiquetas de expresión.** Fish acepta etiquetas como `[excited]` o `[break]` en el texto. El adaptador las filtra de las palabras por si alguna vuelve en el alignment.
 - **Aire alrededor de la voz.** Un margen antes y después de cada frase (allá 0,35 s y 0,65 s) evita cortes secos entre segmentos.
 - **Render determinista.** Allá las animaciones se renderizan cuadro a cuadro con seeks exactos en vez de grabar en tiempo real, así no se pierden frames. Es el enfoque preferido aquí si se puede aplicar a una app viva.
 - **Karaoke.** Los subtítulos se generan en ASS con `{\k}`, en líneas de 3 palabras. En vertical, la letra y el margen inferior son mayores para no quedar bajo la interfaz de las redes.

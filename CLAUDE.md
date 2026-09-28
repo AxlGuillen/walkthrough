@@ -47,6 +47,13 @@ El detalle vive en `docs/arquitectura.md`. Lo que no se puede olvidar:
 - **Login.** `walkthrough login <session> <url>` abre Chrome con un perfil propio en `.auth/<session>/` (ignorado por git). El autor inicia sesión a mano y cierra la ventana; los renders reutilizan ese perfil. Es un perfil persistente y no una foto con `storageState`, porque Supabase rota el refresh token en cada uso y una foto caduca tras el primer render. Un perfil admite un solo navegador a la vez.
 - Claude nunca teclea credenciales en sitios reales. Las credenciales no van en tours, en código ni en commits.
 
+## Música
+
+- Las pistas viven en `tours/<project>/assets/music/`, con un `CREDITOS.md` al lado: pista, autor, fuente, licencia y fecha.
+- La Pixabay Content License sirve porque el repo es privado: permite usar la pista en videos, pero no redistribuir el archivo suelto. **Pixabay no es CC0.**
+- Se evitan pistas registradas en Content ID, que darían reclamos al subir el video a YouTube.
+- Bajar cualquier pista requiere permiso del autor antes de la descarga.
+
 ## Relación con `presentations`
 
 `presentations` (repo hermano) hace decks; este repo hace tours. **No se comparte código ni se crea un paquete común.** `presentations/tools/` sirve solo de referencia: se leen sus soluciones y se reescriben aquí, en inglés, con la forma que pida este proyecto.

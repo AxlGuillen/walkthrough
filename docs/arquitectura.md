@@ -135,6 +135,17 @@ Cada overlay es un HTML propio en la carpeta del tour, con sus assets. Se render
 
 Por vivir fuera de la app: no le afecta su CSS, no se escala con la cámara y cambiarlo no obliga a recapturar.
 
+## Montaje (compose)
+
+Una sola pasada de ffmpeg, ejecutada desde `out/<project>/<tour>/` con rutas relativas, porque las reglas de escape del filtro `ass` vuelven frágiles las rutas absolutas.
+
+- **Video:** `capture.mp4` + subtítulos karaoke (`subs.ass`) quemados con libass.
+- **Karaoke:** líneas de hasta 3 palabras; una pausa de más de 0,5 s abre línea nueva. Cada palabra pasa de blanco al `accent` mientras se dice, y `{\k}` dura hasta que empieza la siguiente. En vertical la letra es más grande y más alta, para no quedar bajo la interfaz de las redes. Se desactivan con `subtitles: none`.
+- **Voz:** cada clip entra con `adelay` en el `speechStart` de su segmento.
+- **Música opcional** (`music: { track, volume }`, ruta relativa a la carpeta del tour): en loop, con fade de entrada y salida y ducking con `sidechaincompress` bajo la voz.
+- **Loudness:** todo se normaliza a −16 LUFS con `loudnorm`.
+- **Repetir solo el montaje:** `render --from=compose` reutiliza `capture.mp4`. Sirve para cambiar subtítulos, música o color sin recapturar.
+
 ## Voz
 
 ```ts
@@ -161,7 +172,7 @@ interface VoiceProvider {
 ```
 walkthrough login  <session> <url>     iniciar sesión a mano, una vez
 walkthrough voice  <tour>              solo voz: para oírla y revisar tiempos
-walkthrough render <tour> [--from=capture|overlays|compose]
+walkthrough render <tour> [--from=compose]
 ```
 
 ## Estructura

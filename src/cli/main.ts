@@ -4,6 +4,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { captureTour } from '../capture/capture.ts';
 import { login } from '../capture/session.ts';
+import { composeTour } from '../compose/compose.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
 import { tourPaths } from '../tour/paths.ts';
@@ -15,7 +16,8 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const USAGE = `usage:
   walkthrough login <session> <url>   sign in by hand once; the profile is reused by renders
   walkthrough voice <tour.yaml>       synthesize narration and write the timeline
-  walkthrough render <tour.yaml>      voice, timeline and capture into capture.mp4`;
+  walkthrough render <tour.yaml>      voice, timeline, capture and compose into video.mp4
+      --from=compose                  reuse capture.mp4 and only rebuild the final video`;
 
 async function voice(tourFile: string) {
   const paths = tourPaths(tourFile, ROOT);
@@ -37,25 +39,33 @@ async function voice(tourFile: string) {
   return { tour, paths, timeline };
 }
 
-async function render(tourFile: string): Promise<void> {
+async function render(tourFile: string, from: string | undefined): Promise<void> {
+  if (from !== undefined && from !== 'compose') throw new Error(`unknown --from value: ${from}`);
   const { tour, paths, timeline } = await voice(tourFile);
-  const file = path.join(paths.outDir, 'capture.mp4');
-  const started = Date.now();
-  const { frames } = await captureTour({
-    root: ROOT, tour, timeline, file,
-    onFrame: (frame, total) => process.stderr.write(`\r  capturing ${frame}/${total}`),
-  });
-  process.stderr.write('\n');
-  console.log(`${frames} frames in ${((Date.now() - started) / 1000).toFixed(1)}s → ${path.relative(ROOT, file)}`);
+
+  if (from !== 'compose') {
+    const started = Date.now();
+    const { frames } = await captureTour({
+      root: ROOT, tour, timeline, file: path.join(paths.outDir, 'capture.mp4'),
+      onFrame: (frame, total) => process.stderr.write(`\r  capturing ${frame}/${total}`),
+    });
+    process.stderr.write('\n');
+    console.log(`${frames} frames in ${((Date.now() - started) / 1000).toFixed(1)}s`);
+  } else if (!existsSync(path.join(paths.outDir, 'capture.mp4'))) {
+    throw new Error('no capture.mp4 to compose; run render without --from first');
+  }
+
+  const video = await composeTour(tour, timeline, paths.outDir, paths.dir);
+  console.log(`✓ ${path.relative(ROOT, video)}`);
 }
 
-const { positionals } = parseArgs({ allowPositionals: true });
+const { positionals, values } = parseArgs({ allowPositionals: true, options: { from: { type: 'string' } } });
 const [command, target, url] = positionals;
 if (existsSync(path.join(ROOT, '.env'))) process.loadEnvFile(path.join(ROOT, '.env'));
 
 try {
   if (command === 'voice' && target) await voice(target);
-  else if (command === 'render' && target) await render(target);
+  else if (command === 'render' && target) await render(target, values.from);
   else if (command === 'login' && target && url) {
     console.log(`Sign in to ${url} in the Chrome window, then close it. The session is kept in .auth/${target}.`);
     await login(ROOT, target, url);

@@ -8,6 +8,7 @@ import type { Tour } from '../tour/schema.ts';
 import { looksLikeLogin, selectorOf, worst, type CheckItem, type Status } from './report.ts';
 
 const ACTION_TIMEOUT = 5_000;
+const WAIT_TIMEOUT = 15_000;
 
 // Walks the tour with the page running freely and no frames captured: the same clicks as a
 // render, in seconds instead of minutes, stopping at nothing so every problem shows up.
@@ -46,6 +47,10 @@ async function checkAction(page: Page, tour: Tour, { time, action }: TimedAction
       }
     }
 
+    if (action.kind === 'scroll' && action.within && (await page.locator(action.within).count()) === 0) {
+      flag('fail', `scroll container ${action.within} not found`);
+    }
+
     const selector = selectorOf(action);
     if (selector) {
       if (dataDependent(selector)) flag('warn', 'depends on data that may change; prefer a structural selector');
@@ -81,6 +86,10 @@ async function act(page: Page, action: TimedAction['action'], selector: string):
   else if (action.kind === 'hover') await target.hover({ timeout: ACTION_TIMEOUT });
   else if (action.kind === 'type') await target.fill(action.text, { timeout: ACTION_TIMEOUT });
   if (action.kind === 'click') await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+  if (action.kind === 'click' && action.wait) {
+    await page.locator(action.wait).first().waitFor({ state: 'visible', timeout: WAIT_TIMEOUT })
+      .catch(() => { throw new Error(`${action.wait} did not show after the click`); });
+  }
 }
 
 function describe(action: TimedAction['action']): string {
@@ -88,6 +97,8 @@ function describe(action: TimedAction['action']): string {
     case 'goto': return `goto ${action.url}`;
     case 'type': return `type into ${action.into}`;
     case 'zoom': return `zoom ${action.to}`;
+    case 'scroll': return `scroll ${action.to}${action.within ? ` within ${action.within}` : ''}`;
+    case 'wait': return `wait ${action.until}`;
     default: return `${action.kind} ${action.on}`;
   }
 }

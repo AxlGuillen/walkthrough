@@ -3,12 +3,13 @@ import { renderScene } from '../effects/svg.ts';
 import type { Timeline } from '../timeline/build.ts';
 import { cameraAt, followCursor, fullFrame } from '../timeline/camera.ts';
 import type { Tour } from '../tour/schema.ts';
-import { continueTyping, perform } from './actions.ts';
+import { continueTyping, perform, retrackMarks } from './actions.ts';
 import { installClock } from './clock.ts';
-import { prepareCursor } from './cursor.ts';
+import { prepareTargets } from './prep.ts';
 import { deviceProfile, FPS, type Quality } from './devices.ts';
 import { startEncoder } from './encoder.ts';
-import { effectsLayer } from './runtime.ts';
+import { effectsLayer, scrollControl } from './runtime.ts';
+import { applyScrolls } from './scroll.ts';
 import { dueActions, frameCount } from './schedule.ts';
 import { openContext } from './session.ts';
 import { createStage } from './stage.ts';
@@ -38,17 +39,19 @@ export async function captureTour({
     const page = context.pages()[0] ?? (await context.newPage());
     const clock = await installClock(page);
     await page.addInitScript(effectsLayer);
+    await page.addInitScript(scrollControl);
     const stage = createStage(page, clock, tour, device, timeline);
     const home = fullFrame(device.viewport);
 
     let previous = -Infinity;
     for (let frame = 0; frame < total; frame++) {
       stage.time = frame / fps;
-      await prepareCursor(stage);
+      await prepareTargets(stage);
       for (const action of dueActions(timeline.actions, previous, stage.time)) {
         await perform(stage, action, timeline.actions.indexOf(action));
       }
       await continueTyping(stage);
+      if (await applyScrolls(page, stage.scrolls, previous, stage.time)) await retrackMarks(stage);
       previous = stage.time;
 
       await clock.syncAnimations();

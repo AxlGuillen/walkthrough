@@ -1,6 +1,10 @@
 declare global {
   interface Window {
-    __walkthrough?: { syncAnimations?(afterSettle: boolean): Promise<void>; draw?(markup: string): void };
+    __walkthrough?: {
+      syncAnimations?(afterSettle: boolean): Promise<void>;
+      draw?(markup: string): void;
+      scrollTo?(key: string, x: number, y: number): void;
+    };
   }
 }
 
@@ -80,6 +84,18 @@ export function effectsLayer(): void {
       // Re-showing moves the layer to the top of the top layer, above dialogs opened since.
       if (host.matches(':popover-open')) host.hidePopover();
       host.showPopover();
+    },
+  };
+}
+
+// Node animates every scroll frame by frame; `instant` keeps CSS smooth scrolling, which
+// would run on wall time, from getting in the way.
+export function scrollControl(): void {
+  window.__walkthrough = {
+    ...window.__walkthrough,
+    scrollTo(key, x, y) {
+      const el = key === 'window' ? document.scrollingElement : document.querySelector(`[data-walkthrough-scroll="${key}"]`);
+      el?.scrollTo({ left: x, top: y, behavior: 'instant' });
     },
   };
 }

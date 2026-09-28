@@ -11,21 +11,37 @@ export function dueActions(actions: readonly TimedAction[], previous: number, cu
   return actions.filter(({ time }) => time > previous && time <= current + 1e-9);
 }
 
-export interface PointerStep {
+// Long enough to scroll a target into view and then move the cursor to it.
+export const PREP_LEAD = 1.6;
+
+export interface PrepStep {
   action: TimedAction;
-  moveStart: number;
+  prepAt: number;
+  target: string;
+  pointer: boolean;
+  center: boolean;
 }
 
-// The cursor leaves early so it lands on the target exactly when the action runs, but
-// never before the previous pointer action has happened.
-export function pointerSchedule(actions: readonly TimedAction[], travel: number): PointerStep[] {
+// Each selector action is prepared ahead of time (scroll it into view, send the cursor),
+// but never before the previous action ran: that one may navigate or change the screen.
+export function prepSchedule(actions: readonly TimedAction[], lead = PREP_LEAD): PrepStep[] {
   let previous = 0;
-  return actions.flatMap(action => {
-    if (!pointerTarget(action)) return [];
-    const moveStart = Math.max(action.time - travel, previous);
-    previous = action.time;
-    return [{ action, moveStart }];
+  return actions.flatMap(timed => {
+    const target = targetOf(timed);
+    const step = target ? [{
+      action: timed, target, prepAt: Math.max(timed.time - lead, previous),
+      pointer: pointerTarget(timed) !== undefined, center: timed.action.kind === 'zoom',
+    }] : [];
+    previous = Math.max(previous, timed.time);
+    return step;
   });
+}
+
+export function targetOf(timed: TimedAction): string | undefined {
+  const { action } = timed;
+  if (action.kind === 'highlight') return action.on;
+  if (action.kind === 'zoom') return action.to === 'out' ? undefined : action.to;
+  return pointerTarget(timed);
 }
 
 export function pointerTarget({ action }: TimedAction): string | undefined {

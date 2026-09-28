@@ -44,6 +44,8 @@ export interface ClickMark {
   time: number;
   at: Point;
   seed: number;
+  // Lets the capture re-measure the mark while the page scrolls under it.
+  track?: { selector: string; offset: Point };
 }
 
 export interface Ring {
@@ -51,6 +53,7 @@ export interface Ring {
   rect: Rect;
   hold: number;
   seed: number;
+  track?: string;
 }
 
 export interface EffectsPlan {
@@ -120,6 +123,14 @@ function cursorAt(time: number, plan: EffectsPlan): Scene['cursor'] {
     opacity: Math.min(1, (time - first.start) / TIMING.cursorFade),
     scale: pressed ? 0.85 : 1,
   };
+}
+
+export function clickVisible(time: number, click: ClickMark): boolean {
+  return strokePhase(time, click.time, TIMING.circleDraw, TIMING.circleHold) !== null;
+}
+
+export function ringVisible(time: number, ring: Ring): boolean {
+  return strokePhase(time, ring.time, TIMING.ringDraw, ring.hold) !== null;
 }
 
 export function strokePhase(time: number, start: number, draw: number, hold: number): Omit<Stroke, 'd'> | null {

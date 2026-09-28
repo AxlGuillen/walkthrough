@@ -16,10 +16,12 @@ const goto = z.strictObject({
   ]),
 }).transform(({ goto }) => ({ kind: 'goto' as const, ...goto }));
 
+// `wait` holds the video until the next screen shows that selector, off the video clock,
+// so a navigation never shows half-loaded states.
 const click = z.strictObject({
   click: z.union([
-    selector.transform(on => ({ on, at: undefined })),
-    z.strictObject({ on: selector, ...timed }),
+    selector.transform(on => ({ on, wait: undefined, at: undefined })),
+    z.strictObject({ on: selector, wait: selector.optional(), ...timed }),
   ]),
 }).transform(({ click }) => ({ kind: 'click' as const, ...click }));
 
@@ -56,7 +58,22 @@ const highlight = z.strictObject({
   ]),
 }).transform(({ highlight }) => ({ kind: 'highlight' as const, ...highlight }));
 
-const action = z.union([goto, click, hover, type, zoom, highlight]);
+const scrollTarget = z.union([z.literal('top'), z.literal('bottom'), selector]);
+const scroll = z.strictObject({
+  scroll: z.union([
+    scrollTarget.transform(to => ({ to, within: undefined, duration: undefined, at: undefined })),
+    z.strictObject({ to: scrollTarget, within: selector.optional(), duration: z.number().positive().optional(), ...timed }),
+  ]),
+}).transform(({ scroll }) => ({ kind: 'scroll' as const, ...scroll }));
+
+const wait = z.strictObject({
+  wait: z.union([
+    selector.transform(until => ({ until, at: undefined })),
+    z.strictObject({ until: selector, ...timed }),
+  ]),
+}).transform(({ wait }) => ({ kind: 'wait' as const, ...wait }));
+
+const action = z.union([goto, click, hover, type, zoom, highlight, scroll, wait]);
 export type Action = z.infer<typeof action>;
 
 // An HTML page laid over the video. params reach it as a query string, so one

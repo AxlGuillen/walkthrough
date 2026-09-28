@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin: 0; height: 3000px; background: #000; font: 16px sans-serif; color: #fff; }
+  #far { position: absolute; top: 2200px; left: 300px; width: 200px; height: 80px; background: #0000ff; }
+  #lane { position: absolute; top: 100px; left: 100px; width: 600px; height: 120px; overflow-x: auto; white-space: nowrap; }
+  #lane button { display: inline-block; width: 200px; height: 100px; margin: 0; border: 0; background: #444; color: #fff; }
+</style>
+</head>
+<body>
+  <div id="lane"></div>
+  <div id="far">Lejos</div>
+  <script>
+    const lane = document.getElementById('lane');
+    for (let i = 0; i < 12; i++) lane.insertAdjacentHTML('beforeend', `<button id="item-${i}">Item ${i}</button>`);
+  </script>
+</body>
+</html>

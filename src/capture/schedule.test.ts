@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { TimedAction } from '../timeline/build.ts';
-import { charsDue, dueActions, frameCount, pointerSchedule } from './schedule.ts';
+import { charsDue, dueActions, frameCount, prepSchedule } from './schedule.ts';
 
-const at = (time: number): TimedAction => ({ time, segment: 0, action: { kind: 'click', on: '.a', at: undefined } });
+const at = (time: number): TimedAction => ({ time, segment: 0, action: { kind: 'click', on: '.a', wait: undefined, at: undefined } });
 const zoomAt = (time: number): TimedAction => ({
   time, segment: 0, action: { kind: 'zoom', to: 'out', padding: undefined, duration: undefined, at: undefined },
 });
@@ -43,17 +43,22 @@ describe('dueActions', () => {
   });
 });
 
-describe('pointerSchedule', () => {
-  it('leaves early enough to land on the target at the action time', () => {
-    expect(pointerSchedule([at(2)], 0.7).map(s => s.moveStart)).toEqual([1.3]);
+describe('prepSchedule', () => {
+  const highlight = (time: number): TimedAction => ({ time, segment: 0, action: { kind: 'highlight', on: '.h', duration: undefined, at: undefined } });
+  const goto = (time: number): TimedAction => ({ time, segment: 0, action: { kind: 'goto', url: '/', at: undefined } });
+
+  it('prepares ahead of the action by the lead', () => {
+    expect(prepSchedule([at(3)], 1.6).map(s => s.prepAt)).toEqual([1.4]);
   });
 
-  it('never leaves before the previous pointer action or the start', () => {
-    expect(pointerSchedule([at(0.3), at(0.6)], 0.7).map(s => s.moveStart)).toEqual([0, 0.3]);
+  it('never prepares before the previous action of any kind, which may change the screen', () => {
+    expect(prepSchedule([goto(1), at(1.5)], 1.6).map(s => s.prepAt)).toEqual([1]);
+    expect(prepSchedule([at(0.3), at(0.6)], 1.6).map(s => s.prepAt)).toEqual([0, 0.3]);
   });
 
-  it('ignores actions without a pointer target', () => {
-    expect(pointerSchedule([zoomAt(1), at(2)], 0.7).map(s => s.action.time)).toEqual([2]);
+  it('covers every selector action, marking which move the cursor and which want centering', () => {
+    const steps = prepSchedule([zoomAt(1), highlight(2), at(3), { ...zoomAt(4), action: { ...zoomAt(4).action, to: '.card' } as TimedAction['action'] }]);
+    expect(steps.map(s => [s.target, s.pointer, s.center])).toEqual([['.h', false, false], ['.a', true, false], ['.card', false, true]]);
   });
 });
 

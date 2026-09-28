@@ -16,6 +16,9 @@ describe('selectorOf', () => {
     expect(selectorOf({ kind: 'zoom', to: '.card' })).toBe('.card');
     expect(selectorOf({ kind: 'zoom', to: 'out' })).toBeNull();
     expect(selectorOf({ kind: 'goto', url: '/' })).toBeNull();
+    expect(selectorOf({ kind: 'scroll', to: '[data-tour=board]' })).toBe('[data-tour=board]');
+    expect(selectorOf({ kind: 'scroll', to: 'bottom' })).toBeNull();
+    expect(selectorOf({ kind: 'wait', until: '.ready' })).toBe('.ready');
   });
 });
 

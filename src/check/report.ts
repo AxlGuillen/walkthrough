@@ -25,7 +25,9 @@ export function formatReport(items: readonly CheckItem[]): string {
 
 // Selector-bound actions are what can go missing between renders.
 export function selectorOf(action: { kind: string } & Record<string, unknown>): string | null {
-  const selector = action.on ?? action.into ?? (action.kind === 'zoom' && action.to !== 'out' ? action.to : undefined);
+  const edge = action.to === 'out' || action.to === 'top' || action.to === 'bottom';
+  const selector = action.on ?? action.into ?? action.until
+    ?? ((action.kind === 'zoom' || action.kind === 'scroll') && !edge ? action.to : undefined);
   return typeof selector === 'string' ? selector : null;
 }
 

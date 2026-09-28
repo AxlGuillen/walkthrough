@@ -3,6 +3,7 @@ import { deviceProfile } from '../capture/devices.ts';
 import { openContext } from '../capture/session.ts';
 import { dataDependent, suggest } from '../inspect/selectors.ts';
 import { snapshotPage } from '../inspect/snapshot.ts';
+import { resolveOverlay } from '../overlays/render.ts';
 import type { Timeline, TimedAction } from '../timeline/build.ts';
 import type { Tour } from '../tour/schema.ts';
 import { looksLikeLogin, selectorOf, worst, type CheckItem, type Status } from './report.ts';
@@ -12,6 +13,17 @@ const WAIT_TIMEOUT = 15_000;
 
 // Walks the tour with the page running freely and no frames captured: the same clicks as a
 // render, in seconds instead of minutes, stopping at nothing so every problem shows up.
+// Overlays are files, not screens: they only need to exist, in the tour or among the templates.
+export function checkOverlays(tourDir: string, timeline: Timeline): CheckItem[] {
+  return timeline.overlays.map(overlay => {
+    const found = resolveOverlay(tourDir, overlay.src);
+    return {
+      time: overlay.start, label: `overlay ${overlay.src}`, status: found ? 'ok' : 'fail',
+      notes: found ? [] : ['not found in the tour folder or templates/overlays'],
+    };
+  });
+}
+
 export async function checkTour(root: string, tour: Tour, timeline: Timeline): Promise<CheckItem[]> {
   const context = await openContext(root, {
     headless: true, device: { ...deviceProfile(tour.device), deviceScaleFactor: 1 },

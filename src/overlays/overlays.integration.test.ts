@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { composeTour } from '../compose/compose.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
-import { overlayUrl, renderOverlays } from './render.ts';
+import { overlayUrl, renderOverlays, resolveOverlay } from './render.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const output = { width: 1920, height: 1080 };
@@ -36,9 +36,23 @@ beforeAll(async () => {
 afterAll(async () => { await rm(dir, { recursive: true, force: true }); });
 
 describe('overlayUrl', () => {
-  it('resolves against the tour folder and carries params as a query string', () => {
-    expect(overlayUrl('/repo/tours/x', 'overlays/title.html', { title: 'Hola mundo' }))
-      .toBe('file:///repo/tours/x/overlays/title.html?title=Hola+mundo');
+  it('carries the tour folder, its accent and the params as a query string', () => {
+    const url = new URL(overlayUrl('/repo/templates/overlays/title.html', '/repo/tours/x', { title: 'Hola mundo' }, '#FF3B5C'));
+    expect(url.pathname).toBe('/repo/templates/overlays/title.html');
+    expect(Object.fromEntries(url.searchParams)).toEqual({ base: 'file:///repo/tours/x/', accent: '#FF3B5C', title: 'Hola mundo' });
+  });
+
+  it('lets params override the automatic ones', () => {
+    expect(new URL(overlayUrl('/t.html', '/x', { accent: '#000000' }, '#FFFFFF')).searchParams.get('accent')).toBe('#000000');
+  });
+});
+
+describe('resolveOverlay', () => {
+  it("prefers the tour's own file, then the shared template, else nothing", async () => {
+    await writeFile(path.join(dir, 'lower-third.html'), '<p>tour</p>');
+    expect(resolveOverlay(dir, 'lower-third.html')).toBe(path.join(dir, 'lower-third.html'));
+    expect(resolveOverlay(dir, 'title-card.html')).toBe(path.join(ROOT, 'templates/overlays/title-card.html'));
+    expect(resolveOverlay(dir, 'nope.html')).toBeNull();
   });
 });
 

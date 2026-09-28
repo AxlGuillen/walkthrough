@@ -1,0 +1,68 @@
+import { execFileSync } from 'node:child_process';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { chromium } from 'playwright-core';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { buildTimeline } from '../timeline/build.ts';
+import { parseTour } from '../tour/load.ts';
+import { overlayFile, overlayUrl, renderOverlays, TEMPLATES_DIR } from './render.ts';
+
+const ROOT = path.resolve(import.meta.dirname, '../..');
+const tourDir = path.join(ROOT, 'tests/fixtures/overlay');
+const canvas = { width: 1920, height: 1080 };
+let dir: string;
+beforeAll(async () => {
+  dir = await mkdtemp(path.join(tmpdir(), 'templates-'));
+  execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'color=c=red:s=64x64:d=1', '-frames:v', '1', path.join(dir, 'before.png')]);
+});
+afterAll(async () => { await rm(dir, { recursive: true, force: true }); });
+
+const templates: [string, Record<string, string>][] = [
+  ['lower-third.html', { title: 'uws-tasks', subtitle: 'Recorrido' }],
+  ['title-card.html', { eyebrow: 'Entrega', title: 'Semana 38', subtitle: 'Lo nuevo' }],
+  ['outro.html', { title: 'Gracias', url: 'uws-tasks.vercel.app' }],
+  ['chapter.html', { index: '2', total: '6', label: 'Board', position: 'top-left' }],
+  ['shortcut.html', { keys: '⌘ + K', label: 'Buscar' }],
+  ['compare.html', { before: 'before.png', after: 'before.png' }],
+];
+
+describe('overlay templates', () => {
+  it('fill their params, take the tour accent and load images from the tour folder', async () => {
+    const browser = await chromium.launch({ channel: 'chrome' });
+    try {
+      const page = await browser.newPage({ viewport: canvas });
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'chapter.html'), tourDir, { index: '2', total: '6', label: 'Board', position: 'top-left' }, '#00AA88'));
+      expect(await page.locator('.pill').innerText()).toMatch(/2\s*\/\s*6\s*Board/);
+      expect(await page.locator('.pill').getAttribute('class')).toContain('top-left');
+      expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())).toBe('#00AA88');
+
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'shortcut.html'), tourDir, { keys: '⌘ + K' }));
+      expect(await page.locator('kbd').allInnerTexts()).toEqual(['⌘', 'K']);
+
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'compare.html'), dir, { before: 'before.png', after: 'before.png' }));
+      await page.waitForFunction(() => [...document.images].every(image => image.complete));
+      expect(await page.evaluate(() => [...document.images].map(image => image.naturalWidth))).toEqual([64, 64]);
+      expect(await page.locator('figcaption').allInnerTexts()).toEqual(['Antes', 'Después']);
+    } finally {
+      await browser.close();
+    }
+  }, 60_000);
+
+  it('render with a transparent background and something visible on it', async () => {
+    const yaml = templates.map(([src, params]) => `  - hold: 1.2\n    overlays: [{ src: ${src}, fade: 0, params: ${JSON.stringify(params)} }]`).join('\n');
+    const tour = parseTour(`title: Templates\nurl: https://example.com\nsegments:\n${yaml}\n`);
+    const timeline = buildTimeline(tour, []);
+    await renderOverlays({ overlays: timeline.overlays, tourDir: dir, outDir: dir, canvas, output: { width: 480, height: 270 }, fps: 10 });
+
+    for (const [index, [src]] of templates.entries()) {
+      const rgba = execFileSync('ffmpeg', ['-v', 'error', '-sseof', '-0.1', '-i', path.join(dir, overlayFile(index)), '-frames:v', '1',
+        '-f', 'rawvideo', '-pix_fmt', 'rgba', '-']);
+      let opaque = 0;
+      for (let i = 3; i < rgba.length; i += 4) if (rgba[i]! > 200) opaque++;
+      const share = opaque / (rgba.length / 4);
+      expect(share, src).toBeGreaterThan(0.005);
+      if (src === 'lower-third.html' || src === 'chapter.html' || src === 'shortcut.html') expect(share, src).toBeLessThan(0.3);
+    }
+  }, 120_000);
+});

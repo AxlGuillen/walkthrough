@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
-import { checkTour } from './check.ts';
+import { checkOverlays, checkTour } from './check.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const url = pathToFileURL(path.join(ROOT, 'tests/fixtures/check/index.html')).href;
@@ -47,4 +47,16 @@ segments:
     expect(byLabel['goto private.html']?.status).toBe('fail');
     expect(byLabel['goto private.html']?.notes[0]).toMatch(/^landed on a login page \(.*login\.html\)/);
   }, 60_000);
+
+  it('checks that every overlay exists, in the tour folder or the shared templates', () => {
+    const tour = parseTour(`
+title: Check
+url: ${url}
+segments:
+  - hold: 1
+    overlays: [{ src: lower-third.html }, { src: missing.html }]
+`);
+    const items = checkOverlays(path.dirname(new URL(url).pathname), buildTimeline(tour, []));
+    expect(items.map(i => [i.label, i.status])).toEqual([['overlay lower-third.html', 'ok'], ['overlay missing.html', 'fail']]);
+  });
 });

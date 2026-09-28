@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  body { display: grid; place-items: center; background: radial-gradient(120vmax 90vmax at 20% 10%, #2a1d63 0%, #120d26 55%, #09070f 100%);
+    animation: fade 400ms ease-out both; }
+  .stack { width: 80vw; }
+  .eyebrow { color: var(--accent); font-size: 2.2vmin; font-weight: 700; letter-spacing: 0.5vmin; text-transform: uppercase;
+    animation: rise 600ms var(--ease) 200ms both; }
+  .title { margin-top: 1.6vmin; font-size: 9vmin; font-weight: 800; letter-spacing: -0.3vmin; line-height: 1;
+    animation: rise 700ms var(--ease) 320ms both; }
+  .line { margin-top: 3vmin; width: 14vmin; height: 0.6vmin; border-radius: 0.3vmin; background: var(--accent); transform-origin: left;
+    animation: grow 700ms var(--ease) 600ms both; }
+  .subtitle { margin-top: 3vmin; color: var(--muted); font-size: 3.2vmin; font-weight: 500; max-width: 60ch;
+    animation: rise 700ms var(--ease) 700ms both; }
+</style>
+</head>
+<body>
+  <div class="stack">
+    <div class="eyebrow" data-param="eyebrow"></div>
+    <div class="title" data-param="title"></div>
+    <div class="line"></div>
+    <div class="subtitle" data-param="subtitle"></div>
+  </div>
+  <script src="params.js"></script>
+</body>
+</html>

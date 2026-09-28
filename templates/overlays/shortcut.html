@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .wrap { position: absolute; left: 50%; bottom: 14vmin; transform: translateX(-50%); display: flex; align-items: center; gap: 2vmin;
+    padding: 1.8vmin 2.6vmin; animation: pop 450ms var(--ease) 60ms both; }
+  .keys { display: flex; gap: 1vmin; }
+  kbd { min-width: 5vmin; padding: 1vmin 1.6vmin; border-radius: 1.2vmin; text-align: center; font: 700 3vmin var(--font);
+    background: linear-gradient(#3a3160, #2a2348); box-shadow: 0 0.5vmin 0 #150f2b, inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+  .label { color: var(--muted); font-size: 2.4vmin; }
+</style>
+</head>
+<body>
+  <div class="wrap panel"><div class="keys"></div><div class="label" data-param="label"></div></div>
+  <script src="params.js"></script>
+  <script>
+    const keys = document.querySelector('.keys');
+    for (const key of param('keys').split('+').map(k => k.trim()).filter(Boolean)) keys.insertAdjacentHTML('beforeend', '<kbd></kbd>'), keys.lastElementChild.textContent = key;
+  </script>
+</body>
+</html>

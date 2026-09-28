@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  body { display: grid; place-items: center; background: rgba(9, 7, 15, 0.85); animation: fade 350ms ease-out both; }
+  .pair { display: flex; gap: 3vmin; width: 90vw; justify-content: center; flex-wrap: wrap; }
+  figure { margin: 0; flex: 1 1 40vmin; max-width: 44vw; overflow: hidden; }
+  figure:nth-child(1) { animation: rise 600ms var(--ease) 120ms both; }
+  figure:nth-child(2) { animation: rise 600ms var(--ease) 320ms both; }
+  img { display: block; width: 100%; max-height: 70vh; object-fit: contain; background: #000; }
+  figcaption { padding: 1.4vmin 2vmin; font-size: 2.4vmin; font-weight: 700; }
+  figure:nth-child(2) figcaption { color: var(--accent); }
+</style>
+</head>
+<body>
+  <div class="pair">
+    <figure class="panel"><img id="before" alt=""><figcaption data-param="beforeLabel"></figcaption></figure>
+    <figure class="panel"><img id="after" alt=""><figcaption data-param="afterLabel"></figcaption></figure>
+  </div>
+  <script src="params.js"></script>
+  <script>
+    document.getElementById('before').src = asset(param('before'));
+    document.getElementById('after').src = asset(param('after'));
+    for (const [id, text] of [['beforeLabel', 'Antes'], ['afterLabel', 'Después']]) {
+      const caption = document.querySelector(`[data-param=${id}]`);
+      if (!caption.textContent) caption.textContent = text;
+    }
+  </script>
+</body>
+</html>

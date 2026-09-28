@@ -1,0 +1,21 @@
+/* Shared look for overlay templates. Sizes use vmin so a template fits 16:9 and 9:16 alike. */
+:root {
+  --accent: #FF3B5C;
+  --ink: #ffffff;
+  --muted: #cbc4ea;
+  --panel: rgba(20, 16, 40, 0.92);
+  --font: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: var(--font); color: var(--ink); }
+[data-param]:empty { display: none; }
+.panel {
+  background: var(--panel);
+  border-radius: 2vmin;
+  box-shadow: 0 1.8vmin 5vmin rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.accent-bar { width: 0.6vmin; border-radius: 0.3vmin; background: var(--accent); }
+@keyframes rise { from { opacity: 0; transform: translateY(3vmin); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes pop { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: none; } }

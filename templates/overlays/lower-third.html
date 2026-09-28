@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .card { position: absolute; left: 5vmin; bottom: 20vmin; display: flex; gap: 2vmin; padding: 2.4vmin 3.6vmin 2.6vmin 2.6vmin;
+    animation: rise 600ms var(--ease) 100ms both; }
+  .title { font-size: 4.3vmin; font-weight: 700; letter-spacing: -0.05vmin; line-height: 1.1; }
+  .subtitle { margin-top: 0.8vmin; color: var(--muted); font-size: 2.4vmin; font-weight: 500; }
+</style>
+</head>
+<body>
+  <div class="card panel">
+    <div class="accent-bar"></div>
+    <div>
+      <div class="title" data-param="title"></div>
+      <div class="subtitle" data-param="subtitle"></div>
+    </div>
+  </div>
+  <script src="params.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  .pill { position: absolute; display: flex; align-items: center; gap: 1.4vmin; padding: 1.2vmin 2.4vmin 1.2vmin 1.4vmin; border-radius: 99vmin;
+    animation: rise 500ms var(--ease) 80ms both; }
+  .pill.top-right { top: 3vmin; right: 3vmin; }
+  .pill.top-left { top: 3vmin; left: 3vmin; }
+  .pill.bottom-right { bottom: 3vmin; right: 3vmin; }
+  .pill.bottom-left { bottom: 3vmin; left: 3vmin; }
+  .count { padding: 0.5vmin 1.2vmin; border-radius: 99vmin; background: var(--accent); font-size: 2vmin; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .label { font-size: 2.4vmin; font-weight: 600; }
+</style>
+</head>
+<body>
+  <div class="pill panel">
+    <div class="count"><span data-param="index"></span> / <span data-param="total"></span></div>
+    <div class="label" data-param="label"></div>
+  </div>
+  <script src="params.js"></script>
+  <script>document.querySelector('.pill').classList.add(param('position', 'top-right'));</script>
+</body>
+</html>

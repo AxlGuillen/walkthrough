@@ -10,7 +10,7 @@ segments:
     do:
       - goto: /dashboard
     overlays:
-      - src: overlays/lower-third.html
+      - src: lower-third.html
         from: 0.4
         params: { title: uws-tasks, subtitle: Recorrido para el equipo }
 
@@ -58,5 +58,5 @@ segments:
 
   - say: Así de simple. Cualquier duda, me escriben.
     overlays:
-      - src: overlays/lower-third.html
+      - src: lower-third.html
         params: { title: uws-tasks.vercel.app, subtitle: Entra con tu cuenta de Google }

@@ -51,6 +51,14 @@ segments:
     });
   });
 
+  it('reads sound effect settings in their short and long forms', () => {
+    const base = 'title: x\nurl: https://a.com\nsegments:\n  - hold: 1\n';
+    expect(parseTour(base).sfx).toEqual({ enabled: true, volume: 1, mute: [] });
+    expect(parseTour(`sfx: false\n${base}`).sfx).toEqual({ enabled: false, volume: 1, mute: [] });
+    expect(parseTour(`sfx: { volume: 0.5, mute: [scroll, whoosh] }\n${base}`).sfx).toEqual({ enabled: true, volume: 0.5, mute: ['scroll', 'whoosh'] });
+    expect(() => parseTour(`sfx: { mute: [bell] }\n${base}`)).toThrow(TourError);
+  });
+
   it('rejects a silent segment without hold', () => {
     expect(() => parseTour(`
 title: Board

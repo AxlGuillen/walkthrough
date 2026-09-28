@@ -10,6 +10,7 @@ export interface AudioGraphOptions {
   duration: number;
   music?: { input: number; volume: number };
   sfx?: readonly SoundEvent[];
+  sfxVolume?: number;
   loudness?: Loudness;
 }
 
@@ -31,7 +32,7 @@ const MUSIC_FADE_OUT = 2;
 
 // Voice lands at -16 LUFS; the bed ducks under it via sidechaincompress instead of
 // hand-drawn volume curves.
-export function audioGraph({ clips, duration, music, sfx = [], loudness }: AudioGraphOptions): string {
+export function audioGraph({ clips, duration, music, sfx = [], sfxVolume = 1, loudness }: AudioGraphOptions): string {
   const d = duration.toFixed(3);
   const parts: string[] = [];
 
@@ -57,7 +58,7 @@ export function audioGraph({ clips, duration, music, sfx = [], loudness }: Audio
     mix = '[mix]';
   }
   // Effects join after the ducking, so they never push the music down.
-  const effects = sfxGraph(sfx, duration);
+  const effects = sfxGraph(sfx, duration, sfxVolume);
   if (effects) {
     parts.push(...effects.parts);
     parts.push(`${mix}${effects.label}amix=inputs=2:normalize=0:duration=first[withsfx]`);

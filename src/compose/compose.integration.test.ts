@@ -7,6 +7,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
 import { composeTour } from './compose.ts';
+import { sfxGraph } from './sfx.ts';
+import { SOUNDS } from './sounds.ts';
+import { spawnSync } from 'node:child_process';
 
 let dir: string;
 const ffmpeg = (...args: string[]) => execFileSync('ffmpeg', ['-y', '-v', 'error', ...args], { cwd: dir });
@@ -70,3 +73,16 @@ segments:
     await expect(composeTour(tour, buildTimeline(tour, []), dir, dir)).rejects.toThrow(/music track not found/);
   });
 });
+
+describe('sound effect sources', () => {
+  it('every sound and variant is valid ffmpeg and finishes promptly', () => {
+    const events = SOUNDS.flatMap((sound, i) => [0, 1, 2].map(variant => ({ sound, variant, time: i + variant * 0.3, duration: 0.6 })));
+    const graph = sfxGraph(events, SOUNDS.length + 1)!;
+    const run = spawnSync('ffmpeg', ['-v', 'error', '-filter_complex', graph.parts.join(';'), '-map', graph.label, '-f', 'null', '-'],
+      { timeout: 20_000, killSignal: 'SIGKILL' });
+    expect(run.signal).toBeNull();
+    expect(run.stderr.toString()).toBe('');
+    expect(run.status).toBe(0);
+  }, 30_000);
+});
+

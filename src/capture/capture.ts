@@ -1,3 +1,5 @@
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { cursorPosition, sceneAt } from '../effects/scene.ts';
 import { renderScene } from '../effects/svg.ts';
 import type { Timeline } from '../timeline/build.ts';
@@ -7,6 +9,7 @@ import { continueTyping, perform, retrackMarks } from './actions.ts';
 import { installClock } from './clock.ts';
 import { prepareTargets } from './prep.ts';
 import { deviceProfile, FPS, type Quality } from './devices.ts';
+import { EVENTS_FILE } from './events.ts';
 import { startEncoder } from './encoder.ts';
 import { effectsLayer, scrollControl } from './runtime.ts';
 import { applyScrolls } from './scroll.ts';
@@ -63,6 +66,7 @@ export async function captureTour({
       onFrame?.(frame + 1, total);
     }
     await encoder.finish();
+    await writeFile(path.join(path.dirname(file), EVENTS_FILE), JSON.stringify(stage.log, null, 2));
   } catch (error) {
     await encoder.finish().catch(() => {});
     throw error;

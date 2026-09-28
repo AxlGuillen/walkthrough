@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SOUNDS } from '../compose/sounds.ts';
 
 const selector = z.string().trim().min(1);
 
@@ -109,7 +110,13 @@ export const tourSchema = z.strictObject({
     volume: z.number().min(0).max(1).default(0.055),
   }).optional(),
   subtitles: z.enum(['karaoke', 'none']).default('none'),
-  sfx: z.boolean().default(true),
+  sfx: z.union([
+    z.boolean().transform(enabled => ({ enabled, volume: 1, mute: [] as (typeof SOUNDS)[number][] })),
+    z.strictObject({
+      volume: z.number().min(0).max(2).default(1),
+      mute: z.array(z.enum(SOUNDS)).default([]),
+    }).transform(settings => ({ enabled: true, ...settings })),
+  ]).prefault(true),
   accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'use a #RRGGBB color').default('#FF3B5C'),
   segments: z.array(segment).min(1),
 });

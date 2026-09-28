@@ -9,13 +9,18 @@ import { aimAt, visibleBox, zoomRect } from './targets.ts';
 const ZOOM_DURATION = 0.8;
 
 export async function perform(stage: Stage, { time, action }: TimedAction, seed: number): Promise<void> {
-  const { page, clock, tour, device, camera, effects } = stage;
+  const { page, clock, tour, device, camera, effects, log } = stage;
   switch (action.kind) {
     case 'goto':
+      // The opening load is the start of the video, not a change of screen.
+      if (stage.time > 0) log.push({ kind: 'navigate', time: stage.time });
       return clock.settle(() => page.goto(new URL(action.url, tour.url).href));
     case 'click': {
       await clickWithMark(stage, action.on, seed);
-      if (action.wait) await waitFor(stage, action.wait);
+      if (action.wait) {
+        log.push({ kind: 'navigate', time: stage.time });
+        await waitFor(stage, action.wait);
+      }
       return;
     }
     case 'wait':
@@ -26,6 +31,7 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       const planned = await planScroll(page, edge ? null : action.to, mode, action.within);
       const duration = action.duration ?? scrollDuration(planned.plans);
       for (const plan of planned.plans) stage.scrolls.push({ ...plan, start: stage.time, duration });
+      if (planned.plans.length) log.push({ kind: 'scroll', time: stage.time, duration });
       return;
     }
     case 'hover': {
@@ -37,6 +43,7 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       await page.locator(action.into).first().fill('');
       await clickWithMark(stage, action.into, seed);
       stage.typing = { text: action.text, start: stage.time, typed: 0 };
+      log.push({ kind: 'type', time: stage.time, chars: action.text.length });
       return;
     }
     case 'zoom': {
@@ -46,23 +53,26 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       };
       const rect = action.to === 'out' ? fullFrame(device.viewport) : await zoomRect(page, action.to, device, fit);
       camera.push({ time, duration: action.duration ?? ZOOM_DURATION, rect, follow: action.follow ?? false });
+      log.push({ kind: 'zoom', time, direction: action.to === 'out' ? 'out' : 'in' });
       return;
     }
     case 'highlight': {
       const box = await visibleBox(page.locator(action.on).first(), `highlight target "${action.on}"`);
       effects.rings.push({ time: stage.time, rect: box, hold: action.duration ?? TIMING.ringHold, seed, track: action.on });
+      log.push({ kind: 'ring', time: stage.time });
       return;
     }
   }
 }
 
 // The mark is placed before clicking: the click may navigate away from the target.
-async function clickWithMark({ page, time, effects }: Stage, selector: string, seed: number): Promise<void> {
+async function clickWithMark({ page, time, effects, log }: Stage, selector: string, seed: number): Promise<void> {
   const target = page.locator(selector).first();
   await target.scrollIntoViewIfNeeded();
   const aim = await aimAt(target);
   await target.click(aim ? { position: aim.position } : {});
   if (aim) effects.clicks.push({ time, at: aim.point, seed, track: { selector, offset: aim.position } });
+  log.push({ kind: 'click', time });
 }
 
 const WAIT_TIMEOUT = 15_000;

@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { deviceProfile, type Quality } from '../capture/devices.ts';
@@ -8,7 +8,8 @@ import type { Timeline } from '../timeline/build.ts';
 import { overlayFile } from '../overlays/render.ts';
 import type { Tour } from '../tour/schema.ts';
 import { audioGraph, type Loudness } from './audio.ts';
-import { soundEvents, type SoundEvent } from './sfx.ts';
+import { EVENTS_FILE, type CaptureEvent } from '../capture/events.ts';
+import { eventsFromTimeline, soundEvents, type SoundEvent } from './sfx.ts';
 import { karaokeAss } from './subtitles.ts';
 import { videoGraph } from './video.ts';
 
@@ -20,13 +21,14 @@ export interface ComposeInputs {
   music?: { file: string; volume: number };
   overlays?: { file: string; start: number; end: number; fade: number }[];
   sfx?: SoundEvent[];
+  sfxVolume?: number;
   subtitles?: string;
   duration: number;
   output: string;
   draft?: boolean;
 }
 
-function graphs({ capture, clips, music, overlays = [], sfx = [], subtitles, duration }: ComposeInputs, loudness?: Loudness) {
+function graphs({ capture, clips, music, overlays = [], sfx = [], sfxVolume = 1, subtitles, duration }: ComposeInputs, loudness?: Loudness) {
   const inputs = ['-i', capture, ...clips.flatMap(clip => ['-i', clip.file])];
   if (music) inputs.push('-stream_loop', '-1', '-i', music.file);
   const firstOverlay = 1 + clips.length + (music ? 1 : 0);
@@ -36,6 +38,7 @@ function graphs({ capture, clips, music, overlays = [], sfx = [], subtitles, dur
     clips: clips.map((clip, i) => ({ input: i + 1, start: clip.start })),
     duration,
     sfx,
+    sfxVolume,
     ...(loudness ? { loudness } : {}),
     ...(music ? { music: { input: clips.length + 1, volume: music.volume } } : {}),
   });
@@ -97,7 +100,8 @@ export async function composeTour(
   const output = 'video.mp4';
   const inputs: ComposeInputs = {
     capture: 'capture.mp4', clips, overlays, duration: timeline.duration, output, draft: quality === 'preview',
-    sfx: tour.sfx ? soundEvents(timeline) : [],
+    sfx: tour.sfx.enabled ? soundEvents(await capturedEvents(outDir, timeline), timeline.overlays, tour.sfx) : [],
+    sfxVolume: tour.sfx.volume,
     ...(subtitles ? { subtitles } : {}),
     ...(music ? { music } : {}),
   };
@@ -116,4 +120,9 @@ export function parseLoudness(stderr: string): Loudness {
   const keys = ['input_i', 'input_tp', 'input_lra', 'input_thresh', 'target_offset'] as const;
   if (keys.some(key => measured[key] === undefined)) throw new Error('loudnorm did not report its measurement');
   return measured as Loudness;
+}
+
+async function capturedEvents(outDir: string, timeline: Timeline): Promise<CaptureEvent[]> {
+  const file = path.join(outDir, EVENTS_FILE);
+  return existsSync(file) ? JSON.parse(await readFile(file, 'utf8')) as CaptureEvent[] : eventsFromTimeline(timeline);
 }

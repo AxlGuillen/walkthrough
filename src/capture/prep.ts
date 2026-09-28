@@ -11,7 +11,7 @@ const MIN_SCROLL = 0.2;
 // cursor lands exactly when the action runs. A target that only appears at the last moment
 // gets less time instead of blocking the action.
 export async function prepareTargets(stage: Stage): Promise<void> {
-  const { page, time, effects, pending, scrolls } = stage;
+  const { page, time, effects, pending, scrolls, log } = stage;
   while (pending[0] && pending[0].prepAt <= time + EPSILON) {
     const step = pending[0];
     const target = page.locator(step.target).first();
@@ -27,6 +27,7 @@ export async function prepareTargets(stage: Stage): Promise<void> {
       const room = step.action.time - time - (step.pointer ? TIMING.travelMin : 0);
       const duration = Math.max(MIN_SCROLL, Math.min(scrollDuration(planned.plans), room));
       for (const plan of planned.plans) scrolls.push({ ...plan, start: time, duration });
+      log.push({ kind: 'scroll', time, duration });
       shift = planned.shift;
       ready = time + duration;
     }

@@ -7,6 +7,7 @@ Decidida el 28/sep/2026. Complementa a `docs/arranque.md` (qué y para qué); aq
 | Pieza | Elección | Por qué |
 |---|---|---|
 | Lenguaje | TypeScript estricto sobre **Node 24** | Node 24 ejecuta `.ts` directo (type stripping): sin paso de build. |
+| Paquetes | Bun (`bun install`, `bun run`, `bun.lock`) | Instala y corre los scripts rápido. No es el runtime: los scripts llaman a `node`, y Vitest corre sobre Node. |
 | Versión de Node | `fnm` + `.node-version`, con `FNM_ARCH=arm64` | Node 24 solo para este repo; el Node global de los otros proyectos no se toca. Sin `FNM_ARCH`, un fnm de Homebrew Intel baja Node x64 y corre en Rosetta. |
 | Navegador | `playwright-core` con el Chrome del sistema (`channel: 'chrome'`) | Emulación de dispositivos, perfiles persistentes, locators, `boundingBox()`, control del reloj. No descarga navegadores. |
 | Tours | YAML (`yaml`) validado con `zod` | Cómodo de revisar a mano; zod da errores claros y los tipos salen del esquema. |
@@ -49,6 +50,7 @@ Nada generado vive en el repo:
 - Se cambian con `WALKTHROUGH_WORK` y `WALKTHROUGH_VIDEOS`.
 - **Cada render es un archivo nuevo**, así se pueden comparar versiones.
 - **`walkthrough gallery`** abre `http://localhost:4717`, una página local para ver los videos por proyecto, mostrarlos en Finder, mandarlos a la Papelera o limpiar la caché. Solo escucha en `127.0.0.1` y rechaza acciones cuyo `Origin` no sea el suyo, para que otra página no pueda borrar nada. Sirve el video con `Range`, que Safari exige para reproducir.
+- **`render --open`** abre la galería directo en el video recién hecho (o en la vista previa): cada tarjeta tiene un ancla estable (`#v-…`, `#p-…`) y la página baja hasta ella y la resalta. Si la galería no está corriendo, se arranca en segundo plano y queda viva después del comando. Se reconoce por su título, así que otra app en el puerto 4717 no se confunde con ella.
 - **`walkthrough clean`** borra los archivos de trabajo. Con `--voice` también borra la caché de voz, y con `--keep=<n>` manda a la Papelera todo menos los *n* renders más nuevos de cada tour. La carpeta vieja `out/` del repo, si existe, también va a la Papelera.
 - **Nunca se borra un video de forma permanente**: va a `~/.Trash` con un nombre que no pisa lo que ya haya ahí.
 
@@ -301,7 +303,7 @@ walkthrough voice  <tour>              solo voz: para oírla y revisar tiempos
 walkthrough doctor                      revisar el entorno
 walkthrough check  <tour>               validar sin renderizar
 walkthrough inspect <url> [--session=<s>] [--device=mobile]
-walkthrough render <tour> [--preview] [--from=overlays|compose]
+walkthrough render <tour> [--preview] [--open] [--from=overlays|compose]
 walkthrough gallery [--no-open]           ver los videos generados
 walkthrough clean [--voice] [--keep=<n>]  limpiar caché y renders viejos
 ```

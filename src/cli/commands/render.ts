@@ -4,12 +4,15 @@ import path from 'node:path';
 import { captureTour } from '../../capture/capture.ts';
 import { deviceProfile, FPS, type Quality } from '../../capture/devices.ts';
 import { composeTour } from '../../compose/compose.ts';
+import { execFile } from 'node:child_process';
+import { ensureGallery } from '../../library/launch.ts';
 import { previewMetaFile, publishVideo } from '../../library/library.ts';
+import { previewAnchor, videoAnchor } from '../../library/page.ts';
 import { renderOverlays } from '../../overlays/render.ts';
-import { ROOT } from '../context.ts';
+import { ROOT, STORAGE } from '../context.ts';
 import { voice } from './voice.ts';
 
-export async function render(tourFile: string, from: string | undefined, preview: boolean): Promise<void> {
+export async function render(tourFile: string, from: string | undefined, preview: boolean, open: boolean): Promise<void> {
   if (from !== undefined && from !== 'overlays' && from !== 'compose') throw new Error(`unknown --from value: ${from}`);
   const { tour, paths, timeline } = await voice(tourFile);
   const quality: Quality = preview ? 'preview' : 'final';
@@ -41,10 +44,22 @@ export async function render(tourFile: string, from: string | undefined, preview
 
   const composed = await composeTour(tour, timeline, outDir, paths.dir, { quality, ...(preview ? { voiceDir: '../voice' } : {}) });
   const meta = { title: tour.title, project: paths.project, tour: paths.name, device: tour.device, duration: timeline.duration };
+  let anchor: string;
   if (preview) {
     await writeFile(previewMetaFile(composed), JSON.stringify({ ...meta, createdAt: new Date().toISOString() }, null, 2));
-    console.log(`✓ preview in ${((Date.now() - started) / 1000).toFixed(1)}s: ${composed}  (npm run gallery)`);
+    console.log(`✓ preview in ${((Date.now() - started) / 1000).toFixed(1)}s: ${composed}`);
+    anchor = previewAnchor(`${paths.project}/${paths.name}`);
   } else {
-    console.log(`✓ ${(await publishVideo(composed, paths.videoDir, meta)).file}`);
+    const video = await publishVideo(composed, paths.videoDir, meta);
+    console.log(`✓ ${video.file}`);
+    anchor = videoAnchor(path.relative(STORAGE.videos, video.file));
+  }
+
+  if (open) {
+    const url = `${await ensureGallery(ROOT)}/#${anchor}`;
+    execFile('open', [url]);
+    console.log(`  opened ${url}`);
+  } else {
+    console.log('  see it in the gallery: bun run gallery  (or render with --open)');
   }
 }

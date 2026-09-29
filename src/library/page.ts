@@ -18,6 +18,17 @@ export function formatDuration(seconds: number): string {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
 }
 
+// Stable ids for gallery cards, so a link can land on one video: /#v-uws-tasks-tablero-…
+export function videoAnchor(relative: string): string {
+  return `v-${relative.replace(/\.mp4$/, '').replace(/[^a-zA-Z0-9]+/g, '-')}`;
+}
+
+export function previewAnchor(key: string): string {
+  return `p-${key.replace(/[^a-zA-Z0-9]+/g, '-')}`;
+}
+
+export const GALLERY_TITLE = 'walkthrough · videos';
+
 export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
@@ -32,7 +43,7 @@ export function galleryPage({ videos, previews = [], cacheBytes, videosRoot }: G
     <section>
       <h2>${escapeHtml(project)}</h2>
       <div class="grid">${list.map(video => `
-        <article class="${video.device}">
+        <article class="${video.device}" id="${videoAnchor(video.relative)}">
           <video controls preload="metadata" src="/video?file=${encodeURIComponent(video.relative)}"></video>
           <div class="meta">
             <h3>${escapeHtml(video.title)}</h3>
@@ -52,7 +63,7 @@ export function galleryPage({ videos, previews = [], cacheBytes, videosRoot }: G
       <h2>Vistas previas</h2>
       <p class="hint">Media resolución a 15 fps, para revisar ritmo y encuadre. Cada una se reemplaza con la siguiente vista previa del tour.</p>
       <div class="grid">${previews.map(preview => `
-        <article class="${preview.device}">
+        <article class="${preview.device}" id="${previewAnchor(preview.key)}">
           <video controls preload="metadata" src="/video?preview=${encodeURIComponent(preview.key)}"></video>
           <div class="meta">
             <h3>${escapeHtml(preview.title)}</h3>
@@ -68,7 +79,7 @@ export function galleryPage({ videos, previews = [], cacheBytes, videosRoot }: G
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>walkthrough · videos</title>
+<title>${GALLERY_TITLE}</title>
 <style>
   :root { --bg: #f6f5fb; --card: #fff; --ink: #1b1830; --muted: #6b6784; --line: #e4e1ef; --accent: #5b3fd9; --danger: #c62f4a; color-scheme: light dark; }
   @media (prefers-color-scheme: dark) { :root { --bg: #0f0d1a; --card: #1a1729; --ink: #eeeaff; --muted: #9a95b8; --line: #2c2842; --accent: #9b85ff; --danger: #ff6b81; } }
@@ -93,6 +104,7 @@ export function galleryPage({ videos, previews = [], cacheBytes, videosRoot }: G
   button.danger:hover { border-color: var(--danger); color: var(--danger); }
   button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   .hint { color: var(--muted); font-size: 13px; margin: -6px 0 12px; }
+  article.focus { outline: 3px solid var(--accent); outline-offset: 3px; }
   .empty { padding: 48px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: 14px; }
   code { font-size: 13px; overflow-wrap: anywhere; }
   header > div { min-width: 0; }
@@ -113,6 +125,11 @@ export function galleryPage({ videos, previews = [], cacheBytes, videosRoot }: G
   ${sections || '<p class="empty">Todavía no hay videos. Genera uno con <code>walkthrough render tours/&lt;proyecto&gt;/&lt;tour&gt;.yaml</code>.</p>'}
 </main>
 <script>
+  const target = location.hash && document.getElementById(location.hash.slice(1));
+  if (target) {
+    target.classList.add('focus');
+    target.scrollIntoView({ block: 'center' });
+  }
   document.addEventListener('click', async event => {
     const button = event.target.closest('button[data-action]');
     if (!button) return;

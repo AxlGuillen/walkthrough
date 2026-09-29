@@ -5,7 +5,8 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseRange, resolvePreview, resolveVideo, startGallery } from './gallery.ts';
 import { publishVideo } from './library.ts';
-import { escapeHtml, formatBytes, formatDuration, galleryPage } from './page.ts';
+import { isGallery } from './launch.ts';
+import { escapeHtml, formatBytes, formatDuration, galleryPage, previewAnchor, videoAnchor } from './page.ts';
 
 describe('resolveVideo', () => {
   it('accepts only mp4 files inside the library', () => {
@@ -60,6 +61,20 @@ describe('galleryPage', () => {
     const page = galleryPage({ videos: [], previews: [{ ...video, key: 'uws-tasks/tablero' }], cacheBytes: 0, videosRoot: '/v' });
     expect(page).toContain('<h2>Vistas previas</h2>');
     expect(page).toContain('src="/video?preview=uws-tasks%2Ftablero"');
+  });
+
+  it('gives every card a stable anchor and focuses the one in the URL hash', () => {
+    const page = galleryPage({ videos: [video], previews: [{ ...video, key: 'uws-tasks/tablero' }], cacheBytes: 0, videosRoot: '/v' });
+    expect(page).toContain(`id="${videoAnchor('uws-tasks/tablero/a.mp4')}"`);
+    expect(page).toContain(`id="${previewAnchor('uws-tasks/tablero')}"`);
+    expect(page).toContain("target.classList.add('focus')");
+    expect(videoAnchor('uws-tasks/tablero/2026-09-28_140447.mp4')).toBe('v-uws-tasks-tablero-2026-09-28-140447');
+    expect(previewAnchor('uws-tasks/tablero')).toBe('p-uws-tasks-tablero');
+  });
+
+  it('is recognized by its title, and other pages on the port are not', () => {
+    expect(isGallery(galleryPage({ videos: [], cacheBytes: 0, videosRoot: '/v' }))).toBe(true);
+    expect(isGallery('<html><title>Some other app</title></html>')).toBe(false);
   });
 
   it('explains how to make the first video when there are none', () => {

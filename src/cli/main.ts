@@ -21,6 +21,7 @@ const USAGE = `usage:
       --device=mobile                 inspect with the phone viewport
   walkthrough render <tour.yaml>      voice, timeline, capture, overlays and compose
       --preview                       half size at 15 fps, kept out of ~/Movies, shown in the gallery
+      --open                          open the gallery on the new video when done
       --from=overlays                 reuse the capture; re-render overlays and compose
       --from=compose                  reuse capture and overlays; only rebuild the final video
   walkthrough gallery                 browse, reveal and trash generated videos
@@ -35,7 +36,7 @@ const { positionals, values } = parseArgs({
   allowPositionals: true,
   options: {
     from: { type: 'string' }, voice: { type: 'boolean' }, keep: { type: 'string' }, 'no-open': { type: 'boolean' },
-    session: { type: 'string' }, device: { type: 'string' }, preview: { type: 'boolean' },
+    session: { type: 'string' }, device: { type: 'string' }, preview: { type: 'boolean' }, open: { type: 'boolean' },
   },
 });
 const [command, target, url] = positionals;
@@ -45,7 +46,7 @@ try {
   if (command === 'voice' && target) await voice(target);
   else if (command === 'check' && target) await check(target);
   else if (command === 'inspect' && target) await inspect(target, values.session, values.device);
-  else if (command === 'render' && target) await render(target, values.from, values.preview ?? false);
+  else if (command === 'render' && target) await render(target, values.from, values.preview ?? false, values.open ?? false);
   else if (command === 'gallery') await gallery(!values['no-open']);
   else if (command === 'doctor') await doctor();
   else if (command === 'clean') await cleanUp(values.voice ?? false, values.keep);

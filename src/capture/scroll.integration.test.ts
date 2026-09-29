@@ -88,6 +88,23 @@ describe('smooth scrolling', () => {
     await page.close();
   }, 60_000);
 
+  it('keeps a revealed target clear of a fixed header', async () => {
+    const { page } = await run(`segments:
+  - hold: 1
+    do:
+      - goto: ${url}
+      - scroll: { to: top, at: 0 }
+  - hold: 2.5
+    do:
+      - scroll: { to: "#far", at: 0, duration: 0.5 }
+      - highlight: { on: "#under", at: 2.2 }
+`, page => page.evaluate(() => scrollY));
+    const box = (await page.locator('#under').boundingBox())!;
+    expect(box.y).toBeGreaterThanOrEqual(120);
+    expect(box.y + box.height).toBeLessThanOrEqual(900);
+    await page.close();
+  }, 60_000);
+
   it('runs explicit scrolls to an edge of the page or of a container', async () => {
     const { samples, page } = await run(`segments:
   - hold: 4

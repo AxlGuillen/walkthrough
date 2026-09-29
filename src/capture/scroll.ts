@@ -106,12 +106,26 @@ function measureScroll(
     return key;
   };
 
+  // A fixed or sticky header covers the top of the page: what sits under it is not in view.
+  const headerBottom = () => {
+    let bottom = 0;
+    for (const x of [innerWidth * 0.25, innerWidth * 0.5, innerWidth * 0.75]) {
+      for (const el of document.elementsFromPoint(x, 2)) {
+        const position = getComputedStyle(el).position;
+        if ((position === 'fixed' || position === 'sticky') && el !== target && !el.contains(target)) {
+          bottom = Math.max(bottom, el.getBoundingClientRect().bottom);
+        }
+      }
+    }
+    return Math.min(bottom, innerHeight / 3);
+  };
+
   const plans: ScrollPlan[] = [];
   const shift = { x: 0, y: 0 };
   const box = target.getBoundingClientRect();
   for (const el of chain) {
     const isRoot = el === root;
-    const view = isRoot ? { left: 0, top: 0, right: innerWidth, bottom: innerHeight } : el.getBoundingClientRect();
+    const view = isRoot ? { left: 0, top: headerBottom(), right: innerWidth, bottom: innerHeight } : el.getBoundingClientRect();
     const from = { x: isRoot ? scrollX : el.scrollLeft, y: isRoot ? scrollY : el.scrollTop };
     const max = {
       x: el.scrollWidth - (isRoot ? innerWidth : el.clientWidth),

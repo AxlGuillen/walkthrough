@@ -3,6 +3,8 @@ import type { Tour } from '../tour/schema.ts';
 import { looksLikeLogin } from './session.ts';
 
 const DISMISS_TIMEOUT = 2_000;
+// Announcements often slide in a moment after the page settles.
+const APPEAR_TIMEOUT = 1_500;
 
 export class SessionExpiredError extends Error {
   override name = 'SessionExpiredError';
@@ -22,10 +24,14 @@ export async function installSetup(page: Page, tour: Tour): Promise<void> {
 }
 
 export async function dismissDialogs(page: Page, tour: Tour): Promise<void> {
-  for (const selector of tour.setup.dismiss) {
+  await Promise.all(tour.setup.dismiss.map(async selector => {
     const target = page.locator(selector).first();
-    if (await target.isVisible().catch(() => false)) await target.click({ timeout: DISMISS_TIMEOUT }).catch(() => {});
-  }
+    const appeared = await target.waitFor({ state: 'visible', timeout: APPEAR_TIMEOUT }).then(() => true, () => false);
+    if (!appeared) return;
+    await target.click({ timeout: DISMISS_TIMEOUT }).catch(() => {});
+    // Wait out the exit animation too, or it would play over the first frames of the video.
+    await target.waitFor({ state: 'hidden', timeout: DISMISS_TIMEOUT }).catch(() => {});
+  }));
 }
 
 // Stops a render on the spot: a video of the login page is never what anyone wanted.

@@ -3,8 +3,10 @@
 <head><meta charset="utf-8"><title>Setup fixture</title></head>
 <body>
   <h1>Panel</h1>
-  <div id="banner" role="dialog">Novedades <button id="dismiss-banner" onclick="this.parentElement.remove()">Cerrar</button></div>
   <script>
+    // Slides in after load, like most announcements.
+    setTimeout(() => document.body.insertAdjacentHTML('beforeend',
+      '<div id="banner" role="dialog">Novedades <button id="dismiss-banner" onclick="this.parentElement.remove()">Cerrar</button></div>'), 600);
     if (!localStorage.getItem('demo_seen')) {
       document.body.insertAdjacentHTML('beforeend', '<div id="tour" role="dialog" aria-modal="true">Bienvenido al onboarding</div>');
     }

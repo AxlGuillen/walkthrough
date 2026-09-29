@@ -4,6 +4,14 @@ session: uws-tasks
 device: desktop
 language: es
 music: { track: assets/music/corporate-calm-background.mp3 }
+setup:
+  # The app's own onboarding, marked as seen so a fresh profile skips it too.
+  storage:
+    uws_tour_seen:dashboard: 1
+    uws_tour_seen:tickets: 1
+    uws_tour_seen:workload: 1
+    uws_tour_seen:reports: 1
+    uws_tour_seen:syncs: 1
 
 segments:
   - say: Esto es uws-tasks, la app donde vemos nuestro trabajo de Jira de un vistazo.
@@ -34,7 +42,7 @@ segments:
   - say: La vista de tablero agrupa los tickets por estado, igual que en Jira.
     do:
       - click: { on: '[data-tour=views] >> text="Board"', at: tablero }
-      - zoom: { to: '[data-tour=card]:has-text("UWS-8324")', at: estado }
+      - zoom: { to: "[data-tour=card] >> nth=0", at: estado }
 
   - hold: 0.8
     do:

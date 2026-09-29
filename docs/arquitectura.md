@@ -252,6 +252,31 @@ interface VoiceProvider {
 
 **No sirve la sesión del Chrome personal.** Ese perfil está bloqueado mientras Chrome está abierto, y automatizarlo mezclaría la navegación real con la herramienta.
 
+**Sesión caducada.** Después de cada navegación (`goto`, `click` con `wait`), si la app cayó en un login (un campo de contraseña, o una ruta con `login`, `sign-in` o `auth` distinta de la pedida), el render se detiene con el comando exacto para volver a iniciar sesión. `check` lo reporta igual.
+
+## Onboarding de la app
+
+```yaml
+setup:
+  storage: { uws_tour_seen:dashboard: 1 }   # localStorage antes de cada carga
+  dismiss: ["button[aria-label=Close]"]      # se cierra si aparece tras navegar
+```
+
+- `storage` se escribe con un init script antes de que cargue cada documento del origen del tour. Se compara protocolo y host, no `origin`, porque para `file://` Node dice `"null"` y Chrome `"file://"`.
+- `dismiss` se aplica dentro del `settle()` de cada navegación: el diálogo y su animación de cierre quedan fuera del tiempo del video.
+- `check` aplica el mismo `setup`, así que no reporta como abiertos los onboardings ya resueltos.
+- Con `storage` declarado, un tour funciona igual con un perfil recién creado.
+
+## Salud del entorno
+
+`walkthrough doctor` revisa:
+- Node 24, y que sea `arm64` en Apple Silicon;
+- ffmpeg con los filtros del pipeline (sin libass solo advierte, porque los subtítulos son opcionales), y ffprobe;
+- que Chrome arranque en headless;
+- que la clave de Fish funcione, consultando la voz por defecto;
+- las sesiones guardadas, y las que algún tour pide pero nadie ha guardado;
+- el tamaño de la caché.
+
 ## Iterar sin renderizar
 
 - **`walkthrough check <tour>`** recorre el tour con el reloj normal y sin capturar cuadros, así que tarda segundos: el de uws-tasks, 9 s. Hace los mismos clics que el render y reporta por acción:
@@ -273,6 +298,7 @@ interface VoiceProvider {
 ```
 walkthrough login  <session> <url>     iniciar sesión a mano, una vez
 walkthrough voice  <tour>              solo voz: para oírla y revisar tiempos
+walkthrough doctor                      revisar el entorno
 walkthrough check  <tour>               validar sin renderizar
 walkthrough inspect <url> [--session=<s>] [--device=mobile]
 walkthrough render <tour> [--preview] [--from=overlays|compose]

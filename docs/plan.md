@@ -113,7 +113,9 @@ Detalle en `docs/arquitectura.md`: «Montaje» (efectos), «Overlays» (plantill
   - comparación antes/después con dos imágenes.
 - **Etiquetas pegadas a un elemento:** `label: { on, text }`, una flecha y un texto a mano junto al elemento. Va en la capa de efectos de la página, no como overlay, porque tiene que moverse con la cámara y con el scroll.
 
-## Fase 4 — Robustez
+## Fase 4 — Robustez (en curso)
+
+Hecho el 29/sep/2026: datos que cambian, sesión caducada, onboardings (`setup:`) y `doctor`. Falta el primer tour real en móvil.
 
 | Tarea | Detalle |
 |---|---|

@@ -55,6 +55,9 @@ El detalle vive en `docs/arquitectura.md`. Lo que no se puede olvidar:
 - `FISH_API_KEY` y cualquier otra clave van en `.env`, nunca al repo.
 - **Login.** `walkthrough login <session> <url>` abre Chrome con un perfil propio en `.auth/<session>/` (ignorado por git). El autor inicia sesión a mano y cierra la ventana; los renders reutilizan ese perfil. Es un perfil persistente y no una foto con `storageState`, porque Supabase rota el refresh token en cada uso y una foto caduca tras el primer render. Un perfil admite un solo navegador a la vez.
 - Claude nunca teclea credenciales en sitios reales. Las credenciales no van en tours, en código ni en commits.
+- **Sesión caducada:** si una navegación termina en un login, el render se detiene con el comando `walkthrough login` exacto.
+- **Onboardings:** se declaran en el `setup:` del tour (`storage` y `dismiss`), no se cierran a mano en el perfil.
+- **`walkthrough doctor`** revisa Node, ffmpeg, Chrome, Fish y las sesiones antes de un render.
 
 ## Música
 

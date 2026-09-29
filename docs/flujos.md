@@ -10,7 +10,7 @@ Un flujo explica un proceso con pasos conectados que aparecen justo cuando la vo
 | Antes de recorrer varias pantallas, para dar el mapa | Una lista de funciones sin orden: eso es un `lower-third` o una tarjeta |
 | Al cerrar, para resumir lo que se vio | Más de 6 pasos: se parte en dos flujos o se agrupan |
 
-Para elegir la forma: si el proceso siempre sigue el mismo camino, `linear`; si depende de una condición que cambia lo que pasa después, `decision`; si al terminar vuelve a empezar, `cycle`.
+Para elegir la forma: si el proceso siempre sigue el mismo camino, `linear`; si depende de una condición que cambia lo que pasa después, `decision`; si al terminar vuelve a empezar, `cycle`; si lo importante es quién hace cada paso, `lanes`; si lo importante es la diferencia con cómo era, `compare`.
 
 ## Modos
 
@@ -24,8 +24,8 @@ Para elegir la forma: si el proceso siempre sigue el mismo camino, `linear`; si 
 | `linear` (por defecto) | Un proceso de punta a punta | Pasos en fila (columna en 9:16) |
 | `decision` | Un punto donde el proceso se bifurca: aprobaciones, disponibilidad, validaciones | La línea llega a una pregunta («?») y de ahí salen dos ramas con su etiqueta, una arriba y otra abajo (lado a lado en 9:16) |
 | `cycle` | Algo que se repite: entregas semanales, sprints, un ciclo de feedback | En `full`, pasos alrededor de una elipse con una flecha que regresa al inicio; en `card`, una fila con la flecha de regreso por debajo |
-
-Carriles y antes/después vienen en la fase 6.3 del plan. Mientras tanto, un reparto de responsabilidades se cuenta con un `linear` que nombra al responsable en cada paso.
+| `lanes` | Quién hace qué: un proceso que pasa por varias personas o sistemas | Una franja por responsable, con su nombre; cada paso cae en la franja de quien lo hace y el tiempo corre de izquierda a derecha (en 9:16, franjas lado a lado y el tiempo hacia abajo) |
+| `compare` | Antes y después: qué mejoró, cuántos pasos se ahorran | Dos columnas lado a lado con su etiqueta; la de antes, apagada; la de después, en el color de acento |
 
 ### Decisión
 
@@ -65,6 +65,47 @@ flow:
     - { text: Entregar, at: entregamos }
     - { text: Escuchar feedback, at: escuchamos }
 ```
+
+### Carriles
+
+De 2 a 4 `lanes` y de 2 a 6 pasos; cada paso nombra su carril en `lane`. Un mismo carril puede tener varios pasos, y cada paso ocupa su propia columna de tiempo, así que el ojo lee el orden de izquierda a derecha y el responsable por la franja.
+
+```yaml
+flow:
+  shape: lanes
+  title: ¿Quién hace qué?
+  lanes: [Huésped, Venue, Host]
+  steps:
+    - { text: Elige su mesa, lane: Huésped, at: elige }
+    - { text: Aprueba la reserva, lane: Venue, at: aprueba }
+    - { text: Paga el depósito, lane: Huésped, at: paga }
+    - { text: Prepara la mesa, lane: Host, at: prepara }
+```
+
+La narración nombra al responsable junto al paso («el **venue** aprueba la reserva»); el `at` va en el verbo, que distingue al paso.
+
+### Antes y después
+
+`before` y `after`, cada uno con su etiqueta y de 1 a 5 pasos; no lleva `steps`. La narración cuenta todo el antes y luego el después. Cada lado se numera desde 1, así que la diferencia de pasos se ve sola.
+
+```yaml
+flow:
+  shape: compare
+  title: Reservar una mesa
+  before:
+    label: Antes
+    steps:
+      - { text: Llamar al venue, at: llamar }
+      - { text: Esperar respuesta, at: esperar }
+      - { text: Mandar transferencia, at: transferencia }
+  after:
+    label: Ahora
+    steps:
+      - { text: Reservar en línea, at: línea }
+      - { text: Pagar con tarjeta, at: tarjeta }
+```
+
+Funciona mejor cuando el después tiene menos pasos o pasos más simples: el contraste de columnas es el mensaje.
 
 ## Cómo escribir los pasos
 

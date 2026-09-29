@@ -24,7 +24,7 @@ Fuera de alcance por ahora: Reel Editor (no es web; segundo alcance) y la genera
 2. **Guion.** Claude escribe el tour: segmentos con narración + acciones. El autor lo revisa antes de renderizar.
 3. **Voz primero.** Se sintetiza la narración; la duración de cada frase fija cuánto dura cada segmento. La sincronía sale del audio, no de tiempos puestos a mano.
 4. **Grabar.** El navegador ejecuta las acciones con esos tiempos. Resaltado y clic dibujado van inyectados en el DOM; el zoom es una cámara virtual que recorta la captura. Todo apunta a selectores.
-5. **Montar.** MP4 con voz, subtítulos karaoke y, si se pide, música.
+5. **Montar.** MP4 con voz, efectos de sonido y, si se pide, música. Los subtítulos karaoke existen, pero están apagados por defecto.
 
 Se ejecuta a mano, desde la terminal.
 

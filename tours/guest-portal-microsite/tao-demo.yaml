@@ -1,0 +1,71 @@
+title: TAO Nightclub microsite
+url: https://uat.booketing.com/m/uws9920-tao-demo
+device: desktop
+language: en
+voice: 933563129e564b19a115bedd57b7406a  # "Sarah", soft conversational English
+accent: "#E63946"
+music: { track: ../uws-tasks/assets/music/corporate-calm-background.mp3 }
+setup:
+  dismiss: ['button[aria-label="Dismiss announcement"]']
+
+# Public UAT demo, no login. Dates roll forward, so events are picked by venue
+# (EVE1112 is TAO Nightclub) and position, never by date. The tour stops before
+# Continue: that step goes to checkout and writes to UAT.
+segments:
+  - say: This is a Guest Portal microsite for TAO Nightclub, running live on our UAT environment.
+    do:
+      - goto: /m/uws9920-tao-demo
+    overlays:
+      - src: title-card.html
+        to: 3.2
+        params: { eyebrow: UrVenue · Guest Portal, title: TAO Nightclub, subtitle: A live microsite demo }
+
+  - say: It opens with a full-bleed shot of the club, and one clear call to action. Reserve a table.
+    do:
+      - highlight: { on: 'header >> text="Reserve a table"', at: reserve, duration: 2 }
+
+  - say: Scrolling down, guests see what's on. Every night at TAO Nightclub and TAO Beach, with the artist, the time, and how many tables are left.
+    do:
+      - scroll: { to: 'div[aria-label="Lineup view"]', at: scrolling, duration: 1.6 }
+      - label: { on: 'a[href*="/event/EVE1112"] >> nth=0', text: Live table inventory, at: tables }
+
+  - say: They can switch between calendar, agenda and list, or filter by venue and artist.
+    do:
+      - highlight: { on: 'div[aria-label="Lineup view"]', at: switch, duration: 1.4 }
+      - highlight: { on: 'button[aria-label="Filter by venue"]', at: filter, duration: 1.4 }
+
+  - say: Picking a night opens the event, with every way to book it. Tables, bachelorette packages, dinner and nightlife, and more.
+    do:
+      - click: { on: 'a[href*="/event/EVE1112"] >> nth=0', at: picking, wait: "[data-testid=booktypes]" }
+      - zoom: { to: "[data-testid=nightclub-item-row] >> nth=0", at: tables }
+      - zoom: { to: out, at: more }
+
+  - say: Each table shows its capacity, what to pay now, and the minimum spend, before the guest commits to anything.
+    do:
+      - label: { on: "[data-testid=nightclub-item-commitment] >> nth=0", text: Minimum spend up front, at: minimum }
+
+  - say: Or they can book straight from a 3D map of the venue, and see exactly where each section is.
+    do:
+      - click: { on: '[data-testid=venue-map-entry] >> text=/book with 3d map/i', at: map, wait: "[data-testid=venue-map-surface]" }
+      - zoom: { to: "[data-testid=venue-map-surface]", at: see }
+      - highlight: { on: "[data-testid=venue-map-rail]", at: section, duration: 1.6 }
+
+  - hold: 0.8
+    do:
+      - zoom: out
+
+  - say: Back on the event, choosing a table opens the booking panel, with the details, the minimum spend, and the total for the party.
+    do:
+      - click: { on: 'a[href*="/event/EVE1112"] >> nth=0', at: 0.3, wait: "[data-testid=booktypes]" }
+      - click: { on: 'button[aria-label^="Book "] >> nth=0', at: choosing, wait: "[data-testid=sheet-item]" }
+      - highlight: { on: "[data-testid=sheet-total]", at: total, duration: 2 }
+
+  - say: From here, the guest continues to a secure checkout, and their host confirms the table before they arrive.
+    do:
+      - label: { on: "[data-testid=booking-actions]", text: Secure checkout next, at: checkout }
+
+  - say: And all of it is set up by the venue team in GPM Studio.
+    overlays:
+      - src: outro.html
+        from: 0.6
+        params: { title: Guest Portal Microsite, subtitle: Configured in GPM Studio, url: uat.booketing.com/m/uws9920-tao-demo }

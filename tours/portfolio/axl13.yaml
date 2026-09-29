@@ -1,0 +1,65 @@
+title: Axl Guillen portfolio
+url: https://axl13.dev/en
+device: mobile
+language: en
+voice: 933563129e564b19a115bedd57b7406a  # "Sarah", the same English voice as the TAO demo
+accent: "#D9F24A"  # the site's own lime (the Contact tab)
+# Public site, no login. The bottom tab bar (nav.fixed) is how a phone moves between sections.
+segments:
+  - say: This is my portfolio, at axl thirteen dot dev. Every project here is told like a comic. Stories drawn in code.
+    do:
+      - goto: /en
+      - highlight: { on: 'p:has-text("Stories drawn in code")', at: Stories }
+
+  - say: The home page leads with the work. Four cases, each one its own panel.
+    do:
+      - scroll: { to: 'p:has-text("The four cases")', at: leads, duration: 1.8 }
+
+  - say: The projects tab opens every case with its dates, its status, and the stack behind it.
+    do:
+      - click: { on: 'nav.fixed a[href="/en/projects"]', at: projects, wait: 'a[href="/en/projects/hasly-portfolio"]' }
+      - highlight: { on: 'a[href="/en/projects/dymmsa"]', at: status }
+
+  # The commit count keeps growing, so neither the selector nor the narration names it.
+  - say: Take DYMMSA, a quoting and inventory system for a tool distributor. Every commit since January, week by week.
+    do:
+      - click: { on: 'a[href="/en/projects/dymmsa"]', at: Take, wait: 'svg[aria-label*="commits between"]' }
+      - scroll: { to: 'svg[aria-label*="commits between"]', at: Every }
+      - label: { on: 'svg[aria-label*="commits between"]', text: "Shipped week by week", at: week }
+
+  # The flow covers the page; underneath, the page scrolls to the decision it summarizes.
+  - say: Here is who does what. The customer sends their Excel. DYMMSA builds the quote. The customer approves it with a link, and DYMMSA plans the purchase. URREA ships the order, and it is received straight into stock.
+    do:
+      - scroll: { to: 'h2:has-text("The decision")', at: 0.4 }
+    flow:
+      shape: lanes
+      title: How an order moves
+      lanes: [Customer, DYMMSA, URREA]
+      steps:
+        - { text: Sends their Excel, lane: Customer, at: sends }
+        - { text: Builds the quote, lane: DYMMSA, at: builds }
+        - { text: Approves by link, lane: Customer, at: approves }
+        - { text: Plans the purchase, lane: DYMMSA, at: plans }
+        - { text: Ships the order, lane: URREA, at: ships }
+        - { text: Received into stock, lane: DYMMSA, at: received }
+
+  - say: Every case also explains the decisions behind it, and what the result was.
+    do:
+      - highlight: { on: 'h2:has-text("The decision")', at: decisions }
+      - scroll: { to: 'h2:has-text("The result")', at: result }
+
+  - say: About tells how I got here. From websites, to systems, to infrastructure for agents.
+    do:
+      - click: { on: 'nav.fixed a[href="/en/about"]', at: About, wait: 'h1' }
+      - scroll: { to: 'p:has-text("How I got here")', at: websites, duration: 1.2 }
+      - scroll: { to: 'text=Infrastructure for agents', at: agents }
+
+  # The hold leaves the closing card on screen after the last line.
+  - say: And if you want to talk, it is one tap away.
+    hold: 6
+    do:
+      - click: { on: 'nav.fixed a[href="/en/contact"]', at: talk, wait: 'h1' }
+    overlays:
+      - src: outro.html
+        from: tap
+        params: { title: Axl Guillen, subtitle: Stories drawn in code, url: axl13.dev }

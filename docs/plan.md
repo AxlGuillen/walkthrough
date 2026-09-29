@@ -114,9 +114,9 @@ Detalle en `docs/arquitectura.md`: «Montaje» (efectos), «Overlays» (plantill
   - comparación antes/después con dos imágenes.
 - **Etiquetas pegadas a un elemento:** `label: { on, text }`, una flecha y un texto a mano junto al elemento. Va en la capa de efectos de la página, no como overlay, porque tiene que moverse con la cámara y con el scroll.
 
-## Fase 4 — Robustez (en curso)
+## Fase 4 — Robustez ✅ (29/sep/2026)
 
-Hecho el 29/sep/2026: datos que cambian, sesión caducada, onboardings (`setup:`) y `doctor`. Falta el primer tour real en móvil.
+Hecho el 29/sep/2026: datos que cambian, sesión caducada, onboardings (`setup:`), `doctor` y el primer tour real en móvil (`tours/portfolio/axl13.yaml`, 9:16, con un flujo de carriles). Salió de ahí el texto sobre el acento: con un acento claro (el lima del portafolio) el blanco no se leía.
 
 | Tarea | Detalle |
 |---|---|
@@ -124,7 +124,7 @@ Hecho el 29/sep/2026: datos que cambian, sesión caducada, onboardings (`setup:`
 | Sesión caducada | Después de cada navegación, si la app redirige al login, el render se detiene con «corre `walkthrough login <sesión>`». |
 | Onboardings | `setup:` a nivel tour: claves de `localStorage` o selectores que se cierran después de cada navegación. Ya no hay que cerrarlos a mano en el perfil. |
 | `walkthrough doctor` | Revisa Node, ffmpeg (y la versión con el bug de `asplit`), Chrome, `FISH_API_KEY`, la voz por defecto y las sesiones guardadas. |
-| Móvil | Primer tour real en 9:16 (portafolio o Reel Express) y corrección de lo que salga. |
+| Móvil ✅ | Primer tour real en 9:16: el portafolio (axl13.dev), con taps en la barra inferior, scroll, etiqueta, carriles y cierre. |
 
 ## Fase 5 — Tour de uws-tasks v2
 

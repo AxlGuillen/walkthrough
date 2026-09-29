@@ -147,7 +147,7 @@ Explicar un proceso («cómo se reserva una mesa», «cómo se asigna un ticket�
 - **Layout puro** en `src/flow/`: posiciones, cortes de texto y flechas a partir de la forma y del tamaño del cuadro. Horizontal en 16:9 y vertical en 9:16. Probado sin navegador: nada se encima, todo cabe y el texto no se corta.
 - **Coreografía pura:** la flecha se dibuja hacia el paso justo antes de la palabra, la caja entra con la palabra, un anillo a mano marca el paso activo y los anteriores bajan de intensidad.
 - **Plantilla `templates/overlays/flow.html`**: solo pinta lo que calcula Node, con el color de acento del tour y las flechas y anillos a mano de la capa de efectos.
-- **Sonido:** un *pop* por caja y un trazo por flecha, en vez de un solo *pop* por overlay.
+- **Sonido:** un solo *pop* al aparecer, como cualquier overlay (el 29/sep/2026 se quitó el sonido por paso: saturaba y no seguía al diagrama).
 - **`check`** avisa de pasos demasiado juntos para leerse y de textos que no caben.
 
 ### 6.2 Directrices ✅

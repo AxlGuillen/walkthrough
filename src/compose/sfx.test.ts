@@ -33,12 +33,9 @@ describe('soundEvents', () => {
     expect(sounds.find(e => e.sound === 'scroll')?.duration).toBe(0.8);
   });
 
-  it('sounds a flow step by step: a stroke for each arrow and a pop as each box lands', () => {
+  it('gives a flow a single pop as it appears, not one per step', () => {
     const flow = { ...overlay(1), flow: { shape: 'linear' as const, mode: 'full' as const, steps: [0, 2, 4].map(time => ({ text: 'Step', time: 1 + time })) } };
-    const sounds = soundEvents([], [flow]).map(e => [e.sound, Number(e.time.toFixed(2))]);
-    expect(sounds).toEqual([['pop', 1], ['draw', 2.55], ['pop', 3], ['draw', 4.55], ['pop', 5]]);
-    const cycle = { ...flow, flow: { ...flow.flow, shape: 'cycle' as const, loop: 6 } };
-    expect(soundEvents([], [cycle]).at(-1)).toMatchObject({ sound: 'draw', time: 6 });
+    expect(soundEvents([], [flow]).map(e => [e.sound, e.time])).toEqual([['pop', 1]]);
   });
 
   it('varies clicks and overlays, the same way on every render', () => {

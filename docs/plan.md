@@ -134,11 +134,13 @@ Con `inspect`, scroll, etiquetas y la biblioteca de overlays:
 - Indicador de capítulo por sección.
 - Selectores estables, validados con `check` antes de renderizar.
 
-## Fase 6 — Flujos sincronizados con la voz
+## Fase 6 — Flujos sincronizados con la voz (en curso)
+
+Hecho el 29/sep/2026: 6.1 y 6.2. Faltan más formas y el catálogo completo.
 
 Explicar un proceso («cómo se reserva una mesa», «cómo se asigna un ticket») con pasos conectados que aparecen justo cuando la narración los nombra. El autor del tour escribe solo los pasos y la palabra de cada uno; el layout, la coreografía y el sonido salen del repo, iguales en todos los videos.
 
-### 6.1 Motor y forma lineal
+### 6.1 Motor y forma lineal ✅
 
 - **`flow:` en el segmento**, al lado de `say`: `steps` (texto, detalle opcional y `at`, la palabra en que aparece), `title`, `mode` (`full` o `card`) y `from`/`to` como los overlays.
 - **La timeline resuelve los tiempos.** Cada `at` se busca en la narración después del paso anterior, así una palabra repetida no se confunde. Sin `at`, los pasos se reparten a lo largo de la frase.
@@ -148,7 +150,7 @@ Explicar un proceso («cómo se reserva una mesa», «cómo se asigna un ticket�
 - **Sonido:** un *pop* por caja y un trazo por flecha, en vez de un solo *pop* por overlay.
 - **`check`** avisa de pasos demasiado juntos para leerse y de textos que no caben.
 
-### 6.2 Directrices
+### 6.2 Directrices ✅
 
 - **Skill del repo** (`.claude/skills/flow/`): cuándo usar un flujo y qué forma, cómo escribir la narración para que cada paso tenga su palabra, cuántos pasos caben y cómo revisar el resultado antes de entregarlo.
 - **Guía** en `docs/flujos.md`, con las mismas reglas para el autor.

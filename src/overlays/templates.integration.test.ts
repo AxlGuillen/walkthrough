@@ -42,6 +42,10 @@ describe('overlay templates', () => {
       expect(await page.locator('.pill').innerText()).toMatch(/2\s*\/\s*6\s*Board/);
       expect(await page.locator('.pill').getAttribute('class')).toContain('top-left');
       expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())).toBe('#00AA88');
+      const onAccent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--on-accent').trim());
+      expect(await onAccent()).toBe('#ffffff');
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'chapter.html'), tourDir, { index: '1', total: '2' }, '#D9F24A'));
+      expect(await onAccent()).toBe('#111111');
 
       await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'shortcut.html'), tourDir, { keys: '⌘ + K' }));
       expect(await page.locator('kbd').allInnerTexts()).toEqual(['⌘', 'K']);

@@ -186,6 +186,7 @@ overlays:
 ```
 
 - **Plantillas compartidas** en `templates/overlays/`. `src` busca primero en la carpeta del tour y después ahí, así que un proyecto puede reemplazar cualquiera. Todas reciben `accent` (el del tour) y `base` (la carpeta del tour, para que `asset()` cargue sus imágenes), y comparten `base.css` y `params.js`. Usan `vmin`, así que sirven en 16:9 y en 9:16.
+- **Texto sobre el acento** (`--on-accent` en las plantillas, `onAccent()` en `src/effects/color.ts` para las etiquetas): blanco, salvo con un acento claro (luminancia > 0,4, como un lima o un amarillo), donde va casi negro. `params.js` repite la regla porque las plantillas no importan código de Node.
 
   | Plantilla | Params |
   |---|---|

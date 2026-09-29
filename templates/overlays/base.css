@@ -1,6 +1,8 @@
 /* Shared look for overlay templates. Sizes use vmin so a template fits 16:9 and 9:16 alike. */
 :root {
   --accent: #FF3B5C;
+  /* Text on an accent fill; params.js darkens it for a light accent. */
+  --on-accent: #ffffff;
   --ink: #ffffff;
   --muted: #cbc4ea;
   --panel: rgba(20, 16, 40, 0.92);

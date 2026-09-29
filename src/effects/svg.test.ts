@@ -28,5 +28,8 @@ describe('renderScene', () => {
     expect(markup).toContain('Filtros &lt;nuevos&gt;');
     expect(markup.match(/<tspan/g)).toHaveLength(2);
     expect(markup).toContain('&amp; más');
+    expect(markup).toContain('<text fill="#ffffff"');
+    const onLime = renderScene({ cursor: null, strokes: [], bubbles: [{ rect: { x: 0, y: 0, width: 50, height: 20 }, lines: ['a'], opacity: 1, scale: 1 }] }, '#D9F24A');
+    expect(onLime).toContain('<text fill="#111111"');
   });
 });

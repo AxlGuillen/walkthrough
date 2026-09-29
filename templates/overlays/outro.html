@@ -8,8 +8,15 @@
   .card { padding: 5vmin 7vmin; text-align: center; max-width: 70vw; animation: pop 600ms var(--ease) 150ms both; }
   .title { font-size: 6vmin; font-weight: 800; letter-spacing: -0.2vmin; }
   .subtitle { margin-top: 1.6vmin; color: var(--muted); font-size: 2.8vmin; }
-  .url { display: inline-block; margin-top: 3.2vmin; padding: 1.2vmin 2.6vmin; border-radius: 99vmin; background: var(--accent);
+  .url { display: inline-block; margin-top: 3.2vmin; padding: 1.2vmin 2.6vmin; border-radius: 99vmin; background: var(--accent); color: var(--on-accent);
     font-size: 2.6vmin; font-weight: 700; animation: rise 600ms var(--ease) 500ms both; }
+  /* A phone shows the card larger: vmin is the narrow side there. */
+  @media (orientation: portrait) {
+    .card { max-width: 84vw; padding: 7vmin 8vmin; }
+    .title { font-size: 9vmin; }
+    .subtitle { font-size: 4vmin; }
+    .url { font-size: 3.8vmin; }
+  }
 </style>
 </head>
 <body>

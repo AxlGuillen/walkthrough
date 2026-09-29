@@ -1,3 +1,4 @@
+import { onAccent } from './color.ts';
 import { LABEL_FONT } from './label.ts';
 import type { Scene } from './scene.ts';
 
@@ -17,7 +18,7 @@ export function renderScene({ cursor, strokes, bubbles = [] }: Scene, accent: st
     paths.push(
       `<g opacity="${f(opacity)}" transform="translate(${cx} ${cy}) scale(${f(scale)}) translate(${-cx} ${-cy})">`
       + `<rect x="${f(rect.x)}" y="${f(rect.y)}" width="${f(rect.width)}" height="${f(rect.height)}" rx="14" fill="${accent}"/>`
-      + `<text fill="#fff" font-family="${MARKER_FONT}" font-size="${LABEL_FONT.size}" font-weight="700">${text}</text></g>`,
+      + `<text fill="${onAccent(accent)}" font-family="${MARKER_FONT}" font-size="${LABEL_FONT.size}" font-weight="700">${text}</text></g>`,
     );
   }
   if (cursor) {

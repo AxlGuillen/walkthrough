@@ -28,17 +28,24 @@ export function flowEdges(flow: Shape): FlowEdge[] {
       });
     }
   }
+  if (flow.shape === 'compare') {
+    for (const side of [0, 1] as const) {
+      const members = flow.steps.flatMap((step, i) => (step.branch === side ? [i] : []));
+      for (let k = 1; k < members.length; k++) edges.push({ from: members[k - 1]!, to: members[k]! });
+    }
+  }
   if (flow.shape === 'cycle') edges.push({ from: main - 1, to: 0, closing: true });
   return edges;
 }
 
 // The question is marked "?" instead of numbered; both branches go on from the same number,
-// since either one is the next step.
+// since either one is the next step. Each side of a comparison counts from one.
 export function badgeTexts(flow: Shape): string[] {
   const main = mainLength(flow);
+  const first = flow.shape === 'compare' ? 1 : main;
   const position: [number, number] = [0, 0];
   return flow.steps.map((step, i) => {
-    if (step.branch !== undefined) return String(main + position[step.branch]++);
+    if (step.branch !== undefined) return String(first + position[step.branch]++);
     if (flow.shape === 'decision' && i === main - 1) return '?';
     return String(i + 1);
   });

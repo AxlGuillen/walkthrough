@@ -88,6 +88,17 @@ describe('flow template', () => {
     ],
   };
   const cycle = { shape: 'cycle' as const, mode: 'full' as const, title: 'Every week', loop: 6.5, steps: linear.steps.slice(0, 4) };
+  const lanes = {
+    shape: 'lanes' as const, mode: 'full' as const, title: 'Who does what', lanes: ['Guest', 'Venue', 'Host'],
+    steps: texts.slice(0, 4).map((text, i) => ({ text, time: 1 + i, lane: [0, 1, 0, 2][i]! })),
+  };
+  const compare = {
+    shape: 'compare' as const, mode: 'full' as const, title: 'Before and now', branches: ['Before', 'Now'] as [string, string],
+    steps: [
+      ...texts.slice(0, 4).map((text, i) => ({ text, time: 1 + i, branch: 0 as const })),
+      ...texts.slice(0, 2).map((text, i) => ({ text, time: 6 + i, branch: 1 as const })),
+    ],
+  };
   const mobile = { width: 1080, height: 1920 };
 
   const cases = [
@@ -97,6 +108,10 @@ describe('flow template', () => {
     ['9:16 full decision', mobile, decision, 5, 4],
     ['16:9 full cycle', canvas, cycle, 4, 4],
     ['16:9 card cycle', canvas, { ...cycle, mode: 'card' as const }, 4, 4],
+    ['16:9 full lanes', canvas, lanes, 4, 3],
+    ['9:16 full lanes', mobile, lanes, 4, 3],
+    ['16:9 full compare', canvas, compare, 6, 4],
+    ['9:16 card compare', mobile, { ...compare, mode: 'card' as const }, 6, 4],
   ] as const;
 
   for (const [name, size, flow, boxes, arrows] of cases) {
@@ -126,6 +141,8 @@ describe('flow template', () => {
         expect(await page.locator('svg path.arrow').count()).toBe(arrows * 2);
         expect(await page.locator('svg path.ring').count()).toBe(boxes + (flow.shape === 'cycle' ? 1 : 0));
         expect(await page.locator('.tag').allInnerTexts()).toEqual(flow.shape === 'decision' ? ['Yes', 'No'] : []);
+        const labels = flow.shape === 'lanes' ? flow.lanes : flow.shape === 'compare' ? flow.branches : [];
+        expect(await page.locator('.group-label').allInnerTexts()).toEqual(labels);
       } finally {
         await context.close();
       }

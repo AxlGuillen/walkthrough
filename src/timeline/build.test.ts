@@ -195,11 +195,35 @@ segments:
     expect(buildTimeline(cycle(''), [{ duration: 6.5, words }], options).overlays[0]!.flow!.loop).toBeCloseTo(5.6);
   });
 
+  it('gives lane steps their lane, and tells a comparison before and then after', () => {
+    const build = (flow: string) => buildTimeline(parseTour(`
+title: Flow
+url: https://example.com
+segments:
+  - say: Picks a night, chooses a table, pays, and the host confirms the table.
+    flow:
+${flow}
+`), [{ duration: 6.5, words }], options).overlays[0]!.flow!;
+    const laned = build(`      shape: lanes
+      lanes: [Guest, Host]
+      steps: [{ text: Night, lane: Guest, at: night }, { text: Confirm, lane: Host, at: confirms }]`);
+    expect(laned.lanes).toEqual(['Guest', 'Host']);
+    expect(laned.steps.map(s => s.lane)).toEqual([0, 1]);
+    const compared = build(`      shape: compare
+      before: { label: Before, steps: [{ text: Night, at: night }, { text: Table, at: chooses }] }
+      after: { label: Now, steps: [{ text: Confirm, at: confirms }] }`);
+    expect(compared.branches).toEqual(['Before', 'Now']);
+    expect(compared.steps.map(s => [s.text, s.branch])).toEqual([['Night', 0], ['Table', 0], ['Confirm', 1]]);
+  });
+
   it('rejects shapes without what they need', () => {
     const invalid = (flow: string) => () => parseTour(`title: F\nurl: https://example.com\nsegments:\n  - hold: 3\n    flow: ${flow}\n`);
     expect(invalid('{ shape: decision, steps: [A] }')).toThrow(/two branches/);
     expect(invalid('{ shape: cycle, steps: [A, B] }')).toThrow(/at least 3/);
     expect(invalid('{ steps: [A, B], loop: 1 }')).toThrow(/only a cycle/);
+    expect(invalid('{ shape: lanes, lanes: [A, B], steps: [{ text: X, lane: C }, { text: Y, lane: A }] }')).toThrow(/needs a lane from: A, B/);
+    expect(invalid('{ steps: [{ text: X, lane: A }, Y] }')).toThrow(/only a lanes flow/);
+    expect(invalid('{ shape: compare, before: { label: A, steps: [X] } }')).toThrow(/before and after/);
   });
 
   it('rejects steps whose words come in the wrong order', () => {

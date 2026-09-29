@@ -22,6 +22,20 @@ const decision = (branchLength: number) => ({
   branches: ['Yes', 'No'] as [string, string],
 });
 const cycle = (n: number) => ({ shape: 'cycle' as const, steps: steps(n) });
+const LANES = ['Huésped', 'Venue', 'Host', 'Sistema'];
+const lanes = (n: number, count: number) => ({
+  shape: 'lanes' as const, lanes: LANES.slice(0, count),
+  steps: steps(n).map((step, i) => ({ ...step, lane: i % count })),
+});
+const compare = (before: number, after: number) => ({
+  shape: 'compare' as const, branches: ['Antes', 'Ahora'] as [string, string],
+  steps: [
+    ...Array.from({ length: before }, (_, i) => ({ text: `Paso manual ${i + 1}`, time: i, branch: 0 as const })),
+    ...Array.from({ length: after }, (_, i) => ({ text: `Paso nuevo ${i + 1}`, time: 10 + i, branch: 1 as const })),
+  ],
+});
+const within = (inner: Rect, outer: Rect) =>
+  inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.width <= outer.x + outer.width && inner.y + inner.height <= outer.y + outer.height;
 
 describe('layoutFlow shapes', () => {
   for (const [name, canvas] of [['16:9', desktop], ['9:16', mobile]] as const) {
@@ -29,6 +43,8 @@ describe('layoutFlow shapes', () => {
       const cases = [
         ...[1, 2, 3].map(b => [`decision with a ${b}-step branch`, decision(b)] as const),
         ...[3, 4, 5, 6].map(n => [`cycle of ${n}`, cycle(n)] as const),
+        ...[[2, 2], [4, 3], [6, 3], [6, 4]].map(([n, count]) => [`${n} steps in ${count} lanes`, lanes(n!, count!)] as const),
+        ...[[1, 1], [5, 2], [3, 5], [5, 5]].map(([b, a]) => [`comparison of ${b} and ${a}`, compare(b!, a!)] as const),
       ];
       for (const [label, flow] of cases) {
         it(`${name} ${mode} ${label}: fits on screen, with no box touching another`, () => {
@@ -48,6 +64,29 @@ describe('layoutFlow shapes', () => {
       }
     }
   }
+
+  it('keeps every lane step inside its own band, in narration order', () => {
+    for (const canvas of [desktop, mobile]) {
+      const layout = layoutFlow({ ...lanes(5, 3), mode: 'full' }, canvas);
+      expect(layout.groups.map(g => g.label)).toEqual(['Huésped', 'Venue', 'Host']);
+      layout.boxes.forEach((box, i) => expect(within(box.rect, layout.groups[i % 3]!.rect), `step ${i + 1}`).toBe(true));
+      const along = layout.boxes.map(box => (canvas === desktop ? box.rect.x : box.rect.y));
+      expect([...along].sort((a, b) => a - b)).toEqual(along);
+    }
+  });
+
+  it('sets before and after side by side, the before muted and the after in the accent', () => {
+    for (const canvas of [desktop, mobile]) {
+      const layout = layoutFlow({ ...compare(4, 2), mode: 'full' }, canvas);
+      const [before, after] = layout.groups;
+      expect(after!.rect.x).toBeGreaterThan(before!.rect.x + before!.rect.width);
+      expect([before!.accent, after!.accent]).toEqual([false, true]);
+      layout.boxes.forEach((box, i) => expect(within(box.rect, layout.groups[i < 4 ? 0 : 1]!.rect)).toBe(true));
+      expect(layout.boxes.map(box => box.muted)).toEqual([true, true, true, true, false, false]);
+      expect(layout.boxes.map(box => box.badge)).toEqual(['1', '2', '3', '4', '1', '2']);
+      expect(layout.arrows).toHaveLength(4);
+    }
+  });
 
   it('puts the branches beyond the question: one above and one below it in a row', () => {
     const layout = layoutFlow({ ...decision(2), mode: 'full' }, desktop);

@@ -8,6 +8,10 @@ export interface FlowBox {
   rect: Rect;
   badge: string;
   kind: 'step' | 'decision';
+  // The number beside the text instead of above it: for wide, short boxes.
+  inline: boolean;
+  // The "before" side of a comparison steps back from the "after" one.
+  muted: boolean;
   lines: string[];
   detail: string[];
   truncated: boolean;
@@ -17,6 +21,15 @@ export interface FlowArrow extends FlowEdge {
   shaft: string;
   head: string;
   tag?: { text: string; x: number; y: number; size: number };
+}
+
+// A lane of a lanes flow, or a side of a comparison: a band behind its boxes, with a label.
+export interface FlowGroup {
+  kind: 'lane' | 'side';
+  label: string;
+  rect: Rect;
+  labelAt: { x: number; y: number; size: number };
+  accent: boolean;
 }
 
 export interface FlowLayout {
@@ -29,12 +42,13 @@ export interface FlowLayout {
   pad: number;
   radius: number;
   stroke: number;
+  groups: FlowGroup[];
   boxes: FlowBox[];
   arrows: FlowArrow[];
   rings: string[];
 }
 
-type Input = Pick<TimedFlow, 'shape' | 'mode' | 'title' | 'steps' | 'branches'>;
+type Input = Pick<TimedFlow, 'shape' | 'mode' | 'title' | 'steps' | 'branches' | 'lanes'>;
 type Font = FlowLayout['font'];
 
 // Rough advance of a semibold sans glyph, in ems: layout happens in Node, before any text
@@ -59,7 +73,7 @@ export function layoutFlow(flow: Input, canvas: Size): FlowLayout {
     width: outer.width - 2 * inset,
     height: card ? canvas.height * 0.5 : canvas.height - 12 * u - titleSpace,
   };
-  const ctx: Context = { u, direction, card, pad, space, gap: (card ? 5 : direction === 'row' ? 8 : 6) * u };
+  const ctx: Context = { u, direction, card, pad, space, inline: direction === 'column', gap: (card ? 5 : direction === 'row' ? 8 : 6) * u };
 
   const placed = place(flow, ctx);
   const left = outer.x + (outer.width - placed.width) / 2;
@@ -76,11 +90,17 @@ export function layoutFlow(flow: Input, canvas: Size): FlowLayout {
 
   const badges = badgeTexts(flow);
   const main = mainLength(flow);
+  const shift = (rect: Rect): Rect => ({ ...rect, x: rect.x + left, y: rect.y + top });
   const boxes: FlowBox[] = placed.boxes.map(({ rect, lines, detail, truncated }, i) => ({
-    rect: { ...rect, x: rect.x + left, y: rect.y + top },
+    rect: shift(rect),
     badge: badges[i]!,
     kind: flow.shape === 'decision' && i === main - 1 ? 'decision' : 'step',
+    inline: placed.inline,
+    muted: flow.shape === 'compare' && flow.steps[i]!.branch === 0,
     lines, detail, truncated,
+  }));
+  const groups = (placed.groups ?? []).map(group => ({
+    ...group, rect: shift(group.rect), labelAt: { ...group.labelAt, x: group.labelAt.x + left, y: group.labelAt.y + top },
   }));
   const rects = boxes.map(box => box.rect);
   const arrows = flowEdges(flow).map((edge, i) => arrowFor(edge, i, rects, flow.shape, ctx, placed.font, placed.returnDepth));
@@ -94,7 +114,7 @@ export function layoutFlow(flow: Input, canvas: Size): FlowLayout {
   return {
     canvas, mode: flow.mode, direction, ...(panel ? { panel } : {}),
     ...(flow.title ? { title: { text: flow.title, x: left, y: top - titleSpace, size: titleSize } } : {}),
-    font: placed.font, pad, radius, stroke: 0.35 * u, boxes, arrows, rings,
+    font: placed.font, pad, radius, stroke: 0.35 * u, groups, boxes, arrows, rings,
   };
 }
 
@@ -105,6 +125,7 @@ interface Context {
   pad: number;
   gap: number;
   space: Size;
+  inline: boolean;
 }
 
 interface Measured {
@@ -119,6 +140,8 @@ interface Placed {
   width: number;
   height: number;
   font: Font;
+  inline: boolean;
+  groups?: FlowGroup[];
   // Room under a card cycle's row for the arrow back to the start.
   returnDepth?: number;
 }
@@ -126,6 +149,8 @@ interface Placed {
 function place(flow: Input, ctx: Context): Placed {
   if (flow.shape === 'decision') return placeDecision(flow, ctx);
   if (flow.shape === 'cycle' && !ctx.card) return placeCycle(flow, ctx);
+  if (flow.shape === 'lanes') return placeLanes(flow, ctx);
+  if (flow.shape === 'compare') return placeCompare(flow, ctx);
   const placed = placeLine(flow.steps, ctx);
   if (flow.shape !== 'cycle') return placed;
   const returnDepth = 6 * ctx.u;
@@ -142,8 +167,8 @@ function placeLine(steps: Input['steps'], ctx: Context): Placed {
     ? { x: i * (width + gap), y: 0, width, height }
     : { x: 0, y: i * (height + gap), width, height }, font, ctx));
   return direction === 'row'
-    ? { boxes, width: n * width + (n - 1) * gap, height, font }
-    : { boxes, width, height: n * height + (n - 1) * gap, font };
+    ? { boxes, width: n * width + (n - 1) * gap, height, font, inline: ctx.inline }
+    : { boxes, width, height: n * height + (n - 1) * gap, font, inline: ctx.inline };
 }
 
 // The question sits at the end of the main line; its two branches fan out beyond it, one
@@ -171,7 +196,7 @@ function placeDecision(flow: Input, ctx: Context): Placed {
       const k = branches[step.branch]!.indexOf(step);
       return measured(step, { x: branchX + k * (width + gap), y: step.branch === 0 ? 0 : height + split, width, height }, font, ctx);
     });
-    return { boxes, width: branchX + longest * width + (longest - 1) * gap, height: 2 * height + split, font };
+    return { boxes, width: branchX + longest * width + (longest - 1) * gap, height: 2 * height + split, font, inline: ctx.inline };
   }
 
   const mainWidth = space.width * (card ? 1 : 0.9);
@@ -187,7 +212,7 @@ function placeDecision(flow: Input, ctx: Context): Placed {
     const k = branches[step.branch]!.indexOf(step);
     return measured(step, { x: step.branch * (branchWidth + gap), y: branchY + k * (height + gap), width: branchWidth, height }, font, ctx);
   });
-  return { boxes, width: mainWidth, height: branchY + longest * height + (longest - 1) * gap, font };
+  return { boxes, width: mainWidth, height: branchY + longest * height + (longest - 1) * gap, font, inline: ctx.inline };
 }
 
 // Steps around an ellipse, clockwise from the top. Boxes shrink until no two touch.
@@ -215,30 +240,107 @@ function placeCycle(flow: Input, ctx: Context): Placed {
       const minX = Math.min(...rects.map(r => r.x));
       const minY = Math.min(...rects.map(r => r.y));
       const boxes = flow.steps.map((step, i) => measured(step, { ...rects[i]!, x: rects[i]!.x - minX, y: rects[i]!.y - minY }, font, ctx));
-      return { boxes, width: 2 * rx + width, height: 2 * ry + height, font };
+      return { boxes, width: 2 * rx + width, height: 2 * ry + height, font, inline: ctx.inline };
     }
     width *= 0.92;
   }
 }
 
-function fontFor(width: number, { u, card, direction }: Context): Font {
-  const text = direction === 'row'
-    ? clamp(width * (card ? 0.1 : 0.11), (card ? 1.9 : 2.2) * u, (card ? 2.6 : 3.4) * u)
-    : clamp(width * 0.075, (card ? 2.2 : 2.6) * u, (card ? 2.6 : 3.2) * u);
+// Who does what: one band per lane and one column per step, in narration order, so time
+// reads left to right and the band says who acts. In 9:16 the lanes stand side by side.
+function placeLanes(flow: Input, base: Context): Placed {
+  const ctx = { ...base, inline: false };
+  const { u, direction, card, gap, space } = ctx;
+  const lanes = flow.lanes ?? [];
+  const n = flow.steps.length;
+  const bandPad = 1.6 * u;
+  const bandGap = 0.8 * u;
+  const labelSize = (card ? 1.9 : 2.2) * u;
+  const laneOf = (i: number) => flow.steps[i]!.lane ?? 0;
+
+  if (direction === 'row') {
+    const labelWidth = (card ? 12 : 15) * u;
+    const width = Math.min((card ? 24 : 28) * u, (space.width - labelWidth - (n - 1) * gap) / n);
+    const font = fontFor(width, ctx);
+    const height = uniformHeight(flow.steps.map(step => [step, width] as const), font, ctx);
+    const band = height + 2 * bandPad;
+    const total = labelWidth + n * width + (n - 1) * gap + bandPad;
+    const boxes = flow.steps.map((step, i) => measured(step, {
+      x: labelWidth + i * (width + gap), y: laneOf(i) * (band + bandGap) + bandPad, width, height,
+    }, font, ctx));
+    const groups = lanes.map((label, l): FlowGroup => ({
+      kind: 'lane', label, accent: false,
+      rect: { x: 0, y: l * (band + bandGap), width: total, height: band },
+      labelAt: { x: bandPad, y: l * (band + bandGap) + band / 2 - labelSize * 0.6, size: labelSize },
+    }));
+    return { boxes, width: total, height: lanes.length * band + (lanes.length - 1) * bandGap, font, inline: false, groups };
+  }
+
+  const header = labelSize * 1.2 + 2 * bandPad;
+  const laneWidth = (space.width - (lanes.length - 1) * bandGap) / lanes.length;
+  const width = laneWidth - 2 * bandPad;
+  const font = fontFor(width, ctx);
+  const height = uniformHeight(flow.steps.map(step => [step, width] as const), font, ctx);
+  const total = header + n * height + (n - 1) * gap + bandPad;
+  const boxes = flow.steps.map((step, i) => measured(step, {
+    x: laneOf(i) * (laneWidth + bandGap) + bandPad, y: header + i * (height + gap), width, height,
+  }, font, ctx));
+  const groups = lanes.map((label, l): FlowGroup => ({
+    kind: 'lane', label, accent: false,
+    rect: { x: l * (laneWidth + bandGap), y: 0, width: laneWidth, height: total },
+    labelAt: { x: l * (laneWidth + bandGap) + bandPad, y: bandPad, size: labelSize },
+  }));
+  return { boxes, width: space.width, height: total, font, inline: false, groups };
+}
+
+// Before and after, side by side: each a column of steps under its label.
+function placeCompare(flow: Input, base: Context): Placed {
+  const { u, direction, card, space } = base;
+  const ctx = { ...base, inline: direction === 'row' };
+  const sides = ([0, 1] as const).map(s => flow.steps.flatMap((step, i) => (step.branch === s ? [i] : [])));
+  const longest = Math.max(...sides.map(side => side.length));
+  const between = (direction === 'row' ? 8 : 3) * u;
+  const inner = 2 * u;
+  const column = direction === 'row' ? Math.min((card ? 52 : 62) * u, (space.width - between) / 2) : (space.width - between) / 2;
+  const width = column - 2 * inner;
+  const gap = (direction === 'row' ? 4.5 : 4) * u;
+  const labelSize = (card ? 2.2 : 2.8) * u;
+  const header = labelSize * 1.6 + inner;
+  const font = fontFor(width, ctx);
+  const height = uniformHeight(flow.steps.map(step => [step, width] as const), font, ctx);
+  const total = 2 * inner + header + longest * height + (longest - 1) * gap;
+
+  const boxes = flow.steps.map((step, i) => {
+    const side = step.branch ?? 0;
+    const k = sides[side]!.indexOf(i);
+    return measured(step, { x: side * (column + between) + inner, y: inner + header + k * (height + gap), width, height }, font, ctx);
+  });
+  const groups = ([0, 1] as const).map((s): FlowGroup => ({
+    kind: 'side', label: flow.branches?.[s] ?? '', accent: s === 1,
+    rect: { x: s * (column + between), y: 0, width: column, height: total },
+    labelAt: { x: s * (column + between) + inner, y: inner, size: labelSize },
+  }));
+  return { boxes, width: 2 * column + between, height: total, font, inline: ctx.inline, groups };
+}
+
+function fontFor(width: number, { u, card, inline }: Context): Font {
+  const text = inline
+    ? clamp(width * 0.075, (card ? 2.2 : 2.6) * u, (card ? 2.6 : 3.2) * u)
+    : clamp(width * (card ? 0.1 : 0.11), (card ? 1.9 : 2.2) * u, (card ? 2.6 : 3.4) * u);
   return {
     text, detail: text * 0.72, line: text * 1.22, detailLine: text * 0.72 * 1.35,
     badge: text * 1.5, badgeGap: 1.2 * u, detailGap: 0.6 * u,
   };
 }
 
-// A column puts the number beside the text; a row stacks it above, where there is height.
-function wrap(step: Input['steps'][number], width: number, font: Font, { direction, pad }: Context) {
-  const room = width - 2 * pad - (direction === 'column' ? font.badge + font.badgeGap : 0);
+// Inline boxes put the number beside the text; the others stack it above, where there is height.
+function wrap(step: Input['steps'][number], width: number, font: Font, { inline, pad }: Context) {
+  const room = width - 2 * pad - (inline ? font.badge + font.badgeGap : 0);
   const lines = wrapText(step.text, charsFor(room, font.text), MAX_LINES);
   const detail = step.detail ? wrapText(step.detail, charsFor(room, font.detail), MAX_LINES) : [];
   const truncated = [...lines, ...detail].some(line => line.endsWith('…'));
   const body = lines.length * font.line + (detail.length ? font.detailGap + detail.length * font.detailLine : 0);
-  const height = (direction === 'row' ? font.badge + font.badgeGap + body : Math.max(font.badge, body)) + 2 * pad;
+  const height = (inline ? Math.max(font.badge, body) : font.badge + font.badgeGap + body) + 2 * pad;
   return { lines, detail, truncated, height };
 }
 

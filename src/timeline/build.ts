@@ -28,6 +28,7 @@ export interface TimedFlowStep {
   detail?: string;
   time: number;
   branch?: 0 | 1;
+  lane?: number;
 }
 
 export interface TimedFlow {
@@ -35,7 +36,9 @@ export interface TimedFlow {
   mode: Flow['mode'];
   title?: string;
   steps: TimedFlowStep[];
+  // A decision's branch labels, or a comparison's side labels (before, after).
   branches?: [string, string];
+  lanes?: string[];
   loop?: number;
 }
 
@@ -118,9 +121,10 @@ export function buildTimeline(
       const to = resolve(flow.to, end, 'flow');
       if (to <= from) throw new TimelineError(`${label}: flow ends before it starts`);
 
+      const sides = flow.branches ?? (flow.before && flow.after ? [flow.before, flow.after] as const : []);
       const steps = [
         ...flow.steps.map(step => ({ ...step, branch: undefined })),
-        ...(flow.branches ?? []).flatMap((branch, b) => branch.steps.map(step => ({ ...step, branch: b as 0 | 1 }))),
+        ...sides.flatMap((side, b) => side.steps.map(step => ({ ...step, branch: b as 0 | 1 }))),
       ];
       let lastWord: number | undefined;
       const anchor = (at: Anchor, what: string) => {
@@ -150,10 +154,12 @@ export function buildTimeline(
         src: FLOW_TEMPLATE, params: {}, start: from, end: to, fade: flow.fade, segment: index,
         flow: {
           shape: flow.shape, mode: flow.mode, ...(flow.title ? { title: flow.title } : {}),
-          steps: steps.map(({ text, detail, branch }, i) => ({
+          steps: steps.map(({ text, detail, branch, lane }, i) => ({
             text, ...(detail ? { detail } : {}), time: times[i]!, ...(branch === undefined ? {} : { branch }),
+            ...(lane === undefined || !flow.lanes ? {} : { lane: flow.lanes.indexOf(lane) }),
           })),
-          ...(flow.branches ? { branches: [flow.branches[0].label, flow.branches[1].label] as [string, string] } : {}),
+          ...(sides.length ? { branches: [sides[0]!.label, sides[1]!.label] as [string, string] } : {}),
+          ...(flow.lanes ? { lanes: flow.lanes } : {}),
           ...(loop === undefined ? {} : { loop }),
         },
       });

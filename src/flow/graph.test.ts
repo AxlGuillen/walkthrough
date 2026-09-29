@@ -24,6 +24,12 @@ describe('flow graph', () => {
     ]);
   });
 
+  it('chains each side of a comparison apart, without crossing between them', () => {
+    const comparison = { shape: 'compare' as const, steps: [step('a', 0), step('b', 0), step('c', 1), step('d', 1)] };
+    expect(flowEdges(comparison)).toEqual([{ from: 0, to: 1 }, { from: 2, to: 3 }]);
+    expect(badgeTexts(comparison)).toEqual(['1', '2', '1', '2']);
+  });
+
   it('marks the question and numbers both branches from the same next number', () => {
     expect(badgeTexts(decision)).toEqual(['1', '?', '2', '3', '2']);
     expect(badgeTexts({ shape: 'cycle', steps: [step('a'), step('b'), step('c')] })).toEqual(['1', '2', '3']);

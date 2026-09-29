@@ -101,11 +101,16 @@ export type Overlay = z.infer<typeof overlay>;
 // Connected steps that appear as the narration names them. `at` is the word of each step;
 // without it, steps are spread between their anchored neighbors.
 const flowStep = z.union([
-  z.string().trim().min(1).max(48).transform(text => ({ text, detail: undefined, at: undefined })),
-  z.strictObject({ text: z.string().trim().min(1).max(48), detail: z.string().trim().min(1).max(72).optional(), at: anchor.optional() }),
+  z.string().trim().min(1).max(48).transform(text => ({ text, detail: undefined, lane: undefined, at: undefined })),
+  z.strictObject({
+    text: z.string().trim().min(1).max(48),
+    detail: z.string().trim().min(1).max(72).optional(),
+    lane: z.string().trim().min(1).optional(),
+    at: anchor.optional(),
+  }),
 ]);
 
-export const FLOW_SHAPES = ['linear', 'decision', 'cycle'] as const;
+export const FLOW_SHAPES = ['linear', 'decision', 'cycle', 'lanes', 'compare'] as const;
 
 // A decision's last step is the question; each branch continues from it, and the narration
 // walks the first branch and then the second.
@@ -114,13 +119,23 @@ const flowBranch = z.strictObject({
   steps: z.array(flowStep).min(1).max(3),
 });
 
+// One side of a before/after comparison: the narration tells the whole "before", then the "after".
+const flowSide = z.strictObject({
+  label: z.string().trim().min(1).max(16),
+  steps: z.array(flowStep).min(1).max(5),
+});
+
 const flow = z.strictObject({
   shape: z.enum(FLOW_SHAPES).default('linear'),
   title: z.string().trim().min(1).max(60).optional(),
   // full covers the app, as an interlude; card is a panel over the bottom of the app.
   mode: z.enum(['full', 'card']).default('full'),
-  steps: z.array(flowStep).min(1).max(6),
+  steps: z.array(flowStep).max(6).default([]),
   branches: z.tuple([flowBranch, flowBranch]).optional(),
+  // Who does each step: every step of a lanes flow names one of these in `lane`.
+  lanes: z.array(z.string().trim().min(1).max(20)).min(2).max(4).optional(),
+  before: flowSide.optional(),
+  after: flowSide.optional(),
   // A cycle's closing arrow, back to the first step: a word after the last step, or 0.6s after it.
   loop: anchor.optional(),
   from: anchor.optional(),
@@ -135,6 +150,20 @@ const flow = z.strictObject({
     }
   } else if (flow.branches) {
     issue('only a decision has branches', 'branches');
+  }
+  if (flow.shape === 'lanes') {
+    if (!flow.lanes) issue('a lanes flow needs its lanes', 'lanes');
+    else if (flow.steps.some(step => !step.lane || !flow.lanes!.includes(step.lane))) issue(`every step needs a lane from: ${flow.lanes.join(', ')}`, 'steps');
+    if (flow.steps.length < 2) issue('a lanes flow needs at least 2 steps', 'steps');
+  } else if (flow.lanes || flow.steps.some(step => step.lane)) {
+    issue('only a lanes flow has lanes', 'lanes');
+  }
+  if (flow.shape === 'compare') {
+    if (!flow.before || !flow.after) issue('a comparison needs before and after', 'before');
+    if (flow.steps.length) issue('a comparison has its steps in before and after', 'steps');
+  } else {
+    if (flow.before || flow.after) issue('only a comparison has before and after', 'before');
+    if (flow.steps.length === 0) issue('a flow needs steps', 'steps');
   }
   if (flow.shape === 'linear' && flow.steps.length < 2) issue('a linear flow needs at least 2 steps', 'steps');
   if (flow.shape === 'cycle' && flow.steps.length < 3) issue('a cycle needs at least 3 steps', 'steps');

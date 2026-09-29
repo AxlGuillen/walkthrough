@@ -44,3 +44,29 @@ segments:
         - { text: Construir, at: construimos }
         - { text: Entregar, at: entregamos }
         - { text: Escuchar feedback, at: escuchamos }
+  - say: Cada quien tiene su parte. El huésped elige su mesa, el venue aprueba la reserva, el huésped paga el depósito, y el host prepara la mesa para recibirlo.
+    flow:
+      shape: lanes
+      title: ¿Quién hace qué?
+      lanes: [Huésped, Venue, Host]
+      steps:
+        - { text: Elige su mesa, lane: Huésped, at: elige }
+        - { text: Aprueba la reserva, lane: Venue, at: aprueba }
+        - { text: Paga el depósito, lane: Huésped, at: paga }
+        - { text: Prepara la mesa, lane: Host, at: prepara }
+  - say: Antes, reservar tomaba cuatro pasos. Llamar al venue, esperar su respuesta, mandar una transferencia, y enviar el comprobante. Ahora son dos. Se reserva en línea, y se paga con tarjeta.
+    flow:
+      shape: compare
+      title: Reservar una mesa
+      before:
+        label: Antes
+        steps:
+          - { text: Llamar al venue, at: llamar }
+          - { text: Esperar respuesta, at: esperar }
+          - { text: Mandar transferencia, at: transferencia }
+          - { text: Enviar comprobante, at: comprobante }
+      after:
+        label: Ahora
+        steps:
+          - { text: Reservar en línea, at: línea }
+          - { text: Pagar con tarjeta, at: tarjeta }

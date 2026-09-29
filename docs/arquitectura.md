@@ -202,6 +202,30 @@ overlays:
 - **Lo que no le afecta:** el CSS de la app ni la cámara. Cambiar un overlay solo requiere `render --from=overlays`.
 - **El lienzo** es el video completo (1920×1080 o 1080×1920). La posición la decide el CSS del overlay; los subtítulos ocupan la franja inferior.
 
+## Flujos
+
+Pasos conectados que aparecen cuando la narración los nombra. Reglas de uso y de escritura en `docs/flujos.md`.
+
+```yaml
+- say: El huésped elige una noche, escoge su mesa, paga el depósito, y el host la confirma.
+  flow:
+    title: Cómo se reserva una mesa      # opcional
+    mode: full                           # full (interludio, tapa la app) o card (panel abajo)
+    steps:
+      - { text: Elige una noche, at: noche }
+      - { text: Escoge su mesa, detail: "Sección y consumo mínimo", at: mesa }
+      - Paga el depósito                 # sin `at`: se reparte entre sus vecinos
+      - { text: El host confirma, at: confirma }
+```
+
+- **Es un overlay más.** La timeline lo convierte en un overlay de `templates/overlays/flow.html` con los tiempos de cada paso, así el render, el fade, el montaje y `--from=overlays` funcionan igual.
+- **Tiempos** (`src/timeline/build.ts`): cada `at` se busca en la narración *después* del paso anterior (`findPhrase(…, after)`), así una palabra repetida ancla dos pasos. Los pasos sin `at` se reparten entre sus vecinos anclados (`spreadTimes`), el primero a 0,4 s del inicio y el último a 0,8 s del fin como mínimo. Palabras en desorden detienen el render.
+- **Layout puro** (`src/flow/layout.ts`): en unidades `u` (1/100 del lado corto del lienzo), fila en 16:9 y columna en 9:16. Calcula cajas de alto uniforme, cortes de línea (`wrapText`, con `CHAR_EM` generoso para que el navegador nunca desborde), flechas (`arrowPaths`) y anillos (`sketchRect`) de la capa de efectos. Una prueba en Chrome confirma que ninguna línea sale de su caja.
+- **Coreografía pura** (`src/flow/cues.ts`): la flecha hacia un paso se dibuja en los 0,45 s previos a su palabra (nunca antes de 0,2 s después de la caja anterior), la caja entra con la palabra, un anillo marca el paso activo hasta que llega el siguiente y los anteriores bajan a 50 %.
+- **La plantilla solo pinta.** Recibe `?scene=` con el layout y los tiempos ya en el reloj del overlay; todo se anima con CSS (`animation-delay`), que la sincronía de animaciones congela cuadro a cuadro.
+- **Sonido:** un trazo por flecha y un *pop* por caja, en vez del *pop* único de un overlay.
+- **`check`** avisa de pasos a menos de 0,7 s del anterior y de textos que no caben en su caja.
+
 ## Video dentro de la página
 
 `<video>` tampoco obedece a `page.clock`: corría con el reloj real y en la captura se veía acelerado. La misma sincronía que fija las animaciones CSS lo pausa y lo busca (`currentTime`) al instante exacto de cada cuadro, y espera `seeked` antes del screenshot. Respeta `loop`. Aplica a la app y a los overlays.
@@ -318,9 +342,11 @@ src/
   voice/        VoiceProvider, fish/, cache
   capture/      playwright, session, clock, page-runtime/
   overlays/     transparent rendering
+  flow/         pure: flow layout and cues
   compose/      ffmpeg args, subtitles (ASS), music
 tests/fixtures/ local page for integration tests
 tours/<project>/<tour>.yaml + overlays/ + assets/
+tours/examples/  catálogo de flujos
 .auth/<session>/  .env          ignored by git
 ```
 

@@ -33,6 +33,12 @@ describe('soundEvents', () => {
     expect(sounds.find(e => e.sound === 'scroll')?.duration).toBe(0.8);
   });
 
+  it('sounds a flow step by step: a stroke for each arrow and a pop as each box lands', () => {
+    const flow = { ...overlay(1), flow: { shape: 'linear' as const, mode: 'full' as const, steps: [0, 2, 4].map(time => ({ text: 'Step', time: 1 + time })) } };
+    const sounds = soundEvents([], [flow]).map(e => [e.sound, Number(e.time.toFixed(2))]);
+    expect(sounds).toEqual([['pop', 1], ['draw', 2.55], ['pop', 3], ['draw', 4.55], ['pop', 5]]);
+  });
+
   it('varies clicks and overlays, the same way on every render', () => {
     const clicks = Array.from({ length: 30 }, (_, i): CaptureEvent => ({ kind: 'click', time: i * 1.37 }));
     const variants = soundEvents(clicks, []).map(e => e.variant);

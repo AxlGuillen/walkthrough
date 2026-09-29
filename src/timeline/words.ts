@@ -8,7 +8,8 @@ export function normalizeWord(text: string): string {
     .replace(/[^\p{L}\p{N}]/gu, '');
 }
 
-export function findPhrase(words: readonly Word[], phrase: string): { start: number; end: number } | undefined {
+// `after` skips earlier matches, so a word said twice can anchor two different moments.
+export function findPhrase(words: readonly Word[], phrase: string, after = -Infinity): { start: number; end: number } | undefined {
   const wanted = phrase.split(/\s+/).map(normalizeWord).filter(Boolean);
   const spoken = words
     .map(word => ({ word, key: normalizeWord(word.text) }))
@@ -16,7 +17,7 @@ export function findPhrase(words: readonly Word[], phrase: string): { start: num
   if (wanted.length === 0) return undefined;
 
   for (let i = 0; i + wanted.length <= spoken.length; i++) {
-    if (wanted.every((key, j) => spoken[i + j]!.key === key)) {
+    if (spoken[i]!.word.start > after && wanted.every((key, j) => spoken[i + j]!.key === key)) {
       return { start: spoken[i]!.word.start, end: spoken[i + wanted.length - 1]!.word.end };
     }
   }

@@ -6,6 +6,7 @@ import { chromium, type Page } from 'playwright-core';
 import { installClock } from '../capture/clock.ts';
 import { startEncoder } from '../capture/encoder.ts';
 import { frameCount } from '../capture/schedule.ts';
+import { overlayParams } from '../flow/scene.ts';
 import type { Size } from '../timeline/camera.ts';
 import type { TimedOverlay } from '../timeline/build.ts';
 
@@ -68,7 +69,7 @@ export async function renderOverlays({
         const page = await context.newPage();
         const clock = await installClock(page);
         // Loaded with the clock frozen, not through settle(): nothing may run before frame 0.
-        await page.goto(overlayUrl(source, tourDir, overlay.params, accent));
+        await page.goto(overlayUrl(source, tourDir, overlayParams(overlay, canvas), accent));
         await mediaReady(page);
 
         const total = frameCount(overlay.end - overlay.start, fps);

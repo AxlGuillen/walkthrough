@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseTour } from '../tour/load.ts';
-import { buildTimeline, TimelineError } from './build.ts';
+import { buildTimeline, spreadTimes, TimelineError } from './build.ts';
 
 const options = { leadIn: 0.5, tailOut: 0.5 };
 
@@ -116,5 +116,66 @@ segments:
 
   it('fails when a spoken segment has no speech', () => {
     expect(() => buildTimeline(tour, [], options)).toThrow(/segment 1: missing speech/);
+  });
+});
+
+describe('flows', () => {
+  const words = ['Picks', 'a', 'night,', 'chooses', 'a', 'table,', 'pays,', 'and', 'the', 'host', 'confirms', 'the', 'table.']
+    .map((text, i) => ({ text, start: i * 0.5, end: i * 0.5 + 0.4 }));
+  const flowTour = (steps: string) => parseTour(`
+title: Flow
+url: https://example.com
+segments:
+  - say: Picks a night, chooses a table, pays, and the host confirms the table.
+    flow:
+      title: Booking
+      steps:
+${steps}
+`);
+  const build = (steps: string) => buildTimeline(flowTour(steps), [{ duration: 6.5, words }], options);
+
+  it('becomes a flow overlay whose steps appear on their words', () => {
+    const [overlay] = build(`        - { text: Night, at: picks }
+        - { text: Table, detail: Pick a section, at: table }
+        - { text: Confirmed, at: confirms }`).overlays;
+    expect(overlay).toMatchObject({ src: 'flow.html', start: 0, end: 7.5, fade: 0.3 });
+    expect(overlay!.flow).toEqual({
+      shape: 'linear', mode: 'full', title: 'Booking',
+      steps: [{ text: 'Night', time: 0.5 }, { text: 'Table', detail: 'Pick a section', time: 3 }, { text: 'Confirmed', time: 5.5 }],
+    });
+  });
+
+  it('looks for each word after the step above it, so a repeated word anchors a later step', () => {
+    const [overlay] = build(`        - { text: Table, at: table }
+        - { text: Host, at: host }
+        - { text: Same table, at: table }`).overlays;
+    expect(overlay!.flow!.steps.map(s => s.time)).toEqual([3, 5, 6.5]);
+  });
+
+  it('spreads steps without a word between their neighbors', () => {
+    const [overlay] = build(`        - Night
+        - { text: Table, at: table }
+        - Pay
+        - { text: Confirmed, at: confirms }`).overlays;
+    expect(overlay!.flow!.steps.map(s => s.time)).toEqual([0.4, 3, 4.25, 5.5]);
+  });
+
+  it('rejects steps whose words come in the wrong order', () => {
+    expect(() => build(`        - { text: Host, at: host }
+        - { text: Night, at: night }`)).toThrow(TimelineError);
+  });
+});
+
+describe('spreadTimes', () => {
+  it('fills free steps evenly, from the first slot to the last', () => {
+    expect(spreadTimes([undefined, undefined, undefined, undefined], 1, 4)).toEqual([1, 2, 3, 4]);
+    expect(spreadTimes([2, undefined, undefined, 8], 0, 10)).toEqual([2, 4, 6, 8]);
+    expect(spreadTimes([undefined, 5, undefined], 1, 8)).toEqual([1, 5, 8]);
+  });
+
+  it('keeps free steps apart even when the bounds leave no room', () => {
+    const times = spreadTimes([5, undefined, undefined], 0, 5);
+    expect(times[1]! - times[0]!).toBeCloseTo(0.6);
+    expect(times[2]! - times[1]!).toBeCloseTo(0.6);
   });
 });

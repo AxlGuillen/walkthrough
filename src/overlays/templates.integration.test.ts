@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { flowScene } from '../flow/scene.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
 import { overlayFile, overlayUrl, renderOverlays, TEMPLATES_DIR } from './render.ts';
@@ -71,3 +72,44 @@ describe('overlay templates', () => {
     }
   }, 120_000);
 });
+
+describe('flow template', () => {
+  const flow = {
+    shape: 'linear' as const, mode: 'full' as const, title: 'How a booking works',
+    steps: ['Pick a night', 'Choose a table', 'Pay the deposit', 'Host confirms the table', 'Guest arrives'].map((text, i) => ({
+      text, time: 1 + i, ...(i === 1 ? { detail: 'Sections, capacity and minimum spend' } : {}),
+    })),
+  };
+
+  for (const [name, size, mode] of [['16:9', canvas, 'full'], ['9:16', { width: 1080, height: 1920 }, 'card']] as const) {
+    it(`${name} ${mode}: paints every box where the layout says, with no line wider than its box`, async () => {
+      const scene = flowScene({ ...flow, mode }, 1, size);
+      const context = await browser.newContext({ viewport: size });
+      try {
+        const page = await context.newPage();
+        await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'flow.html'), tourDir, { scene: JSON.stringify(scene) }));
+        // Measured at rest: the entrance scales each box a little.
+        await page.evaluate(async () => { await document.fonts.ready; for (const animation of document.getAnimations()) animation.finish(); });
+        const painted = await page.evaluate(() => [...document.querySelectorAll('.box')].map(box => {
+          const rect = box.getBoundingClientRect();
+          const lines = [...box.querySelectorAll('span')].map(span => span.getBoundingClientRect());
+          return {
+            x: rect.x, width: rect.width, height: rect.height,
+            overflow: Math.max(0, ...lines.map(line => line.right - rect.right), ...lines.map(line => line.bottom - rect.bottom)),
+          };
+        }));
+        expect(painted).toHaveLength(5);
+        for (const [i, box] of painted.entries()) {
+          expect(box.x, `box ${i + 1}`).toBeCloseTo(scene.layout.boxes[i]!.rect.x, 0);
+          expect(box.height).toBeCloseTo(scene.layout.boxes[i]!.rect.height, 0);
+          expect(box.overflow, `box ${i + 1} overflows`).toBe(0);
+        }
+        expect(await page.locator('svg path.arrow').count()).toBe(8);
+        expect(await page.locator('svg path.ring').count()).toBe(5);
+      } finally {
+        await context.close();
+      }
+    }, 60_000);
+  }
+});
+

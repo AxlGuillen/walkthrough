@@ -2,6 +2,7 @@ import type { CaptureEvent } from '../capture/events.ts';
 import { TYPING_RATE } from '../capture/schedule.ts';
 import { random } from '../effects/sketch.ts';
 import { TIMING } from '../effects/scene.ts';
+import { flowCues } from '../flow/cues.ts';
 import type { Timeline, TimedOverlay } from '../timeline/build.ts';
 import type { Sound } from './sounds.ts';
 
@@ -91,7 +92,17 @@ export function soundEvents(
         break;
     }
   }
-  overlays.forEach((overlay, i) => events.push({ sound: 'pop', time: overlay.start, variant: i % POPS.length }));
+  overlays.forEach((overlay, i) => {
+    if (!overlay.flow) {
+      events.push({ sound: 'pop', time: overlay.start, variant: i % POPS.length });
+      return;
+    }
+    // A flow sounds step by step: the arrow's stroke, then the box landing on its word.
+    flowCues(overlay.flow.steps.map(step => step.time)).forEach((cue, step) => {
+      if (cue.arrow) events.push({ sound: 'draw', time: cue.arrow.start, variant: 0 });
+      events.push({ sound: 'pop', time: cue.enter, variant: step % POPS.length });
+    });
+  });
   return events.filter(e => !mute.includes(e.sound)).sort((a, b) => a.time - b.time);
 }
 

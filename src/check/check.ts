@@ -4,7 +4,9 @@ import { looksLikeLogin, openContext } from '../capture/session.ts';
 import { dismissDialogs, installSetup } from '../capture/setup.ts';
 import { dataDependent, suggest } from '../inspect/selectors.ts';
 import { snapshotPage } from '../inspect/snapshot.ts';
+import { layoutFlow } from '../flow/layout.ts';
 import { resolveOverlay } from '../overlays/render.ts';
+import type { Size } from '../timeline/camera.ts';
 import type { Timeline, TimedAction } from '../timeline/build.ts';
 import type { Tour } from '../tour/schema.ts';
 import { selectorOf, worst, type CheckItem, type Status } from './report.ts';
@@ -22,6 +24,24 @@ export function checkOverlays(tourDir: string, timeline: Timeline): CheckItem[] 
       time: overlay.start, label: `overlay ${overlay.src}`, status: found ? 'ok' : 'fail',
       notes: found ? [] : ['not found in the tour folder or templates/overlays'],
     };
+  });
+}
+
+// Below this, a step is gone before anyone can read it.
+export const MIN_STEP_GAP = 0.7;
+
+export function checkFlows(timeline: Timeline, canvas: Size): CheckItem[] {
+  return timeline.overlays.flatMap(({ flow, start }) => {
+    if (!flow) return [];
+    const notes: string[] = [];
+    flow.steps.forEach((step, i) => {
+      const gap = i > 0 ? step.time - flow.steps[i - 1]!.time : Infinity;
+      if (gap < MIN_STEP_GAP) notes.push(`"${step.text}" comes ${gap.toFixed(2)}s after the step before: too fast to read; say more between them`);
+    });
+    layoutFlow(flow, canvas).boxes.forEach((box, i) => {
+      if (box.truncated) notes.push(`"${flow.steps[i]!.text}" does not fit its box and gets cut; shorten it or move words to detail`);
+    });
+    return [{ time: start, label: `flow (${flow.steps.length} steps)`, status: notes.length ? 'warn' : 'ok', notes }];
   });
 }
 

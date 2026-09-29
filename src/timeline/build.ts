@@ -1,4 +1,4 @@
-import type { Action, Anchor, Tour } from '../tour/schema.ts';
+import type { Action, Anchor, Flow, Tour } from '../tour/schema.ts';
 import type { SpeechTiming, Word } from '../voice/types.ts';
 import { findPhrase } from './words.ts';
 
@@ -22,6 +22,19 @@ export interface TimedAction {
   action: Action;
 }
 
+export interface TimedFlowStep {
+  text: string;
+  detail?: string;
+  time: number;
+}
+
+export interface TimedFlow {
+  shape: Flow['shape'];
+  mode: Flow['mode'];
+  title?: string;
+  steps: TimedFlowStep[];
+}
+
 export interface TimedOverlay {
   src: string;
   params: Record<string, string>;
@@ -29,7 +42,13 @@ export interface TimedOverlay {
   end: number;
   fade: number;
   segment: number;
+  flow?: TimedFlow;
 }
+
+export const FLOW_TEMPLATE = 'flow.html';
+// Room for the flow to fade in before its first step, and for the last one to be read.
+const FLOW_FIRST_STEP = 0.4;
+const FLOW_LAST_READ = 0.8;
 
 export interface Timeline {
   duration: number;
@@ -61,8 +80,8 @@ export function buildTimeline(
     const end = start + length;
     const speechStart = spoken ? start + leadIn : null;
 
-    const locate = (phrase: string, what: string) => {
-      const match = spoken && findPhrase(spoken.words, phrase);
+    const locate = (phrase: string, what: string, after?: number) => {
+      const match = spoken && findPhrase(spoken.words, phrase, after);
       if (!match) throw new TimelineError(`${label}: ${what} "${phrase}" is not in the narration`);
       return match;
     };
@@ -88,6 +107,39 @@ export function buildTimeline(
       timeline.overlays.push({ src: overlay.src, params: overlay.params, start: from, end: to, fade: overlay.fade, segment: index });
     }
 
+    if (segment.flow) {
+      const flow = segment.flow;
+      const from = resolve(flow.from, start, 'flow');
+      const to = resolve(flow.to, end, 'flow');
+      if (to <= from) throw new TimelineError(`${label}: flow ends before it starts`);
+
+      let lastWord: number | undefined;
+      const anchored = flow.steps.map(({ at, text }) => {
+        if (at === undefined) return undefined;
+        if (typeof at === 'number') return resolve(at, start, `flow step "${text}"`);
+        const match = locate(at, `flow step "${text}"`, lastWord);
+        lastWord = match.start;
+        return resolve(leadIn + match.start, start, `flow step "${text}"`);
+      });
+      const speechEnd = spoken && speechStart !== null ? speechStart + spoken.duration : to;
+      const times = spreadTimes(anchored, from + FLOW_FIRST_STEP, Math.min(speechEnd, to - FLOW_LAST_READ));
+      times.forEach((time, i) => {
+        const text = flow.steps[i]!.text;
+        if (time < from || time >= to) throw new TimelineError(`${label}: flow step "${text}" falls outside the flow`);
+        if (i > 0 && time <= times[i - 1]!) {
+          throw new TimelineError(`${label}: flow step "${text}" comes before the step above it; its word is said earlier`);
+        }
+      });
+
+      timeline.overlays.push({
+        src: FLOW_TEMPLATE, params: {}, start: from, end: to, fade: flow.fade, segment: index,
+        flow: {
+          shape: flow.shape, mode: flow.mode, ...(flow.title ? { title: flow.title } : {}),
+          steps: flow.steps.map(({ text, detail }, i) => ({ text, ...(detail ? { detail } : {}), time: times[i]! })),
+        },
+      });
+    }
+
     if (spoken && speechStart !== null) {
       timeline.words.push(...spoken.words.map(word => ({
         text: word.text,
@@ -101,4 +153,31 @@ export function buildTimeline(
   });
 
   return timeline;
+}
+
+const SPREAD_MIN = 0.6;
+
+// Fills the gaps between anchored times evenly; leading and trailing gaps run from `first`
+// and to `last`, which bound the steps nothing anchors.
+export function spreadTimes(anchored: readonly (number | undefined)[], first: number, last: number): number[] {
+  const times = [...anchored];
+  let i = 0;
+  while (i < times.length) {
+    if (times[i] !== undefined) { i++; continue; }
+    let j = i;
+    while (j < times.length && times[j] === undefined) j++;
+    const before = i > 0 ? times[i - 1]! : undefined;
+    const after = j < times.length ? times[j]! : undefined;
+    const count = j - i;
+    const lo = before ?? (after === undefined ? first : Math.min(first, after - SPREAD_MIN * count));
+    const hi = after ?? Math.max(last, lo + SPREAD_MIN * (count - (before === undefined ? 1 : 0)));
+    // Open at an anchored end, closed at a free one: a free first step lands on `first`.
+    const slots = count + (before === undefined ? 0 : 1) + (after === undefined ? 0 : 1) - 1;
+    for (let k = i; k < j; k++) {
+      const position = k - i + (before === undefined ? 0 : 1);
+      times[k] = slots <= 0 ? lo : lo + ((hi - lo) * position) / slots;
+    }
+    i = j;
+  }
+  return times as number[];
 }

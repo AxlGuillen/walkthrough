@@ -98,11 +98,33 @@ const overlay = z.strictObject({
 });
 export type Overlay = z.infer<typeof overlay>;
 
+// Connected steps that appear as the narration names them. `at` is the word of each step;
+// without it, steps are spread between their anchored neighbors.
+const flowStep = z.union([
+  z.string().trim().min(1).max(48).transform(text => ({ text, detail: undefined, at: undefined })),
+  z.strictObject({ text: z.string().trim().min(1).max(48), detail: z.string().trim().min(1).max(72).optional(), at: anchor.optional() }),
+]);
+
+export const FLOW_SHAPES = ['linear'] as const;
+
+const flow = z.strictObject({
+  shape: z.enum(FLOW_SHAPES).default('linear'),
+  title: z.string().trim().min(1).max(60).optional(),
+  // full covers the app, as an interlude; card is a panel over the bottom of the app.
+  mode: z.enum(['full', 'card']).default('full'),
+  steps: z.array(flowStep).min(2).max(6),
+  from: anchor.optional(),
+  to: anchor.optional(),
+  fade: z.number().nonnegative().default(0.3),
+});
+export type Flow = z.infer<typeof flow>;
+
 const segment = z.strictObject({
   say: z.string().trim().min(1).optional(),
   hold: z.number().positive().optional(),
   do: z.array(action).default([]),
   overlays: z.array(overlay).default([]),
+  flow: flow.optional(),
 }).refine(s => s.say !== undefined || s.hold !== undefined, {
   message: 'a segment without "say" needs "hold"',
 });

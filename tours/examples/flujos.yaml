@@ -1,0 +1,21 @@
+title: Catálogo de flujos
+url: about:blank
+accent: "#7C5CFF"
+# Muestra de las formas de flujo (docs/flujos.md). Sin app detrás: solo los flujos.
+segments:
+  - say: Así funciona una reserva. El huésped elige una noche, escoge su mesa, paga el depósito, y el host la confirma antes de que llegue.
+    flow:
+      title: Cómo se reserva una mesa
+      steps:
+        - { text: Elige una noche, at: noche }
+        - { text: Escoge su mesa, detail: "Sección, capacidad y consumo mínimo", at: mesa }
+        - { text: Paga el depósito, at: depósito }
+        - { text: El host confirma, at: confirma }
+  - say: En una tarjeta sobre la app, el flujo acompaña a lo que se ve. Se crea el ticket, se asigna, y se entrega.
+    flow:
+      mode: card
+      title: Vida de un ticket
+      steps:
+        - { text: Se crea, at: crea }
+        - { text: Se asigna, at: asigna }
+        - { text: Se entrega, at: entrega }

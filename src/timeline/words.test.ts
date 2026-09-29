@@ -30,9 +30,10 @@ describe('findPhrase', () => {
     expect(findPhrase(words, 'tarjeta con su')).toEqual({ start: 0.7, end: 1.6 });
   });
 
-  it('returns the first occurrence', () => {
+  it('returns the first occurrence, or the first after a given time', () => {
     const repeated = [...words, { text: 'tarjeta', start: 3, end: 3.4 }];
     expect(findPhrase(repeated, 'tarjeta')?.start).toBe(0.7);
+    expect(findPhrase(repeated, 'tarjeta', 0.7)?.start).toBe(3);
   });
 
   it('returns undefined when the phrase is missing or empty', () => {

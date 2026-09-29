@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<style>
+  /* Geometry and timing come from Node (src/flow/) in ?scene=; this page only paints them. */
+  body.full { background: radial-gradient(120vmax 90vmax at 20% 10%, #2a1d63 0%, #120d26 55%, #09070f 100%); }
+  .abs { position: absolute; box-sizing: border-box; }
+  .card-panel { animation: rise 500ms var(--ease) both; }
+  .title { font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; white-space: nowrap; animation: rise 600ms var(--ease) 100ms both; }
+  body.card .title { font-weight: 700; letter-spacing: 0; color: var(--muted); }
+  .box { background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 1.2vmin 3vmin rgba(0, 0, 0, 0.3);
+    display: flex; }
+  .box.row { flex-direction: column; }
+  .box.column { flex-direction: row; align-items: center; }
+  .badge { flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800;
+    font-variant-numeric: tabular-nums; }
+  .text { font-weight: 650; }
+  .text span, .detail span { display: block; white-space: nowrap; }
+  .detail { color: var(--muted); font-weight: 500; }
+  svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  svg path { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+  .arrow { stroke: rgba(255, 255, 255, 0.78); }
+  .ring { stroke: var(--accent); }
+  @keyframes enter { from { opacity: 0; transform: translateY(1.5vmin) scale(0.96); } to { opacity: 1; transform: none; } }
+  @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  @keyframes vanish { to { opacity: 0; } }
+  @keyframes dim { to { opacity: 0.5; } }
+</style>
+</head>
+<body>
+  <script src="params.js"></script>
+  <script>
+    const { layout, cues } = JSON.parse(param('scene', '{}'));
+    const px = n => `${n}px`;
+    const s = n => `${Math.max(0, n)}s`;
+    const el = (tag, className, parent = document.body) => {
+      const node = document.createElement(tag);
+      if (className) node.className = className;
+      parent.append(node);
+      return node;
+    };
+    const place = (node, { x, y, width, height }) => Object.assign(node.style, { left: px(x), top: px(y), width: px(width), height: px(height) });
+    document.body.classList.add(layout.mode);
+
+    if (layout.panel) {
+      const panel = el('div', 'abs panel card-panel');
+      place(panel, layout.panel);
+    }
+    if (layout.title) {
+      const title = el('div', 'abs title');
+      Object.assign(title.style, { left: px(layout.title.x), top: px(layout.title.y), fontSize: px(layout.title.size) });
+      title.textContent = layout.title.text;
+    }
+
+    const { font, pad, radius } = layout;
+    layout.boxes.forEach((box, i) => {
+      const cue = cues[i];
+      const node = el('div', `abs box ${layout.direction}`);
+      place(node, box.rect);
+      Object.assign(node.style, { padding: px(pad), borderRadius: px(radius) });
+      node.style.animation = [`enter 450ms var(--ease) ${s(cue.enter)} both`, ...(cue.dim === undefined ? [] : [`dim 350ms ease ${s(cue.dim)} forwards`])].join(', ');
+
+      const badge = el('div', 'badge', node);
+      Object.assign(badge.style, { width: px(font.badge), height: px(font.badge), fontSize: px(font.text * 0.8) });
+      badge.textContent = String(i + 1);
+      badge.style[layout.direction === 'row' ? 'marginBottom' : 'marginRight'] = px(font.badgeGap);
+
+      const body = el('div', '', node);
+      const text = el('div', 'text', body);
+      Object.assign(text.style, { fontSize: px(font.text), lineHeight: px(font.line) });
+      for (const line of box.lines) el('span', '', text).textContent = line;
+      if (box.detail.length) {
+        const detail = el('div', 'detail', body);
+        Object.assign(detail.style, { fontSize: px(font.detail), lineHeight: px(font.detailLine), marginTop: px(font.detailGap) });
+        for (const line of box.detail) el('span', '', detail).textContent = line;
+      }
+    });
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    document.body.append(svg);
+    const path = (d, className, width, animation) => {
+      const node = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      node.setAttribute('d', d);
+      node.setAttribute('pathLength', '1');
+      node.setAttribute('class', className);
+      node.style.strokeWidth = px(width);
+      node.style.animation = animation;
+      svg.append(node);
+    };
+    layout.arrows.forEach(({ shaft, head }, i) => {
+      const { start, duration } = cues[i + 1].arrow;
+      path(shaft, 'arrow', layout.stroke, `draw ${s(duration * 0.8)} ease-in-out ${s(start)} both`);
+      path(head, 'arrow', layout.stroke, `draw ${s(duration * 0.2)} linear ${s(start + duration * 0.8)} both`);
+    });
+    layout.rings.forEach((d, i) => {
+      const cue = cues[i];
+      path(d, 'ring', layout.stroke, [`draw 500ms ease-out ${s(cue.ringIn)} both`, ...(cue.ringOut === undefined ? [] : [`vanish 250ms linear ${s(cue.ringOut)} forwards`])].join(', '));
+    });
+  </script>
+</body>
+</html>

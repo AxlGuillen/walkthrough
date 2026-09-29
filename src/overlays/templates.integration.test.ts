@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { chromium } from 'playwright-core';
+import { chromium, type Browser } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
@@ -12,11 +12,16 @@ const ROOT = path.resolve(import.meta.dirname, '../..');
 const tourDir = path.join(ROOT, 'tests/fixtures/overlay');
 const canvas = { width: 1920, height: 1080 };
 let dir: string;
+let browser: Browser;
 beforeAll(async () => {
+  browser = await chromium.launch({ channel: 'chrome' });
   dir = await mkdtemp(path.join(tmpdir(), 'templates-'));
   execFileSync('ffmpeg', ['-y', '-v', 'error', '-f', 'lavfi', '-i', 'color=c=red:s=64x64:d=1', '-frames:v', '1', path.join(dir, 'before.png')]);
 });
-afterAll(async () => { await rm(dir, { recursive: true, force: true }); });
+afterAll(async () => {
+  await browser.close();
+  await rm(dir, { recursive: true, force: true });
+});
 
 const templates: [string, Record<string, string>][] = [
   ['lower-third.html', { title: 'uws-tasks', subtitle: 'Recorrido' }],
@@ -29,9 +34,9 @@ const templates: [string, Record<string, string>][] = [
 
 describe('overlay templates', () => {
   it('fill their params, take the tour accent and load images from the tour folder', async () => {
-    const browser = await chromium.launch({ channel: 'chrome' });
+    const context = await browser.newContext({ viewport: canvas });
     try {
-      const page = await browser.newPage({ viewport: canvas });
+      const page = await context.newPage();
       await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'chapter.html'), tourDir, { index: '2', total: '6', label: 'Board', position: 'top-left' }, '#00AA88'));
       expect(await page.locator('.pill').innerText()).toMatch(/2\s*\/\s*6\s*Board/);
       expect(await page.locator('.pill').getAttribute('class')).toContain('top-left');
@@ -45,7 +50,7 @@ describe('overlay templates', () => {
       expect(await page.evaluate(() => [...document.images].map(image => image.naturalWidth))).toEqual([64, 64]);
       expect(await page.locator('figcaption').allInnerTexts()).toEqual(['Antes', 'Después']);
     } finally {
-      await browser.close();
+      await context.close();
     }
   }, 60_000);
 

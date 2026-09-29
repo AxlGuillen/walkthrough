@@ -3,7 +3,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { chromium } from 'playwright-core';
+import { chromium, type Browser } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
@@ -15,15 +15,25 @@ import { layoutLabel } from '../effects/label.ts';
 const ROOT = path.resolve(import.meta.dirname, '../..');
 const fixture = (name: string) => pathToFileURL(path.join(ROOT, 'tests/fixtures', name, 'index.html')).href;
 
+// One browser for the whole file, launched in a hook: under parallel suites, launching and
+// closing Chrome took up to 11s and 9s, and paying that twice inside a test ate its budget.
 let dir: string;
-beforeAll(async () => { dir = await mkdtemp(path.join(tmpdir(), 'capture-')); });
-afterAll(async () => { await rm(dir, { recursive: true, force: true }); });
+let browser: Browser;
+beforeAll(async () => {
+  dir = await mkdtemp(path.join(tmpdir(), 'capture-'));
+  browser = await chromium.launch({ channel: 'chrome' });
+});
+afterAll(async () => {
+  await browser.close();
+  await rm(dir, { recursive: true, force: true });
+});
 
 describe('virtual clock', () => {
+  // A fresh context per run: each one gets its own page clock.
   async function positions(delay: () => number) {
-    const browser = await chromium.launch({ channel: 'chrome' });
+    const context = await browser.newContext({ viewport: { width: 800, height: 300 } });
     try {
-      const page = await browser.newPage({ viewport: { width: 800, height: 300 } });
+      const page = await context.newPage();
       const clock = await installClock(page);
       // Loaded frozen, not through settle(): settling runs on wall time, which is the
       // point for real apps but would make the starting state differ between runs.
@@ -41,7 +51,7 @@ describe('virtual clock', () => {
       }
       return samples;
     } finally {
-      await browser.close();
+      await context.close();
     }
   }
 
@@ -166,13 +176,13 @@ segments:
 });
 
 async function layout(url: string, selectors: string[]) {
-  const browser = await chromium.launch({ channel: 'chrome' });
+  const context = await browser.newContext({ viewport: deviceProfile('desktop').viewport });
   try {
-    const page = await browser.newPage({ viewport: deviceProfile('desktop').viewport });
+    const page = await context.newPage();
     await page.goto(url);
     return Object.fromEntries(await Promise.all(selectors.map(async s => [s, (await page.locator(s).boundingBox())!] as const)));
   } finally {
-    await browser.close();
+    await context.close();
   }
 }
 

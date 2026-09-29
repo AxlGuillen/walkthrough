@@ -67,7 +67,12 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
     }
     case 'highlight': {
       const box = await visibleBox(page.locator(action.on).first(), `highlight target "${action.on}"`);
-      effects.rings.push({ time: stage.time, rect: box, hold: action.duration ?? TIMING.ringHold, seed, track: action.on });
+      const radius = await page.locator(action.on).first()
+        .evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0).catch(() => undefined);
+      effects.rings.push({
+        time: stage.time, rect: box, hold: action.duration ?? TIMING.ringHold, seed, track: action.on,
+        ...(radius === undefined ? {} : { radius }),
+      });
       log.push({ kind: 'ring', time: stage.time });
       return;
     }

@@ -49,18 +49,30 @@ export function sketchCircle(center: Point, radius: number, seed: number): strin
   return smoothPath(points);
 }
 
+// The wobble pushes each point along the outline's normal, so the gap to the element stays
+// even: independent x/y noise used to shear whole edges and read as a misaligned ring.
 export function sketchRect(rect: Rect, seed: number, corner = 10): string {
   const next = random(seed);
   const start = next();
   const turns = 1.05 + next() * 0.04;
-  const [noiseX, noiseY] = [wobble(seed + 1), wobble(seed + 2)];
-  const amplitude = Math.min(2.5, Math.min(rect.width, rect.height) * 0.04);
+  const noise = wobble(seed + 1);
+  const amplitude = Math.min(1.5, Math.min(rect.width, rect.height) * 0.03);
+  const radius = Math.min(corner, rect.width / 2, rect.height / 2);
+  const perimeter = 2 * (rect.width + rect.height);
 
   const points: Point[] = [];
   for (let i = 0; i <= SAMPLES * 2; i++) {
     const u = (i / (SAMPLES * 2)) * turns;
-    const p = roundedRectPoint(rect, Math.min(corner, rect.width / 2, rect.height / 2), (start + u) % 1);
-    points.push({ x: p.x + amplitude * noiseX(u), y: p.y + amplitude * noiseY(u) });
+    const f = (start + u) % 1;
+    const p = roundedRectPoint(rect, radius, f);
+    const step = 1 / perimeter;
+    const a = roundedRectPoint(rect, radius, (f - step + 1) % 1);
+    const b = roundedRectPoint(rect, radius, (f + step) % 1);
+    const length = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    // Clockwise outline: the outward normal is the tangent turned left.
+    const normal = { x: (b.y - a.y) / length, y: -(b.x - a.x) / length };
+    const offset = amplitude * noise(u);
+    points.push({ x: p.x + normal.x * offset, y: p.y + normal.y * offset });
   }
   return smoothPath(points);
 }

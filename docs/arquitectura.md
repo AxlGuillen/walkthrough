@@ -213,7 +213,7 @@ Una sola pasada de ffmpeg, ejecutada desde la carpeta de trabajo del tour con ru
 - **Video:** `capture.mp4` + subtítulos karaoke (`subs.ass`) quemados con libass.
 - **Karaoke:** líneas de hasta 3 palabras; una pausa de más de 0,5 s abre línea nueva. Cada palabra pasa de blanco al `accent` mientras se dice, y `{\k}` dura hasta que empieza la siguiente. En vertical la letra es más grande y más alta, para no quedar bajo la interfaz de las redes. Se desactivan con `subtitles: none`.
 - **Voz:** cada clip entra con `adelay` en el `speechStart` de su segmento.
-- **Música opcional** (`music: { track, volume }`, ruta relativa a la carpeta del tour; `volume` 0,055 por defecto, que deja la música unos 12 dB bajo la voz en las pausas): en loop, con fade de entrada y salida y ducking con `sidechaincompress` bajo la voz.
+- **Música opcional** (`music: { track, volume }`, ruta relativa a la carpeta del tour; `volume` 0,04 por defecto, que deja la música unos 15 dB bajo la voz en las pausas): en loop, con fade de entrada y salida y ducking con `sidechaincompress` bajo la voz.
 - **Efectos de sonido** (`sfx: true | false | { volume, mute: [...] }`), todos sintetizados con ffmpeg (`aevalsrc`, `anoisesrc` con semilla fija): sin licencias, sin archivos y sonando igual en cada render. Entran después del ducking, así que no bajan la música.
 
   | Sonido | Cuándo |

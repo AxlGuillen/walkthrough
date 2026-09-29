@@ -59,6 +59,8 @@ export interface Ring {
   rect: Rect;
   hold: number;
   seed: number;
+  // The element's own corner radius, so the ring's corners run parallel to it.
+  radius?: number;
   track?: string;
 }
 
@@ -136,7 +138,7 @@ export function sceneAt(time: number, plan: EffectsPlan): Scene {
   }
   for (const ring of plan.rings) {
     const phase = strokePhase(time, ring.time, TIMING.ringDraw, ring.hold);
-    if (phase) strokes.push({ d: sketchRect(pad(ring.rect, RING_PADDING), ring.seed), ...phase });
+    if (phase) strokes.push({ d: ringPath(ring, plan.viewport), ...phase });
   }
   const bubbles: Bubble[] = [];
   for (const label of plan.labels) {
@@ -192,6 +194,21 @@ export function strokePhase(time: number, start: number, draw: number, hold: num
   const opacity = elapsed < draw + hold ? 1 : 1 - (elapsed - draw - hold) / TIMING.fade;
   if (opacity <= 0) return null;
   return { progress: easeOutCubic(Math.min(1, elapsed / draw)), opacity };
+}
+
+const RING_EDGE = 4;
+const RING_CORNER = 10;
+
+// Concentric with the element, and pulled inside the frame when the element touches its edge.
+export function ringPath(ring: Ring, viewport: Size): string {
+  const padded = pad(ring.rect, RING_PADDING);
+  const x = Math.max(RING_EDGE, padded.x);
+  const y = Math.max(RING_EDGE, padded.y);
+  const right = Math.min(viewport.width - RING_EDGE, padded.x + padded.width);
+  const bottom = Math.min(viewport.height - RING_EDGE, padded.y + padded.height);
+  const rect = right - x > 0 && bottom - y > 0 ? { x, y, width: right - x, height: bottom - y } : padded;
+  const corner = ring.radius === undefined ? RING_CORNER : ring.radius + RING_PADDING;
+  return sketchRect(rect, ring.seed, corner);
 }
 
 function pad(rect: Rect, by: number): Rect {

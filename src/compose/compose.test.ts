@@ -41,7 +41,7 @@ describe('composeArgs', () => {
 describe('composeArgs for drafts', () => {
   it('encodes previews fast and final videos carefully', () => {
     expect(composeArgs({ ...inputs, draft: true }, loudness).join(' ')).toContain('-preset veryfast -crf 26');
-    expect(composeArgs(inputs, loudness).join(' ')).toContain('-preset medium -crf 18');
+    expect(composeArgs(inputs, loudness).join(' ')).toContain('-preset medium -crf 15 -tune stillimage');
   });
 });
 

@@ -80,4 +80,19 @@ describe('sketchRect', () => {
       expect(outside).toBeLessThan(4);
     }
   });
+
+  it('keeps an even gap: every point stays within its wobble of the outline', () => {
+    const rect = { x: 50, y: 50, width: 300, height: 40 };
+    for (const seed of [1, 2, 3, 4, 5, 6]) {
+      for (const { x, y } of points(sketchRect(rect, seed, 20))) {
+        const dx = Math.max(rect.x - x, x - (rect.x + rect.width), 0);
+        const dy = Math.max(rect.y - y, y - (rect.y + rect.height), 0);
+        const inside = Math.min(x - rect.x, rect.x + rect.width - x, y - rect.y, rect.y + rect.height - y);
+        // Outside by at most the wobble; inside only near the rounded corners.
+        expect(Math.hypot(dx, dy)).toBeLessThan(1.6);
+        if (x > rect.x + 20 && x < rect.x + rect.width - 20) expect(inside).toBeLessThan(1.6);
+      }
+    }
+  });
 });
+

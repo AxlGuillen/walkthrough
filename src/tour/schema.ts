@@ -117,7 +117,7 @@ export const tourSchema = z.strictObject({
   voice: z.string().min(1).optional(),
   music: z.strictObject({
     track: z.string().min(1),
-    volume: z.number().min(0).max(1).default(0.055),
+    volume: z.number().min(0).max(1).default(0.04),
   }).optional(),
   subtitles: z.enum(['karaoke', 'none']).default('none'),
   // Gets the app past its own onboarding: storage is written before every page of the

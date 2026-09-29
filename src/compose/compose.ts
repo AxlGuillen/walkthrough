@@ -58,7 +58,7 @@ export function composeArgs(compose: ComposeInputs, loudness: Loudness): string[
     '-y', '-v', 'error', ...inputs,
     '-filter_complex', `${video};${audio}`,
     '-map', '[vout]', '-map', '[aout]', '-t', compose.duration.toFixed(3),
-    '-c:v', 'libx264', ...(compose.draft ? ['-preset', 'veryfast', '-crf', '26'] : ['-preset', 'medium', '-crf', '18']), '-pix_fmt', 'yuv420p',
+    '-c:v', 'libx264', ...(compose.draft ? ['-preset', 'veryfast', '-crf', '26'] : ['-preset', 'medium', '-crf', '15', '-tune', 'stillimage']), '-pix_fmt', 'yuv420p',
     '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart',
     compose.output,
   ];

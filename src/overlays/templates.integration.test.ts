@@ -74,16 +74,34 @@ describe('overlay templates', () => {
 });
 
 describe('flow template', () => {
-  const flow = {
+  const texts = ['Pick a night', 'Choose a table', 'Pay the deposit', 'Host confirms the table', 'Guest arrives'];
+  const linear = {
     shape: 'linear' as const, mode: 'full' as const, title: 'How a booking works',
-    steps: ['Pick a night', 'Choose a table', 'Pay the deposit', 'Host confirms the table', 'Guest arrives'].map((text, i) => ({
-      text, time: 1 + i, ...(i === 1 ? { detail: 'Sections, capacity and minimum spend' } : {}),
-    })),
+    steps: texts.map((text, i) => ({ text, time: 1 + i, ...(i === 1 ? { detail: 'Sections, capacity and minimum spend' } : {}) })),
   };
+  const decision = {
+    shape: 'decision' as const, mode: 'full' as const, title: 'Is there a table?', branches: ['Yes', 'No'] as [string, string],
+    steps: [
+      { text: 'Request arrives', time: 1 }, { text: 'Tables left?', time: 2 },
+      { text: 'Confirm it', time: 3, branch: 0 as const }, { text: 'Take deposit', time: 4, branch: 0 as const },
+      { text: 'Waitlist', time: 5, branch: 1 as const },
+    ],
+  };
+  const cycle = { shape: 'cycle' as const, mode: 'full' as const, title: 'Every week', loop: 6.5, steps: linear.steps.slice(0, 4) };
+  const mobile = { width: 1080, height: 1920 };
 
-  for (const [name, size, mode] of [['16:9', canvas, 'full'], ['9:16', { width: 1080, height: 1920 }, 'card']] as const) {
-    it(`${name} ${mode}: paints every box where the layout says, with no line wider than its box`, async () => {
-      const scene = flowScene({ ...flow, mode }, 1, size);
+  const cases = [
+    ['16:9 full linear', canvas, linear, 5, 4],
+    ['9:16 card linear', mobile, { ...linear, mode: 'card' as const }, 5, 4],
+    ['16:9 full decision', canvas, decision, 5, 4],
+    ['9:16 full decision', mobile, decision, 5, 4],
+    ['16:9 full cycle', canvas, cycle, 4, 4],
+    ['16:9 card cycle', canvas, { ...cycle, mode: 'card' as const }, 4, 4],
+  ] as const;
+
+  for (const [name, size, flow, boxes, arrows] of cases) {
+    it(`${name}: paints every box where the layout says, with no line wider than its box`, async () => {
+      const scene = flowScene(flow, 1, size);
       const context = await browser.newContext({ viewport: size });
       try {
         const page = await context.newPage();
@@ -92,24 +110,25 @@ describe('flow template', () => {
         await page.evaluate(async () => { await document.fonts.ready; for (const animation of document.getAnimations()) animation.finish(); });
         const painted = await page.evaluate(() => [...document.querySelectorAll('.box')].map(box => {
           const rect = box.getBoundingClientRect();
-          const lines = [...box.querySelectorAll('span')].map(span => span.getBoundingClientRect());
+          const lines = [...box.querySelectorAll('.text span, .detail span')].map(span => span.getBoundingClientRect());
           return {
-            x: rect.x, width: rect.width, height: rect.height,
+            x: rect.x, y: rect.y, height: rect.height,
             overflow: Math.max(0, ...lines.map(line => line.right - rect.right), ...lines.map(line => line.bottom - rect.bottom)),
           };
         }));
-        expect(painted).toHaveLength(5);
+        expect(painted).toHaveLength(boxes);
         for (const [i, box] of painted.entries()) {
           expect(box.x, `box ${i + 1}`).toBeCloseTo(scene.layout.boxes[i]!.rect.x, 0);
+          expect(box.y, `box ${i + 1}`).toBeCloseTo(scene.layout.boxes[i]!.rect.y, 0);
           expect(box.height).toBeCloseTo(scene.layout.boxes[i]!.rect.height, 0);
           expect(box.overflow, `box ${i + 1} overflows`).toBe(0);
         }
-        expect(await page.locator('svg path.arrow').count()).toBe(8);
-        expect(await page.locator('svg path.ring').count()).toBe(5);
+        expect(await page.locator('svg path.arrow').count()).toBe(arrows * 2);
+        expect(await page.locator('svg path.ring').count()).toBe(boxes + (flow.shape === 'cycle' ? 1 : 0));
+        expect(await page.locator('.tag').allInnerTexts()).toEqual(flow.shape === 'decision' ? ['Yes', 'No'] : []);
       } finally {
         await context.close();
       }
     }, 60_000);
   }
 });
-

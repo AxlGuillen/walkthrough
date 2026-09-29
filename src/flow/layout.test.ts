@@ -9,14 +9,73 @@ const steps = (n: number, detail?: string) => TEXTS.slice(0, n).map((text, i) =>
 
 const inside = (r: Rect, canvas: { width: number; height: number }, margin: number) =>
   r.x >= margin && r.y >= margin && r.x + r.width <= canvas.width - margin && r.y + r.height <= canvas.height - margin;
+const contains = (r: Rect, x: number, y: number) => x > r.x && x < r.x + r.width && y > r.y && y < r.y + r.height;
 const overlap = (a: Rect, b: Rect) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+const decision = (branchLength: number) => ({
+  shape: 'decision' as const,
+  steps: [
+    { text: 'Request arrives', time: 0 }, { text: 'Tables left?', time: 1 },
+    ...Array.from({ length: branchLength }, (_, i) => ({ text: ['Confirm it', 'Take deposit', 'Send QR'][i]!, time: 2 + i, branch: 0 as const })),
+    { text: 'Waitlist', time: 9, branch: 1 as const },
+  ],
+  branches: ['Yes', 'No'] as [string, string],
+});
+const cycle = (n: number) => ({ shape: 'cycle' as const, steps: steps(n) });
+
+describe('layoutFlow shapes', () => {
+  for (const [name, canvas] of [['16:9', desktop], ['9:16', mobile]] as const) {
+    for (const mode of ['full', 'card'] as const) {
+      const cases = [
+        ...[1, 2, 3].map(b => [`decision with a ${b}-step branch`, decision(b)] as const),
+        ...[3, 4, 5, 6].map(n => [`cycle of ${n}`, cycle(n)] as const),
+      ];
+      for (const [label, flow] of cases) {
+        it(`${name} ${mode} ${label}: fits on screen, with no box touching another`, () => {
+          const layout = layoutFlow({ ...flow, mode, title: 'Title' }, canvas);
+          const margin = Math.min(canvas.width, canvas.height) * 0.03;
+          for (const [i, box] of layout.boxes.entries()) {
+            expect(inside(box.rect, canvas, margin), `box ${i + 1}`).toBe(true);
+            for (const other of layout.boxes.slice(i + 1)) expect(overlap(box.rect, other.rect), `box ${i + 1}`).toBe(false);
+          }
+          for (const arrow of layout.arrows) {
+            const [x, y] = arrow.shaft.match(/^M(-?[\d.]+) (-?[\d.]+)/)!.slice(1).map(Number);
+            expect(layout.boxes.some(({ rect }) => contains(rect, x!, y!)), 'an arrow starts inside a box').toBe(false);
+            if (arrow.tag) expect(inside({ x: arrow.tag.x, y: arrow.tag.y, width: 0, height: 0 }, canvas, margin)).toBe(true);
+          }
+          expect(layout.title!.y + layout.title!.size).toBeLessThan(Math.min(...layout.boxes.map(b => b.rect.y)));
+        });
+      }
+    }
+  }
+
+  it('puts the branches beyond the question: one above and one below it in a row', () => {
+    const layout = layoutFlow({ ...decision(2), mode: 'full' }, desktop);
+    const [, question, yes, , no] = layout.boxes.map(box => box.rect);
+    expect(yes!.x).toBeGreaterThan(question!.x + question!.width);
+    expect(yes!.y + yes!.height).toBeLessThanOrEqual(question!.y + question!.height);
+    expect(no!.y).toBeGreaterThan(yes!.y + yes!.height);
+    expect(layout.boxes[1]!.kind).toBe('decision');
+    expect(layout.arrows.filter(arrow => arrow.tag).map(arrow => arrow.tag!.text)).toEqual(['Yes', 'No']);
+  });
+
+  it('lays a full cycle around its middle, and a card cycle as a row with a way back beneath it', () => {
+    const ring = layoutFlow({ ...cycle(4), mode: 'full' }, desktop).boxes.map(box => box.rect);
+    expect(ring[0]!.y).toBeLessThan(ring[1]!.y);
+    expect(ring[1]!.x).toBeGreaterThan(ring[3]!.x);
+    const card = layoutFlow({ ...cycle(4), mode: 'card' }, desktop);
+    expect(new Set(card.boxes.map(box => box.rect.y)).size).toBe(1);
+    expect(card.arrows.at(-1)!.closing).toBe(true);
+    expect(card.panel!.y + card.panel!.height).toBeGreaterThan(card.boxes[0]!.rect.y + card.boxes[0]!.rect.height + 50);
+  });
+});
 
 describe('layoutFlow', () => {
   for (const [name, canvas, direction] of [['16:9', desktop, 'row'], ['9:16', mobile, 'column']] as const) {
     for (const mode of ['full', 'card'] as const) {
       it(`${name} ${mode}: every box fits on screen, apart from the others, whatever the step count`, () => {
         for (let n = 2; n <= 6; n++) {
-          const layout = layoutFlow({ mode, title: 'How a booking works', steps: steps(n, 'A detail line under it') }, canvas);
+          const layout = layoutFlow({ shape: 'linear', mode, title: 'How a booking works', steps: steps(n, 'A detail line under it') }, canvas);
           expect(layout.direction).toBe(direction);
           expect(layout.boxes).toHaveLength(n);
           expect(layout.arrows).toHaveLength(n - 1);
@@ -35,7 +94,7 @@ describe('layoutFlow', () => {
   }
 
   it('wraps text to lines that fit inside the box, and flags what it had to cut', () => {
-    const layout = layoutFlow({ mode: 'full', steps: [
+    const layout = layoutFlow({ shape: 'linear', mode: 'full', steps: [
       { text: 'Choose a table', time: 0 },
       { text: 'An extremely long step name that cannot possibly fit in three short lines of this box', time: 1 },
       ...steps(4).slice(2),
@@ -49,19 +108,19 @@ describe('layoutFlow', () => {
   });
 
   it('draws the arrows from one box to the next, in reading order', () => {
-    const row = layoutFlow({ mode: 'full', steps: steps(3) }, desktop);
+    const row = layoutFlow({ shape: 'linear', mode: 'full', steps: steps(3) }, desktop);
     const [a, b] = row.boxes.map(box => box.rect);
     const start = row.arrows[0]!.shaft.match(/^M(-?[\d.]+) (-?[\d.]+)/)!.slice(1).map(Number);
     expect(start[0]).toBeGreaterThan(a!.x + a!.width);
     expect(row.arrows[0]!.head).toContain(`L${(b!.x - 1080 / 100).toFixed(1)}`);
-    const column = layoutFlow({ mode: 'full', steps: steps(3) }, mobile);
+    const column = layoutFlow({ shape: 'linear', mode: 'full', steps: steps(3) }, mobile);
     const [c] = column.boxes.map(box => box.rect);
     expect(Number(column.arrows[0]!.shaft.match(/^M(-?[\d.]+) (-?[\d.]+)/)![2])).toBeGreaterThan(c!.y + c!.height);
   });
 
   it('is the same design at half size in a preview', () => {
-    const full = layoutFlow({ mode: 'card', title: 'Booking', steps: steps(4) }, desktop);
-    const half = layoutFlow({ mode: 'card', title: 'Booking', steps: steps(4) }, { width: 960, height: 540 });
+    const full = layoutFlow({ shape: 'linear', mode: 'card', title: 'Booking', steps: steps(4) }, desktop);
+    const half = layoutFlow({ shape: 'linear', mode: 'card', title: 'Booking', steps: steps(4) }, { width: 960, height: 540 });
     expect(half.boxes[2]!.rect.x).toBeCloseTo(full.boxes[2]!.rect.x / 2);
     expect(half.boxes[2]!.lines).toEqual(full.boxes[2]!.lines);
   });

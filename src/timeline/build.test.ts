@@ -160,6 +160,48 @@ ${steps}
     expect(overlay!.flow!.steps.map(s => s.time)).toEqual([0.4, 3, 4.25, 5.5]);
   });
 
+  it('walks a decision question, then its first branch, then its second', () => {
+    const tour = parseTour(`
+title: Flow
+url: https://example.com
+segments:
+  - say: Picks a night, chooses a table, pays, and the host confirms the table.
+    flow:
+      shape: decision
+      steps: [{ text: Tables left?, at: night }]
+      branches:
+        - { label: Yes, steps: [{ text: Choose, at: chooses }, { text: Pay, at: pays }] }
+        - { label: No, steps: [{ text: Host call, at: host }] }
+`);
+    const flow = buildTimeline(tour, [{ duration: 6.5, words }], options).overlays[0]!.flow!;
+    expect(flow.steps.map(s => [s.text, s.time, s.branch])).toEqual([
+      ['Tables left?', 1.5, undefined], ['Choose', 2, 0], ['Pay', 3.5, 0], ['Host call', 5, 1],
+    ]);
+    expect(flow.branches).toEqual(['Yes', 'No']);
+  });
+
+  it('closes a cycle on its loop word, or just after its last step', () => {
+    const cycle = (loop: string) => parseTour(`
+title: Flow
+url: https://example.com
+segments:
+  - say: Picks a night, chooses a table, pays, and the host confirms the table.
+    flow:
+      shape: cycle
+      ${loop}
+      steps: [{ text: Night, at: night }, { text: Table, at: table }, { text: Host, at: host }]
+`);
+    expect(buildTimeline(cycle('loop: confirms'), [{ duration: 6.5, words }], options).overlays[0]!.flow!.loop).toBe(5.5);
+    expect(buildTimeline(cycle(''), [{ duration: 6.5, words }], options).overlays[0]!.flow!.loop).toBeCloseTo(5.6);
+  });
+
+  it('rejects shapes without what they need', () => {
+    const invalid = (flow: string) => () => parseTour(`title: F\nurl: https://example.com\nsegments:\n  - hold: 3\n    flow: ${flow}\n`);
+    expect(invalid('{ shape: decision, steps: [A] }')).toThrow(/two branches/);
+    expect(invalid('{ shape: cycle, steps: [A, B] }')).toThrow(/at least 3/);
+    expect(invalid('{ steps: [A, B], loop: 1 }')).toThrow(/only a cycle/);
+  });
+
   it('rejects steps whose words come in the wrong order', () => {
     expect(() => build(`        - { text: Host, at: host }
         - { text: Night, at: night }`)).toThrow(TimelineError);

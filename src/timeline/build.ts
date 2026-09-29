@@ -22,10 +22,12 @@ export interface TimedAction {
   action: Action;
 }
 
+// Steps in narration order: a decision's own steps, then its first branch, then its second.
 export interface TimedFlowStep {
   text: string;
   detail?: string;
   time: number;
+  branch?: 0 | 1;
 }
 
 export interface TimedFlow {
@@ -33,6 +35,8 @@ export interface TimedFlow {
   mode: Flow['mode'];
   title?: string;
   steps: TimedFlowStep[];
+  branches?: [string, string];
+  loop?: number;
 }
 
 export interface TimedOverlay {
@@ -49,6 +53,7 @@ export const FLOW_TEMPLATE = 'flow.html';
 // Room for the flow to fade in before its first step, and for the last one to be read.
 const FLOW_FIRST_STEP = 0.4;
 const FLOW_LAST_READ = 0.8;
+const FLOW_LOOP_AFTER = 0.6;
 
 export interface Timeline {
   duration: number;
@@ -113,29 +118,43 @@ export function buildTimeline(
       const to = resolve(flow.to, end, 'flow');
       if (to <= from) throw new TimelineError(`${label}: flow ends before it starts`);
 
+      const steps = [
+        ...flow.steps.map(step => ({ ...step, branch: undefined })),
+        ...(flow.branches ?? []).flatMap((branch, b) => branch.steps.map(step => ({ ...step, branch: b as 0 | 1 }))),
+      ];
       let lastWord: number | undefined;
-      const anchored = flow.steps.map(({ at, text }) => {
-        if (at === undefined) return undefined;
-        if (typeof at === 'number') return resolve(at, start, `flow step "${text}"`);
-        const match = locate(at, `flow step "${text}"`, lastWord);
+      const anchor = (at: Anchor, what: string) => {
+        if (typeof at === 'number') return resolve(at, start, what);
+        const match = locate(at, what, lastWord);
         lastWord = match.start;
-        return resolve(leadIn + match.start, start, `flow step "${text}"`);
-      });
+        return resolve(leadIn + match.start, start, what);
+      };
+      const anchored = steps.map(({ at, text }) => (at === undefined ? undefined : anchor(at, `flow step "${text}"`)));
       const speechEnd = spoken && speechStart !== null ? speechStart + spoken.duration : to;
       const times = spreadTimes(anchored, from + FLOW_FIRST_STEP, Math.min(speechEnd, to - FLOW_LAST_READ));
       times.forEach((time, i) => {
-        const text = flow.steps[i]!.text;
+        const text = steps[i]!.text;
         if (time < from || time >= to) throw new TimelineError(`${label}: flow step "${text}" falls outside the flow`);
         if (i > 0 && time <= times[i - 1]!) {
           throw new TimelineError(`${label}: flow step "${text}" comes before the step above it; its word is said earlier`);
         }
       });
+      const last = times.at(-1)!;
+      const loop = flow.shape !== 'cycle' ? undefined
+        : flow.loop === undefined ? Math.min(last + FLOW_LOOP_AFTER, to - FLOW_LOOP_AFTER / 2) : anchor(flow.loop, 'flow loop');
+      if (loop !== undefined && (loop <= last || loop >= to)) {
+        throw new TimelineError(`${label}: the flow's loop must come after its last step and before the flow ends`);
+      }
 
       timeline.overlays.push({
         src: FLOW_TEMPLATE, params: {}, start: from, end: to, fade: flow.fade, segment: index,
         flow: {
           shape: flow.shape, mode: flow.mode, ...(flow.title ? { title: flow.title } : {}),
-          steps: flow.steps.map(({ text, detail }, i) => ({ text, ...(detail ? { detail } : {}), time: times[i]! })),
+          steps: steps.map(({ text, detail, branch }, i) => ({
+            text, ...(detail ? { detail } : {}), time: times[i]!, ...(branch === undefined ? {} : { branch }),
+          })),
+          ...(flow.branches ? { branches: [flow.branches[0].label, flow.branches[1].label] as [string, string] } : {}),
+          ...(loop === undefined ? {} : { loop }),
         },
       });
     }

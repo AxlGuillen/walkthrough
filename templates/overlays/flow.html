@@ -17,6 +17,13 @@
   .badge { flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 800;
     font-variant-numeric: tabular-nums; }
   .text { font-weight: 650; }
+  .box.decision { background: color-mix(in srgb, var(--accent) 16%, rgba(255, 255, 255, 0.05));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 1.2vmin 3vmin rgba(0, 0, 0, 0.3); }
+  .box.decision .badge { border-radius: 22%; transform: rotate(45deg) scale(0.82); }
+  .box.decision .badge span { transform: rotate(-45deg); }
+  /* Centered on its point: translate lives in the margin so the pop animation can own transform. */
+  .tag { translate: -50% -50%; padding: 0.35em 0.8em; border-radius: 99em; background: rgba(9, 7, 15, 0.85); color: var(--accent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent); font-weight: 700; white-space: nowrap; }
   .text span, .detail span { display: block; white-space: nowrap; }
   .detail { color: var(--muted); font-weight: 500; }
   svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
@@ -27,6 +34,7 @@
   @keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
   @keyframes vanish { to { opacity: 0; } }
   @keyframes dim { to { opacity: 0.5; } }
+  @keyframes brighten { from { opacity: 0.5; } to { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -56,15 +64,19 @@
 
     const { font, pad, radius } = layout;
     layout.boxes.forEach((box, i) => {
-      const cue = cues[i];
-      const node = el('div', `abs box ${layout.direction}`);
+      const cue = cues.steps[i];
+      const node = el('div', `abs box ${layout.direction} ${box.kind}`);
       place(node, box.rect);
       Object.assign(node.style, { padding: px(pad), borderRadius: px(radius) });
-      node.style.animation = [`enter 450ms var(--ease) ${s(cue.enter)} both`, ...(cue.dim === undefined ? [] : [`dim 350ms ease ${s(cue.dim)} forwards`])].join(', ');
+      node.style.animation = [
+        `enter 450ms var(--ease) ${s(cue.enter)} both`,
+        ...(cue.dim === undefined ? [] : [`dim 350ms ease ${s(cue.dim)} forwards`]),
+        ...(cue.again === undefined ? [] : [`brighten 350ms ease ${s(cue.again)} forwards`]),
+      ].join(', ');
 
       const badge = el('div', 'badge', node);
       Object.assign(badge.style, { width: px(font.badge), height: px(font.badge), fontSize: px(font.text * 0.8) });
-      badge.textContent = String(i + 1);
+      el('span', '', badge).textContent = box.badge;
       badge.style[layout.direction === 'row' ? 'marginBottom' : 'marginRight'] = px(font.badgeGap);
 
       const body = el('div', '', node);
@@ -89,14 +101,20 @@
       node.style.animation = animation;
       svg.append(node);
     };
-    layout.arrows.forEach(({ shaft, head }, i) => {
-      const { start, duration } = cues[i + 1].arrow;
+    layout.arrows.forEach(({ shaft, head, tag }, i) => {
+      const { start, duration } = cues.arrows[i];
       path(shaft, 'arrow', layout.stroke, `draw ${s(duration * 0.8)} ease-in-out ${s(start)} both`);
       path(head, 'arrow', layout.stroke, `draw ${s(duration * 0.2)} linear ${s(start + duration * 0.8)} both`);
+      if (tag) {
+        const node = el('div', 'abs tag');
+        Object.assign(node.style, { left: px(tag.x), top: px(tag.y), fontSize: px(tag.size), animation: `pop 300ms var(--ease) ${s(start + duration * 0.5)} both` });
+        node.textContent = tag.text;
+      }
     });
     layout.rings.forEach((d, i) => {
-      const cue = cues[i];
+      const cue = cues.steps[i];
       path(d, 'ring', layout.stroke, [`draw 500ms ease-out ${s(cue.ringIn)} both`, ...(cue.ringOut === undefined ? [] : [`vanish 250ms linear ${s(cue.ringOut)} forwards`])].join(', '));
+      if (cue.again !== undefined) path(d, 'ring', layout.stroke, `draw 500ms ease-out ${s(cue.again)} both`);
     });
   </script>
 </body>

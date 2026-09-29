@@ -19,3 +19,28 @@ segments:
         - { text: Se crea, at: crea }
         - { text: Se asigna, at: asigna }
         - { text: Se entrega, at: entrega }
+  - say: Cuando llega una solicitud, el sistema revisa si quedan mesas. Si hay, se confirma y se cobra el depósito. Si no, el huésped entra a la lista de espera.
+    flow:
+      shape: decision
+      title: ¿Hay mesa disponible?
+      steps:
+        - { text: Llega la solicitud, at: solicitud }
+        - { text: ¿Quedan mesas?, at: quedan }
+      branches:
+        - label: Sí
+          steps:
+            - { text: Se confirma, at: confirma }
+            - { text: Se cobra el depósito, at: depósito }
+        - label: "No"
+          steps:
+            - { text: Lista de espera, at: espera }
+  - say: Cada semana repetimos el mismo ciclo. Primero planeamos lo que sigue, luego lo construimos con calma, lo entregamos a dymmsa, y escuchamos su feedback. Y volvemos a empezar.
+    flow:
+      shape: cycle
+      title: Entrega semanal
+      loop: volvemos
+      steps:
+        - { text: Planear, at: planeamos }
+        - { text: Construir, at: construimos }
+        - { text: Entregar, at: entregamos }
+        - { text: Escuchar feedback, at: escuchamos }

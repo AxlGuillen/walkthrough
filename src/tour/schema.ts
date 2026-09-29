@@ -105,17 +105,40 @@ const flowStep = z.union([
   z.strictObject({ text: z.string().trim().min(1).max(48), detail: z.string().trim().min(1).max(72).optional(), at: anchor.optional() }),
 ]);
 
-export const FLOW_SHAPES = ['linear'] as const;
+export const FLOW_SHAPES = ['linear', 'decision', 'cycle'] as const;
+
+// A decision's last step is the question; each branch continues from it, and the narration
+// walks the first branch and then the second.
+const flowBranch = z.strictObject({
+  label: z.string().trim().min(1).max(16),
+  steps: z.array(flowStep).min(1).max(3),
+});
 
 const flow = z.strictObject({
   shape: z.enum(FLOW_SHAPES).default('linear'),
   title: z.string().trim().min(1).max(60).optional(),
   // full covers the app, as an interlude; card is a panel over the bottom of the app.
   mode: z.enum(['full', 'card']).default('full'),
-  steps: z.array(flowStep).min(2).max(6),
+  steps: z.array(flowStep).min(1).max(6),
+  branches: z.tuple([flowBranch, flowBranch]).optional(),
+  // A cycle's closing arrow, back to the first step: a word after the last step, or 0.6s after it.
+  loop: anchor.optional(),
   from: anchor.optional(),
   to: anchor.optional(),
   fade: z.number().nonnegative().default(0.3),
+}).superRefine((flow, ctx) => {
+  const issue = (message: string, path: string) => ctx.addIssue({ code: 'custom', message, path: [path] });
+  if (flow.shape === 'decision') {
+    if (!flow.branches) issue('a decision needs two branches', 'branches');
+    else if (flow.steps.length + Math.max(...flow.branches.map(b => b.steps.length)) > 6) {
+      issue('a decision fits 6 boxes across: its steps plus its longest branch', 'branches');
+    }
+  } else if (flow.branches) {
+    issue('only a decision has branches', 'branches');
+  }
+  if (flow.shape === 'linear' && flow.steps.length < 2) issue('a linear flow needs at least 2 steps', 'steps');
+  if (flow.shape === 'cycle' && flow.steps.length < 3) issue('a cycle needs at least 3 steps', 'steps');
+  if (flow.loop !== undefined && flow.shape !== 'cycle') issue('only a cycle has a loop', 'loop');
 });
 export type Flow = z.infer<typeof flow>;
 

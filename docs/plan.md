@@ -12,6 +12,7 @@ Escrito el 28/sep/2026, después de la primera versión completa (tour de uws-ta
 4. **Fase 3 — Variedad.** Más sonidos y una biblioteca de elementos HTML.
 5. **Fase 4 — Robustez.** Datos que cambian, sesiones que caducan, onboardings y móvil.
 6. **Fase 5 — Tour de uws-tasks v2.** Aplica todo lo anterior y recorre más vistas.
+7. **Fase 6 — Flujos.** Diagramas de pasos que aparecen al ritmo de la voz, con directrices para usarlos en cualquier video (añadida el 29/sep/2026).
 
 Cada fase termina con pruebas en verde, documentación al día y commits que compilan por separado.
 
@@ -133,6 +134,38 @@ Con `inspect`, scroll, etiquetas y la biblioteca de overlays:
 - Indicador de capítulo por sección.
 - Selectores estables, validados con `check` antes de renderizar.
 
+## Fase 6 — Flujos sincronizados con la voz
+
+Explicar un proceso («cómo se reserva una mesa», «cómo se asigna un ticket») con pasos conectados que aparecen justo cuando la narración los nombra. El autor del tour escribe solo los pasos y la palabra de cada uno; el layout, la coreografía y el sonido salen del repo, iguales en todos los videos.
+
+### 6.1 Motor y forma lineal
+
+- **`flow:` en el segmento**, al lado de `say`: `steps` (texto, detalle opcional y `at`, la palabra en que aparece), `title`, `mode` (`full` o `card`) y `from`/`to` como los overlays.
+- **La timeline resuelve los tiempos.** Cada `at` se busca en la narración después del paso anterior, así una palabra repetida no se confunde. Sin `at`, los pasos se reparten a lo largo de la frase.
+- **Layout puro** en `src/flow/`: posiciones, cortes de texto y flechas a partir de la forma y del tamaño del cuadro. Horizontal en 16:9 y vertical en 9:16. Probado sin navegador: nada se encima, todo cabe y el texto no se corta.
+- **Coreografía pura:** la flecha se dibuja hacia el paso justo antes de la palabra, la caja entra con la palabra, un anillo a mano marca el paso activo y los anteriores bajan de intensidad.
+- **Plantilla `templates/overlays/flow.html`**: solo pinta lo que calcula Node, con el color de acento del tour y las flechas y anillos a mano de la capa de efectos.
+- **Sonido:** un *pop* por caja y un trazo por flecha, en vez de un solo *pop* por overlay.
+- **`check`** avisa de pasos demasiado juntos para leerse y de textos que no caben.
+
+### 6.2 Directrices
+
+- **Skill del repo** (`.claude/skills/flow/`): cuándo usar un flujo y qué forma, cómo escribir la narración para que cada paso tenga su palabra, cuántos pasos caben y cómo revisar el resultado antes de entregarlo.
+- **Guía** en `docs/flujos.md`, con las mismas reglas para el autor.
+
+### 6.3 Más formas
+
+- **Decisión:** un paso que se bifurca en «sí» y «no».
+- **Ciclo:** pasos que regresan al inicio (entregas semanales, sprints).
+- **Carriles:** quién hace qué (huésped, venue, host).
+- **Antes y después:** dos flujos lado a lado.
+
+### 6.4 Catálogo
+
+Un tour de ejemplos con todas las formas en 16:9 y 9:16: catálogo visual para elegir y prueba de regresión.
+
+Referencia visual: [archify](https://github.com/tt-a1i/archify) (MIT). Se toman ideas (esquema por forma, validación del layout, carriles y fases), no código: su visor es interactivo, no va al ritmo de la voz y su estética es de documentación técnica.
+
 ## Estimación
 
 | Fase | Tamaño |
@@ -143,3 +176,4 @@ Con `inspect`, scroll, etiquetas y la biblioteca de overlays:
 | 3 | Mediana |
 | 4 | Mediana |
 | 5 | Chica, una vez hecho lo anterior |
+| 6 | Mediana (6.1 es lo más grande) |

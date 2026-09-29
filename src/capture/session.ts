@@ -48,3 +48,9 @@ export async function login(root: string, session: string, url: string): Promise
   });
   await context.close();
 }
+
+// A login page after a navigation almost always means the saved session expired.
+export function looksLikeLogin(requested: URL, landed: URL, hasPasswordField: boolean): boolean {
+  if (hasPasswordField) return true;
+  return landed.pathname !== requested.pathname && /log-?in|sign-?in|auth/i.test(landed.pathname);
+}

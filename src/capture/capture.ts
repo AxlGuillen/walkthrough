@@ -15,6 +15,7 @@ import { effectsLayer, scrollControl } from './runtime.ts';
 import { applyScrolls } from './scroll.ts';
 import { dueActions, frameCount } from './schedule.ts';
 import { openContext } from './session.ts';
+import { installSetup } from './setup.ts';
 import { createStage } from './stage.ts';
 
 export const DEFAULT_FPS = FPS.final;
@@ -43,6 +44,7 @@ export async function captureTour({
     const clock = await installClock(page);
     await page.addInitScript(effectsLayer);
     await page.addInitScript(scrollControl);
+    await installSetup(page, tour);
     const stage = createStage(page, clock, tour, device, timeline);
     const home = fullFrame(device.viewport);
 

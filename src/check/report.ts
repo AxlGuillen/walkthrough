@@ -30,9 +30,3 @@ export function selectorOf(action: { kind: string } & Record<string, unknown>): 
     ?? ((action.kind === 'zoom' || action.kind === 'scroll') && !edge ? action.to : undefined);
   return typeof selector === 'string' ? selector : null;
 }
-
-// A login page after a navigation almost always means the saved session expired.
-export function looksLikeLogin(requested: URL, landed: URL, hasPasswordField: boolean): boolean {
-  if (hasPasswordField) return true;
-  return landed.pathname !== requested.pathname && /log-?in|sign-?in|auth/i.test(landed.pathname);
-}

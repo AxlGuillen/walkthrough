@@ -120,6 +120,12 @@ export const tourSchema = z.strictObject({
     volume: z.number().min(0).max(1).default(0.055),
   }).optional(),
   subtitles: z.enum(['karaoke', 'none']).default('none'),
+  // Gets the app past its own onboarding: storage is written before every page of the
+  // tour's origin loads, and dismiss selectors are clicked after each navigation.
+  setup: z.strictObject({
+    storage: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]).transform(String)).default({}),
+    dismiss: z.array(selector).default([]),
+  }).prefault({}),
   sfx: z.union([
     z.boolean().transform(enabled => ({ enabled, volume: 1, mute: [] as (typeof SOUNDS)[number][] })),
     z.strictObject({

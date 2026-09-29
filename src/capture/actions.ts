@@ -2,6 +2,7 @@ import { clickVisible, labelVisible, ringVisible, TIMING } from '../effects/scen
 import type { TimedAction } from '../timeline/build.ts';
 import { fullFrame } from '../timeline/camera.ts';
 import { charsDue } from './schedule.ts';
+import { assertSignedIn, dismissDialogs } from './setup.ts';
 import type { Stage } from './stage.ts';
 import { planScroll, queueScroll, scrollDuration, type ScrollMode } from './scroll.ts';
 import { aimAt, visibleBox, zoomRect } from './targets.ts';
@@ -11,15 +12,23 @@ const ZOOM_DURATION = 0.8;
 export async function perform(stage: Stage, { time, action }: TimedAction, seed: number): Promise<void> {
   const { page, clock, tour, device, camera, effects, log } = stage;
   switch (action.kind) {
-    case 'goto':
+    case 'goto': {
       // The opening load is the start of the video, not a change of screen.
       if (stage.time > 0) log.push({ kind: 'navigate', time: stage.time });
-      return clock.settle(() => page.goto(new URL(action.url, tour.url).href));
+      const requested = new URL(action.url, tour.url);
+      await clock.settle(async () => {
+        await page.goto(requested.href);
+        await dismissDialogs(page, tour);
+      });
+      return assertSignedIn(page, tour, requested);
+    }
     case 'click': {
+      const before = new URL(page.url());
       await clickWithMark(stage, action.on, seed);
       if (action.wait) {
         log.push({ kind: 'navigate', time: stage.time });
         await waitFor(stage, action.wait);
+        await assertSignedIn(page, tour, before);
       }
       return;
     }
@@ -86,8 +95,11 @@ async function clickWithMark({ page, time, effects, log }: Stage, selector: stri
 
 const WAIT_TIMEOUT = 15_000;
 
-async function waitFor({ page, clock }: Stage, selector: string): Promise<void> {
-  await clock.settle(() => page.locator(selector).first().waitFor({ state: 'visible', timeout: WAIT_TIMEOUT }));
+async function waitFor({ page, clock, tour }: Stage, selector: string): Promise<void> {
+  await clock.settle(async () => {
+    await page.locator(selector).first().waitFor({ state: 'visible', timeout: WAIT_TIMEOUT });
+    await dismissDialogs(page, tour);
+  });
 }
 
 // Keeps rings and click marks on their element while the page scrolls under them.

@@ -1,12 +1,13 @@
 import type { Page } from 'playwright-core';
 import { deviceProfile } from '../capture/devices.ts';
-import { openContext } from '../capture/session.ts';
+import { looksLikeLogin, openContext } from '../capture/session.ts';
+import { dismissDialogs, installSetup } from '../capture/setup.ts';
 import { dataDependent, suggest } from '../inspect/selectors.ts';
 import { snapshotPage } from '../inspect/snapshot.ts';
 import { resolveOverlay } from '../overlays/render.ts';
 import type { Timeline, TimedAction } from '../timeline/build.ts';
 import type { Tour } from '../tour/schema.ts';
-import { looksLikeLogin, selectorOf, worst, type CheckItem, type Status } from './report.ts';
+import { selectorOf, worst, type CheckItem, type Status } from './report.ts';
 
 const ACTION_TIMEOUT = 5_000;
 const WAIT_TIMEOUT = 15_000;
@@ -32,6 +33,7 @@ export async function checkTour(root: string, tour: Tour, timeline: Timeline): P
   const items: CheckItem[] = [];
   try {
     const page = context.pages()[0] ?? (await context.newPage());
+    await installSetup(page, tour);
     for (const timed of timeline.actions) items.push(await checkAction(page, tour, timed));
   } finally {
     await context.close();
@@ -50,6 +52,7 @@ async function checkAction(page: Page, tour: Tour, { time, action }: TimedAction
       const requested = new URL(action.url, tour.url);
       await page.goto(requested.href);
       await page.waitForLoadState('networkidle', { timeout: 10_000 }).catch(() => {});
+      await dismissDialogs(page, tour);
       const landed = new URL(page.url());
       const password = (await page.locator('input[type=password]').count()) > 0;
       if (looksLikeLogin(requested, landed, password)) {

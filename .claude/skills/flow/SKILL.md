@@ -12,4 +12,4 @@ description: Agrega a un tour de walkthrough un flujo de pasos conectados que ap
 5. **Revisa el resultado tú mismo** antes de enseñarlo: `bun run walkthrough render <tour> --preview`, luego saca un cuadro poco después de cada paso con `ffmpeg -ss <tiempo> -i <preview>/video.mp4 -frames:v 1` (los tiempos están en `timeline.json`, `overlays[].flow.steps[].time`) y míralos. Comprueba que la caja entra con su palabra, que el anillo marca el paso activo y que nada se sale ni se encima.
 6. **Entrega** el tour para revisión con lo que verificaste. El render final lo lanza el autor o se lanza cuando lo apruebe.
 
-Si el proceso necesita una forma que aún no existe (decisión, ciclo, carriles, antes/después; fase 6.3 de `docs/plan.md`), cuéntalo por su camino principal, nombra la bifurcación en la voz y avisa al autor que esa forma está pendiente.
+Elige la forma (`linear`, `decision` o `cycle`) con la regla de `docs/flujos.md`. Si el proceso necesita una que aún no existe (carriles, antes/después; fase 6.3 de `docs/plan.md`), cuéntalo con la forma más cercana y avisa al autor que esa forma está pendiente.

@@ -136,7 +136,7 @@ Con `inspect`, scroll, etiquetas y la biblioteca de overlays:
 
 ## Fase 6 — Flujos sincronizados con la voz (en curso)
 
-Hecho el 29/sep/2026: 6.1 y 6.2. Faltan más formas y el catálogo completo.
+Hecho el 29/sep/2026: 6.1, 6.2 y, de 6.3, decisión y ciclo. Faltan carriles, antes/después y el catálogo completo.
 
 Explicar un proceso («cómo se reserva una mesa», «cómo se asigna un ticket») con pasos conectados que aparecen justo cuando la narración los nombra. El autor del tour escribe solo los pasos y la palabra de cada uno; el layout, la coreografía y el sonido salen del repo, iguales en todos los videos.
 
@@ -157,8 +157,8 @@ Explicar un proceso («cómo se reserva una mesa», «cómo se asigna un ticket�
 
 ### 6.3 Más formas
 
-- **Decisión:** un paso que se bifurca en «sí» y «no».
-- **Ciclo:** pasos que regresan al inicio (entregas semanales, sprints).
+- **Decisión** ✅: un paso que se bifurca en «sí» y «no».
+- **Ciclo** ✅: pasos que regresan al inicio (entregas semanales, sprints).
 - **Carriles:** quién hace qué (huésped, venue, host).
 - **Antes y después:** dos flujos lado a lado.
 

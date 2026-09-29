@@ -10,6 +10,8 @@ Un flujo explica un proceso con pasos conectados que aparecen justo cuando la vo
 | Antes de recorrer varias pantallas, para dar el mapa | Una lista de funciones sin orden: eso es un `lower-third` o una tarjeta |
 | Al cerrar, para resumir lo que se vio | Más de 6 pasos: se parte en dos flujos o se agrupan |
 
+Para elegir la forma: si el proceso siempre sigue el mismo camino, `linear`; si depende de una condición que cambia lo que pasa después, `decision`; si al terminar vuelve a empezar, `cycle`.
+
 ## Modos
 
 - **`full`** (por defecto): tapa la app. Es un interludio, para dar el mapa antes de entrar o para resumir al salir.
@@ -17,7 +19,52 @@ Un flujo explica un proceso con pasos conectados que aparecen justo cuando la vo
 
 ## Formas
 
-Hoy existe `linear` (A → B → C). Decisión, ciclo, carriles y antes/después vienen en la fase 6.3 del plan. Mientras tanto, un proceso con bifurcación se cuenta por su camino principal y la bifurcación se nombra en la voz.
+| Forma | Para | Cómo se ve |
+|---|---|---|
+| `linear` (por defecto) | Un proceso de punta a punta | Pasos en fila (columna en 9:16) |
+| `decision` | Un punto donde el proceso se bifurca: aprobaciones, disponibilidad, validaciones | La línea llega a una pregunta («?») y de ahí salen dos ramas con su etiqueta, una arriba y otra abajo (lado a lado en 9:16) |
+| `cycle` | Algo que se repite: entregas semanales, sprints, un ciclo de feedback | En `full`, pasos alrededor de una elipse con una flecha que regresa al inicio; en `card`, una fila con la flecha de regreso por debajo |
+
+Carriles y antes/después vienen en la fase 6.3 del plan. Mientras tanto, un reparto de responsabilidades se cuenta con un `linear` que nombra al responsable en cada paso.
+
+### Decisión
+
+El último paso de `steps` es la pregunta. `branches` son exactamente dos, cada una con una etiqueta corta (`Sí`/`No`, `Hay`/`No hay`) y de 1 a 3 pasos. En total caben 6 cajas a lo ancho: los pasos antes de la pregunta, la pregunta y la rama más larga.
+
+```yaml
+flow:
+  shape: decision
+  title: ¿Hay mesa disponible?
+  steps:
+    - { text: Llega la solicitud, at: solicitud }
+    - { text: ¿Quedan mesas?, at: quedan }       # la pregunta
+  branches:
+    - label: Sí
+      steps:
+        - { text: Se confirma, at: confirma }
+        - { text: Se cobra el depósito, at: depósito }
+    - label: "No"
+      steps:
+        - { text: Lista de espera, at: espera }
+```
+
+La narración recorre la primera rama completa y después la segunda: «Si hay, se confirma y se cobra el depósito. Si no, entra a la lista de espera». Las ramas se numeran desde el mismo número, porque cualquiera de las dos es el paso siguiente.
+
+### Ciclo
+
+De 3 a 6 pasos. `loop` es la palabra en que la flecha regresa al primer paso («y **volvemos** a empezar»), que se vuelve a marcar. Sin `loop`, se cierra 0,6 s después del último paso; conviene darle una frase propia.
+
+```yaml
+flow:
+  shape: cycle
+  title: Entrega semanal
+  loop: volvemos
+  steps:
+    - { text: Planear, at: planeamos }
+    - { text: Construir, at: construimos }
+    - { text: Entregar, at: entregamos }
+    - { text: Escuchar feedback, at: escuchamos }
+```
 
 ## Cómo escribir los pasos
 

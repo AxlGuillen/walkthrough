@@ -3,6 +3,7 @@ import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { check } from './commands/check.ts';
 import { cleanUp } from './commands/clean.ts';
+import { doctor } from './commands/doctor.ts';
 import { gallery } from './commands/gallery.ts';
 import { inspect } from './commands/inspect.ts';
 import { login } from './commands/login.ts';
@@ -11,6 +12,7 @@ import { voice } from './commands/voice.ts';
 import { ROOT, STORAGE } from './context.ts';
 
 const USAGE = `usage:
+  walkthrough doctor                  check Node, ffmpeg, Chrome, Fish and saved sessions
   walkthrough login <session> <url>   sign in by hand once; the profile is reused by renders
   walkthrough voice <tour.yaml>       synthesize narration and write the timeline
   walkthrough check <tour.yaml>       walk the tour without recording: selectors, session, dialogs
@@ -45,6 +47,7 @@ try {
   else if (command === 'inspect' && target) await inspect(target, values.session, values.device);
   else if (command === 'render' && target) await render(target, values.from, values.preview ?? false);
   else if (command === 'gallery') await gallery(!values['no-open']);
+  else if (command === 'doctor') await doctor();
   else if (command === 'clean') await cleanUp(values.voice ?? false, values.keep);
   else if (command === 'login' && target && url) await login(target, url);
   else {

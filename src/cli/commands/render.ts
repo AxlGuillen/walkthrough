@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { captureTour } from '../../capture/capture.ts';
 import { deviceProfile, FPS, type Quality } from '../../capture/devices.ts';
@@ -8,6 +8,8 @@ import { execFile } from 'node:child_process';
 import { ensureGallery } from '../../library/launch.ts';
 import { previewMetaFile, publishVideo } from '../../library/library.ts';
 import { previewAnchor, videoAnchor } from '../../library/page.ts';
+import { auditTiming, formatTiming } from '../../check/timing.ts';
+import { EVENTS_FILE, type CaptureEvent } from '../../capture/events.ts';
 import { renderOverlays } from '../../overlays/render.ts';
 import { ROOT, STORAGE } from '../context.ts';
 import { voice } from './voice.ts';
@@ -54,6 +56,9 @@ export async function render(tourFile: string, from: string | undefined, preview
     console.log(`✓ ${video.file}`);
     anchor = videoAnchor(path.relative(STORAGE.videos, video.file));
   }
+
+  const events = path.join(outDir, EVENTS_FILE);
+  if (existsSync(events)) console.log(formatTiming(auditTiming(JSON.parse(await readFile(events, 'utf8')) as CaptureEvent[], timeline)));
 
   if (open) {
     const url = `${await ensureGallery(ROOT)}/#${anchor}`;

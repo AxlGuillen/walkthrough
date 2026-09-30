@@ -7,6 +7,7 @@ import { doctor } from './commands/doctor.ts';
 import { gallery } from './commands/gallery.ts';
 import { inspect } from './commands/inspect.ts';
 import { login } from './commands/login.ts';
+import { overlay } from './commands/overlay.ts';
 import { render } from './commands/render.ts';
 import { voice } from './commands/voice.ts';
 import { ROOT, STORAGE } from './context.ts';
@@ -24,6 +25,11 @@ const USAGE = `usage:
       --open                          open the gallery on the new video when done
       --from=overlays                 reuse the capture; re-render overlays and compose
       --from=compose                  reuse capture and overlays; only rebuild the final video
+  walkthrough overlay <template.html> render one overlay alone, to design a resource without a tour
+      --beats=title=0.4,line=1.2      its beats, in seconds
+      --params=title=Hola             its params
+      --data=<file.yaml|json>         its structured data
+      --duration=5  --device=mobile  --theme=light  --accent=#D9F24A  --lang=en  --open
   walkthrough gallery                 browse, reveal and trash generated videos
   walkthrough clean                   delete working files (videos are never touched)
       --voice                         also delete the voice cache
@@ -37,6 +43,8 @@ const { positionals, values } = parseArgs({
   options: {
     from: { type: 'string' }, voice: { type: 'boolean' }, keep: { type: 'string' }, 'no-open': { type: 'boolean' },
     session: { type: 'string' }, device: { type: 'string' }, preview: { type: 'boolean' }, open: { type: 'boolean' },
+    beats: { type: 'string' }, params: { type: 'string' }, data: { type: 'string' }, duration: { type: 'string' },
+    theme: { type: 'string' }, accent: { type: 'string' }, lang: { type: 'string' },
   },
 });
 const [command, target, url] = positionals;
@@ -47,6 +55,10 @@ try {
   else if (command === 'check' && target) await check(target);
   else if (command === 'inspect' && target) await inspect(target, values.session, values.device);
   else if (command === 'render' && target) await render(target, values.from, values.preview ?? false, values.open ?? false);
+  else if (command === 'overlay' && target) {
+    const { beats, params, data, duration, device, theme, accent, lang } = values;
+    await overlay({ src: target, open: values.open ?? false, beats, params, data, duration, device, theme, accent, lang });
+  }
   else if (command === 'gallery') await gallery(!values['no-open']);
   else if (command === 'doctor') await doctor();
   else if (command === 'clean') await cleanUp(values.voice ?? false, values.keep);

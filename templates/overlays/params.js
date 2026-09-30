@@ -7,6 +7,10 @@ if (accent) {
   document.documentElement.style.setProperty('--accent', accent);
   document.documentElement.style.setProperty('--on-accent', onAccent(accent));
 }
+// The accent as TEXT: a light accent (lime) cannot be read on a light theme, so text falls
+// back to ink there; as a fill it stays the accent.
+const lightAccent = accent && onAccent(accent) !== '#ffffff';
+if (lightAccent && params.get('theme') === 'light') document.documentElement.style.setProperty('--accent-ink', '#111211');
 window.param = (name, fallback = '') => params.get(name) ?? fallback;
 window.asset = name => new URL(name, params.get('base') ?? location.href).href;
 document.documentElement.dataset.theme = params.get('theme') ?? 'dark';
@@ -23,6 +27,8 @@ window.walkthrough = {
   beats: json('beats') ?? {},
   data: json('data'),
   theme: document.documentElement.dataset.theme,
+  // Seconds the overlay stays on screen, so an exit can be timed from the end.
+  duration: Number(params.get('duration') ?? 0),
   beat(name, fallback = 0) { return this.beats[name] ?? fallback; },
   timeline(seek) { seekers.push(seek); },
   gsap(timeline) {

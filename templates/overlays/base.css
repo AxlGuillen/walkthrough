@@ -3,6 +3,8 @@
   --accent: #FF3B5C;
   /* Text on an accent fill; params.js darkens it for a light accent. */
   --on-accent: #ffffff;
+  /* The accent used as text; params.js swaps it for ink where it would not read. */
+  --accent-ink: var(--accent);
   --ink: #ffffff;
   --muted: #cbc4ea;
   --panel: rgba(20, 16, 40, 0.92);
@@ -12,6 +14,8 @@
   --line: rgba(255, 255, 255, 0.14);
   --stroke: rgba(255, 255, 255, 0.78);
   --scrim: rgba(9, 7, 15, 0.72);
+  /* Behind text laid over the app: the app's own text must not show through. */
+  --scrim-strong: rgba(9, 7, 15, 0.94);
   --shadow: rgba(0, 0, 0, 0.45);
   --font: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   --mono: "SF Mono", ui-monospace, Menlo, monospace;
@@ -27,6 +31,7 @@
   --line: rgba(17, 18, 17, 0.12);
   --stroke: rgba(17, 18, 17, 0.6);
   --scrim: rgba(241, 241, 238, 0.8);
+  --scrim-strong: rgba(241, 241, 238, 0.96);
   --shadow: rgba(17, 18, 17, 0.18);
 }
 html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: var(--font); color: var(--ink); }

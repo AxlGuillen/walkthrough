@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!-- Closing card. params: eyebrow, title, subtitle, url, style, logo. beats: mark, title,
+     subtitle, url. It stays until the video ends, so it has no exit. -->
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="titles.css">
+</head>
+<body>
+  <div class="veil"></div>
+  <div class="scrim"></div>
+  <div class="block">
+    <div class="mark"><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47"></circle></svg></div>
+    <div class="eyebrow" data-param="eyebrow"></div>
+    <h1 class="title" data-param="title"></h1>
+    <div class="rule"></div>
+    <p class="subtitle" data-param="subtitle"></p>
+    <div class="url" data-param="url"></div>
+  </div>
+<script src="params.js"></script>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="vendor/gsap/SplitText.min.js"></script>
+<script src="vendor/gsap/DrawSVGPlugin.min.js"></script>
+<script src="kit.js"></script>
+<script src="titles.js"></script>
+<script>titles.play('closing');</script>
+</body>
+</html>

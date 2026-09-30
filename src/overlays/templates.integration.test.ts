@@ -161,3 +161,67 @@ describe('flow template', () => {
     }, 60_000);
   }
 });
+
+describe('title templates', () => {
+  const open = async (file: string, params: Record<string, string>, look = {}) => {
+    const context = await browser.newContext({ viewport: canvas });
+    const page = await context.newPage();
+    await page.goto(overlayUrl(path.join(TEMPLATES_DIR, file), tourDir, { duration: '5', ...params }, { accent: '#C8633A', ...look }));
+    await page.evaluate(() => document.fonts.ready);
+    const at = async (t: number) => {
+      await page.evaluate(time => window.__walkthroughSeek?.(time), t);
+      return page.evaluate(() => {
+        const opacity = (selector: string) => Number(getComputedStyle(document.querySelector(selector)!).opacity);
+        const chars = [...document.querySelectorAll('.title .char')];
+        const shown = chars.filter(c => Number(getComputedStyle(c).opacity) > 0.9).length;
+        return { chars: chars.length, shown, block: opacity('.block > .title'), body: document.body.className };
+      });
+    };
+    return { page, context, at };
+  };
+
+  for (const style of ['kinetic', 'over-app', 'brand']) {
+    it(`${style} opening: the title lands on its beat and leaves on "out"`, async () => {
+      const { page, context, at } = await open('opening.html', { title: 'Sunset Shores', subtitle: 'A guided overview', style, beats: JSON.stringify({ title: 1, out: 3.5 }) });
+      try {
+        const before = await at(0.9);
+        expect(before.body).toContain(`style-${style}`);
+        expect(before.chars).toBeGreaterThan(10);
+        expect(before.shown).toBe(0);
+        expect((await at(2.8)).shown).toBe(before.chars);
+        expect((await at(4.8)).block).toBe(0);
+        if (style === 'brand') expect(await page.locator('.monogram').innerText()).toBe('S');
+      } finally {
+        await context.close();
+      }
+    }, 60_000);
+  }
+
+  it('closing and chapter cards show their url and index, and the chapter leaves', async () => {
+    const closing = await open('closing.html', { title: 'Gracias', url: 'axl13.dev' });
+    try {
+      await closing.at(3);
+      expect(Number(await closing.page.locator('.url').evaluate(el => getComputedStyle(el).opacity))).toBe(1);
+    } finally {
+      await closing.context.close();
+    }
+    const chapter = await open('chapter-card.html', { index: '2', total: '5', title: 'Reservas' });
+    try {
+      expect((await chapter.page.locator('.index').innerText()).replace(/\s+/g, '')).toBe('02/05');
+      expect((await chapter.at(2)).shown).toBe((await chapter.at(2)).chars);
+      expect((await chapter.at(4.9)).block).toBe(0);
+    } finally {
+      await chapter.context.close();
+    }
+  }, 60_000);
+
+  it('writes accent text in ink when a light accent meets the light theme', async () => {
+    const { page, context } = await open('opening.html', { title: 'Hola', eyebrow: 'UrVenue' }, { accent: '#D9F24A', theme: 'light' });
+    try {
+      expect(await page.locator('.eyebrow').evaluate(el => getComputedStyle(el).color)).toBe('rgb(17, 18, 17)');
+    } finally {
+      await context.close();
+    }
+  }, 60_000);
+});
+

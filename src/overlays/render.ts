@@ -14,7 +14,7 @@ declare global {
   interface Window {
     // Set by templates/overlays/params.js: places the template's paused animation at t seconds.
     __walkthroughSeek?(t: number): void;
-    walkthrough?: { beats: Record<string, number>; data: unknown; theme: string; beat(name: string, fallback?: number): number };
+    walkthrough?: { beats: Record<string, number>; data: unknown; theme: string; duration: number; beat(name: string, fallback?: number): number };
   }
 }
 
@@ -49,10 +49,11 @@ export function overlayUrl(file: string, tourDir: string, params: Record<string,
   return url.href;
 }
 
-// What a template reads besides its own params: its beats and data as JSON, and for a flow
-// the scene Node laid out.
+// What a template reads besides its own params: how long it is on screen, its beats and data
+// as JSON, and for a flow the scene Node laid out.
 export function overlayParams(overlay: TimedOverlay, canvas: Size): Record<string, string> {
   return {
+    duration: (overlay.end - overlay.start).toFixed(3),
     ...overlay.params,
     ...(Object.keys(overlay.beats).length ? { beats: JSON.stringify(overlay.beats) } : {}),
     ...(overlay.data === undefined ? {} : { data: JSON.stringify(overlay.data) }),

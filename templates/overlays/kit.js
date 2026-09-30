@@ -15,10 +15,11 @@
   // The one timeline a template builds; tweens default to the family's entrance.
   const timeline = () => walkthrough.gsap(gsap.timeline({ defaults: { ease: ease.out, duration: time.enter } }));
 
-  // Letters or words as elements to stagger. Splits by characters only, never by lines, so
-  // it does not depend on fonts having loaded.
-  const split = (el, by = 'chars') => {
-    const parts = new window.SplitText(el, { type: by === 'words' ? 'words' : 'words,chars', aria: 'auto' });
+  // Letters or words as elements to stagger. Splits by characters or words only, never by
+  // lines, so it does not depend on fonts having loaded. `mask` clips each word, so letters
+  // can rise into view from below their baseline.
+  const split = (el, by = 'chars', { mask = false } = {}) => {
+    const parts = new window.SplitText(el, { type: by === 'words' ? 'words' : 'words,chars', aria: 'auto', charsClass: 'char', wordsClass: 'word', ...(mask ? { mask: 'words' } : {}) });
     return by === 'words' ? parts.words : parts.chars;
   };
 

@@ -6,7 +6,8 @@ import { z } from 'zod';
 import { deviceProfile, type Device } from '../../capture/devices.ts';
 import { probeOverlay } from '../../overlays/probe.ts';
 import { resourceFor } from '../../resources/registry.ts';
-import { overlayFile, renderOverlays } from '../../overlays/render.ts';
+import { backdropArgs } from '../../overlays/catalog.ts';
+import { renderOverlays } from '../../overlays/render.ts';
 import { STORAGE } from '../context.ts';
 
 // Flags as parseArgs hands them over: any of them may be missing.
@@ -24,8 +25,6 @@ export interface OverlayCommand {
 }
 
 const FPS = 30;
-// Mid grey under the overlay, so both a dark and a light design show their edges.
-const BACKDROP = '0x5a5a5a';
 
 export async function overlay(options: OverlayCommand): Promise<void> {
   const device: Device = options.device === 'mobile' ? 'mobile' : 'desktop';
@@ -53,10 +52,7 @@ export async function overlay(options: OverlayCommand): Promise<void> {
   process.stderr.write('\n');
 
   const video = path.join(outDir, 'probe.mp4');
-  execFileSync('ffmpeg', ['-y', '-v', 'error',
-    '-f', 'lavfi', '-i', `color=c=${BACKDROP}:s=${output.width}x${output.height}:r=${FPS}:d=${timed.end}`,
-    '-i', path.join(outDir, overlayFile(0)),
-    '-filter_complex', '[0][1]overlay=eof_action=pass,format=yuv420p', '-c:v', 'libx264', '-crf', '18', video]);
+  execFileSync('ffmpeg', backdropArgs([timed], output, FPS, timed.end, video), { cwd: outDir });
   console.log(`✓ ${video} (${((Date.now() - started) / 1000).toFixed(1)}s)`);
   if (options.open) execFile('open', [video]);
 }

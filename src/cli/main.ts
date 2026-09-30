@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
+import { catalog } from './commands/catalog.ts';
 import { check } from './commands/check.ts';
 import { cleanUp } from './commands/clean.ts';
 import { doctor } from './commands/doctor.ts';
@@ -30,6 +31,8 @@ const USAGE = `usage:
       --params=title=Hola             its params
       --data=<file.yaml|json>         its structured data
       --duration=5  --device=mobile  --theme=light  --accent=#D9F24A  --lang=en  --open
+  walkthrough catalog                 render every resource alone (tours/examples/catalogo.yaml) with a contact sheet
+      --device=mobile|both  --theme=light  --open
   walkthrough gallery                 browse, reveal and trash generated videos
   walkthrough clean                   delete working files (videos are never touched)
       --voice                         also delete the voice cache
@@ -59,6 +62,7 @@ try {
     const { beats, params, data, duration, device, theme, accent, lang } = values;
     await overlay({ src: target, open: values.open ?? false, beats, params, data, duration, device, theme, accent, lang });
   }
+  else if (command === 'catalog') await catalog(values.device, values.theme, values.open ?? false);
   else if (command === 'gallery') await gallery(!values['no-open']);
   else if (command === 'doctor') await doctor();
   else if (command === 'clean') await cleanUp(values.voice ?? false, values.keep);

@@ -1,0 +1,158 @@
+title: Catálogo de recursos
+url: about:blank
+accent: "#C8633A"
+# Un ejemplo de cada recurso, sin voz: los beats van en segundos desde el inicio de cada
+# segmento. Lo renderiza `walkthrough catalog` en 16:9 y 9:16, y una prueba comprueba que
+# cada entrada sea válida y quepa en los dos formatos. Al agregar un recurso o una variante,
+# agrega aquí su ejemplo. Los ejemplos narrados están en aperturas, graficas, codigo y flujos.
+segments:
+  # Aperturas, capítulo y cierre
+  - hold: 5
+    overlays:
+      - src: opening.html
+        params: { style: kinetic, eyebrow: UrVenue · Resort microsite, title: Sunset Shores, subtitle: Un recorrido guiado }
+        beats: { title: 0.4, subtitle: 1.1 }
+  - hold: 5.5
+    overlays:
+      - src: opening.html
+        params: { style: over-app, eyebrow: UrVenue · Resort microsite, title: Sunset Shores, subtitle: Un recorrido guiado }
+        beats: { title: 0.4, reveal: 1.8 }
+  - hold: 5
+    overlays:
+      - src: opening.html
+        params: { style: brand, eyebrow: UrVenue · Resort microsite, title: Sunset Shores, subtitle: Un recorrido guiado }
+        beats: { mark: 0.3, title: 1.1 }
+  - hold: 3
+    overlays:
+      - src: chapter-card.html
+        params: { style: kinetic, eyebrow: Capítulo, index: 2, total: 5, title: Reservas }
+  - hold: 4
+    overlays:
+      - src: closing.html
+        params: { style: kinetic, title: Gracias, subtitle: Resort microsite en UrVenue, url: sunsetshores.urresort.com }
+
+  # Gráficas
+  - hold: 4.5
+    overlays:
+      - src: chart.html
+        data:
+          type: bar
+          title: Reservas por día
+          highlight: Sáb
+          series: [{ label: Lun, value: 42 }, { label: Mar, value: 38 }, { label: Mié, value: 55 }, { label: Jue, value: 71 }, { label: Vie, value: 128 }, { label: Sáb, value: 163 }, { label: Dom, value: 97 }]
+  - hold: 4.5
+    overlays:
+      - src: chart.html
+        data:
+          type: line
+          title: Commits por semana
+          series: [{ label: S1, value: 12 }, { label: S2, value: 18 }, { label: S3, value: 9 }, { label: S4, value: 26 }, { label: S5, value: 31 }, { label: S6, value: 79 }, { label: S7, value: 44 }]
+  - hold: 4
+    overlays:
+      - src: chart.html
+        data: { type: donut, label: De las mesas del sábado, value: 68, unit: "%" }
+  - hold: 4
+    overlays:
+      - src: chart.html
+        data: { type: stat, label: reservas este mes, value: 1284 }
+  - hold: 5
+    overlays:
+      - src: chart.html
+        data: { type: compare, title: Tiempo por cotización, unit: min, before: { label: Antes, value: 45 }, after: { label: Ahora, value: 3, at: 1.8 } }
+  - hold: 4
+    overlays:
+      - src: chart.html
+        data:
+          type: bar
+          mode: card
+          title: Ocupación por venue
+          unit: "%"
+          series: [{ label: Vera, value: 82 }, { label: Pool, value: 64 }, { label: Spa, value: 71 }]
+
+  # Código
+  - hold: 5
+    overlays:
+      - src: code.html
+        data:
+          language: ts
+          file: src/api/reservations.ts
+          code: |
+            export async function reserve(guest: Guest, table: Table) {
+              const taken = await db.count('reservations', table.id);
+              if (taken >= table.capacity) {
+                throw new Error('This table is full');
+              }
+              return db.insert('reservations', { guest, table });
+            }
+          highlight:
+            - { lines: "2-5", at: 1.8, note: Revisa el cupo }
+            - { lines: 6, at: 3.2, note: Aparta la mesa }
+  - hold: 6.5
+    overlays:
+      - src: code.html
+        data:
+          view: terminal
+          code: |
+            $ bun run walkthrough check demo.yaml
+            ✓ 18 ok · 0 warnings · 0 failures
+            $ bun run walkthrough render demo.yaml
+            ✓ preview in 84.7s
+  - hold: 4
+    overlays:
+      - src: code.html
+        data:
+          view: diff
+          language: ts
+          file: src/capture/scroll.ts
+          code: |2
+             function scrollDuration(distance: number) {
+            -  return clamp(0.4 + distance / 2500, 0.45, 1.1);
+            +  return clamp(0.35 + distance / 1200, 0.6, 3.2);
+             }
+          highlight:
+            - { lines: 3, at: 1.5, note: "1,200 px/s como máximo" }
+
+  # Flujos
+  - hold: 5
+    flow:
+      title: Cómo se reserva una mesa
+      steps:
+        - { text: Elige una noche, at: 0.5 }
+        - { text: Escoge su mesa, detail: "Sección, capacidad y consumo mínimo", at: 1.3 }
+        - { text: Paga el depósito, at: 2.1 }
+        - { text: El host confirma, at: 2.9 }
+  - hold: 5
+    flow:
+      shape: decision
+      title: ¿Hay mesa disponible?
+      steps: [{ text: Llega la solicitud, at: 0.5 }, { text: ¿Quedan mesas?, at: 1.3 }]
+      branches:
+        - { label: Sí, steps: [{ text: Se confirma, at: 2.1 }, { text: Se cobra el depósito, at: 2.9 }] }
+        - { label: "No", steps: [{ text: Lista de espera, at: 3.8 }] }
+  - hold: 5
+    flow:
+      shape: cycle
+      title: Entrega semanal
+      loop: 3.8
+      steps: [{ text: Planear, at: 0.5 }, { text: Construir, at: 1.3 }, { text: Entregar, at: 2.1 }, { text: Escuchar feedback, at: 2.9 }]
+  - hold: 5
+    flow:
+      shape: lanes
+      title: ¿Quién hace qué?
+      lanes: [Huésped, Venue, Host]
+      steps:
+        - { text: Elige su mesa, lane: Huésped, at: 0.5 }
+        - { text: Aprueba la reserva, lane: Venue, at: 1.3 }
+        - { text: Paga el depósito, lane: Huésped, at: 2.1 }
+        - { text: Prepara la mesa, lane: Host, at: 2.9 }
+  - hold: 5
+    flow:
+      shape: compare
+      title: Reservar una mesa
+      before: { label: Antes, steps: [{ text: Llamar al venue, at: 0.5 }, { text: Esperar respuesta, at: 1.2 }, { text: Mandar transferencia, at: 1.9 }] }
+      after: { label: Ahora, steps: [{ text: Reservar en línea, at: 2.8 }, { text: Pagar con tarjeta, at: 3.5 }] }
+  - hold: 4
+    flow:
+      mode: card
+      title: Vida de un ticket
+      steps: [{ text: Se crea, at: 0.5 }, { text: Se asigna, at: 1.3 }, { text: Se entrega, at: 2.1 }]

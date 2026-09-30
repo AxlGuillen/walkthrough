@@ -48,3 +48,42 @@ Usa el mismo estilo en la apertura, los capítulos y el cierre de un video.
 - **Los capítulos** duran lo que su frase; `index` y `total` se muestran con dos dígitos («02 / 05»).
 
 Ejemplos de los tres estilos en `tours/examples/aperturas.yaml`.
+
+## Gráficas
+
+Una plantilla, `chart.html`, con los datos en `data`. Node los valida al cargar el tour (un dato mal escrito falla antes de renderizar, diciendo cuál) y calcula la escena: escala con números redondos, posiciones, textos que caben y números en formato de México (`es`) o de EE. UU. (`en`). La plantilla solo dibuja y anima.
+
+| `type` | Para | Datos |
+|---|---|---|
+| `bar` | Comparar cantidades entre categorías | `series` (1–12 `{ label, value, at }`), `highlight` (una etiqueta, en el color de acento) |
+| `line` | Una evolución en el tiempo | `series` (2–24 puntos) |
+| `donut` | Una parte de un total | `label`, `value`, `total` (100 por defecto), `at` |
+| `stat` | Una cifra que impresiona | `label`, `value`, `from` (desde dónde cuenta; 0), `at` |
+| `compare` | Antes y después | `before` y `after` (`{ label, value, at }`); muestra el cambio («−93%») |
+
+Todas aceptan `title`, `unit` («min», «%», «MXN»; un símbolo va pegado al número y una palabra con espacio), `prefix` («$»), `decimals` y `mode` (`full`, que tapa la app, o `card`, un panel sobre la mitad derecha en 16:9 y la inferior en 9:16).
+
+```yaml
+- say: El lunes hubo pocas reservas, el viernes subieron, y el sábado fue el mejor día.
+  overlays:
+    - src: chart.html
+      data:
+        type: bar
+        title: Reservas por día
+        highlight: Sáb
+        series:
+          - { label: Lun, value: 42, at: lunes }
+          - { label: Mar, value: 38 }
+          - { label: Vie, value: 128, at: viernes }
+          - { label: Sáb, value: 163, at: sábado }
+```
+
+### Cómo escribirlas
+
+- **`at` en los puntos que la voz nombra.** Los demás se reparten solos entre sus vecinos, en orden, como los pasos de un flujo. Sin ningún `at`, las barras entran en cascada y la línea se dibuja de punto en punto.
+- **La cifra cuenta mientras se dice.** Pon el `at` de un `stat` o una `donut` en la palabra que la presenta («este mes **llevamos**…»), no en el número dicho, que llega tarde.
+- **En una comparación**, `before` y `after` en sus palabras («**Antes**… **Ahora**…»), con por lo menos un segundo y medio entre ellas: la primera cifra cuenta, la flecha se dibuja y luego cuenta la segunda.
+- **Etiquetas cortas** en las series (hasta 24 letras; «Lun», «S1», «Vera»); si no caben en su espacio se cortan con «…». `label` de una dona o una cifra puede ser una frase.
+- **Datos reales o marcados como ejemplo.** Una gráfica de un video para cliente usa cifras que se pueden respaldar.
+
+Ejemplos de los cinco tipos en `tours/examples/graficas.yaml`.

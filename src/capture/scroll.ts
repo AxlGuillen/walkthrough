@@ -24,9 +24,22 @@ const REVEAL_MARGIN = 48;
 // Centering a zoom target that is already almost centered would only add motion.
 const CENTER_TOLERANCE = 0.1;
 
+// Paced like a hand on a trackpad: the farther, the longer, and never much faster than
+// SCROLL.speed on average, so text stays readable as it passes. A 1.1s cap used to fling
+// 3000px at nearly 2700px/s.
+export const SCROLL = { min: 0.6, max: 3.2, speed: 1200 };
+
+export function scrollDistance(plans: readonly ScrollPlan[]): number {
+  return Math.max(0, ...plans.map(p => Math.hypot(p.to.x - p.from.x, p.to.y - p.from.y)));
+}
+
 export function scrollDuration(plans: readonly ScrollPlan[]): number {
-  const distance = Math.max(0, ...plans.map(p => Math.hypot(p.to.x - p.from.x, p.to.y - p.from.y)));
-  return Math.min(1.1, Math.max(0.45, 0.4 + distance / 2500));
+  return Math.min(SCROLL.max, Math.max(SCROLL.min, 0.35 + scrollDistance(plans) / SCROLL.speed));
+}
+
+// When the last scroll running at `time` ends, or `time` itself when nothing moves.
+export function scrollBusyUntil(animations: readonly ScrollAnimation[], time: number): number {
+  return Math.max(time, ...animations.filter(a => a.start <= time + 1e-9).map(a => a.start + a.duration));
 }
 
 export function scrollPositionAt({ from, to, start, duration }: ScrollAnimation, time: number): Point {

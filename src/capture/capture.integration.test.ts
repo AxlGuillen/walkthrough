@@ -175,6 +175,59 @@ segments:
   }, 120_000);
 });
 
+describe('marks on hidden elements', () => {
+  it('fade out when a menu covers what they mark, instead of floating over it', async () => {
+    const tour = parseTour(`
+title: Fixture
+url: ${fixture('cover')}
+accent: "#00FFFF"
+segments:
+  - hold: 3
+    do:
+      - goto: ${fixture('cover')}
+      - highlight: { on: "#target", at: 0.2 }
+      - click: { on: "#open", at: 1.2 }
+`);
+    const file = path.join(dir, 'cover.mp4');
+    await captureTour({ root: ROOT, tour, timeline: buildTimeline(tour, []), file, fps: 30 });
+    const cyan = ([r, g, b]: number[]) => r! < 90 && g! > 170 && b! > 170;
+    const aroundTarget = { x: 280, y: 380, width: 340, height: 160 };
+    expect(count(file, 1.0, aroundTarget, cyan)).toBeGreaterThan(50);
+    // Ring hold alone would keep it until 2.2s; covered at 1.2s, it is gone by 1.8s.
+    expect(count(file, 1.9, aroundTarget, cyan)).toBe(0);
+  }, 120_000);
+});
+
+describe('changes of screen', () => {
+  it('dissolve from the old page into the new one instead of cutting', async () => {
+    const page = (color: string) => pathToFileURL(path.join(ROOT, 'tests/fixtures/fade', `${color}.html`)).href;
+    const tour = parseTour(`
+title: Fixture
+url: ${page('red')}
+sfx: false
+segments:
+  - hold: 1
+    do:
+      - goto: ${page('red')}
+  - hold: 1.5
+    do:
+      - goto: ${page('blue')}
+`);
+    const file = path.join(dir, 'fade.mp4');
+    await captureTour({ root: ROOT, tour, timeline: buildTimeline(tour, []), file, fps: 30 });
+    const [r1, , b1] = pixel(file, 0.9, 960, 540);
+    const [r2, , b2] = pixel(file, 1.25, 960, 540);
+    const [r3, , b3] = pixel(file, 1.8, 960, 540);
+    expect(r1).toBeGreaterThan(200);
+    expect(b1).toBeLessThan(60);
+    // Halfway through the dissolve both pages show.
+    expect(r2).toBeGreaterThan(60);
+    expect(b2).toBeGreaterThan(60);
+    expect(r3).toBeLessThan(60);
+    expect(b3).toBeGreaterThan(200);
+  }, 120_000);
+});
+
 async function layout(url: string, selectors: string[]) {
   const context = await browser.newContext({ viewport: deviceProfile('desktop').viewport });
   try {

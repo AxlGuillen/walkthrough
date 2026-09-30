@@ -5,13 +5,13 @@ import { renderScene } from '../effects/svg.ts';
 import type { Timeline } from '../timeline/build.ts';
 import { cameraAt, followCursor, fullFrame } from '../timeline/camera.ts';
 import type { Tour } from '../tour/schema.ts';
-import { continueTyping, perform, retrackMarks } from './actions.ts';
+import { continueTyping, fadeHiddenMarks, perform, retrackMarks } from './actions.ts';
 import { installClock } from './clock.ts';
 import { prepareTargets } from './prep.ts';
 import { deviceProfile, FPS, type Quality } from './devices.ts';
 import { EVENTS_FILE } from './events.ts';
 import { startEncoder } from './encoder.ts';
-import { effectsLayer, scrollControl } from './runtime.ts';
+import { effectsLayer, scrollControl, transitionLayer } from './runtime.ts';
 import { applyScrolls } from './scroll.ts';
 import { dueActions, frameCount } from './schedule.ts';
 import { openContext } from './session.ts';
@@ -44,6 +44,7 @@ export async function captureTour({
     const clock = await installClock(page);
     await page.addInitScript(effectsLayer);
     await page.addInitScript(scrollControl);
+    await page.addInitScript(transitionLayer);
     await installSetup(page, tour);
     const stage = createStage(page, clock, tour, device, timeline);
     const home = fullFrame(device.viewport);
@@ -56,7 +57,11 @@ export async function captureTour({
         await perform(stage, action, timeline.actions.indexOf(action));
       }
       await continueTyping(stage);
-      if (await applyScrolls(page, stage.scrolls, previous, stage.time)) await retrackMarks(stage);
+      await applyScrolls(page, stage.scrolls, previous, stage.time);
+      // Every frame, not only after our own scrolls: the app may move the page itself, as a
+      // menu that scrolls to the top when it opens.
+      await retrackMarks(stage);
+      await fadeHiddenMarks(stage);
       previous = stage.time;
 
       await clock.syncAnimations();

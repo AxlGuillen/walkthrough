@@ -184,6 +184,23 @@ export function clickVisible(time: number, click: ClickMark): boolean {
   return strokePhase(time, click.time, TIMING.circleDraw, TIMING.circleHold) !== null;
 }
 
+// A mark whose element got covered (a menu opened over it) or went away (a navigation)
+// fades out from `time` instead of floating over whatever replaced it. Returns how long
+// it had been on screen, or null if it was already on its way out.
+export function endRingAt(ring: Ring, time: number): number | null {
+  const hold = Math.max(0, time - ring.time - TIMING.ringDraw);
+  if (hold >= ring.hold) return null;
+  ring.hold = hold;
+  return time - ring.time;
+}
+
+export function endLabelAt(label: Label, time: number): number | null {
+  const hold = Math.max(0, time - label.time);
+  if (hold >= label.hold) return null;
+  label.hold = hold;
+  return time - label.time;
+}
+
 export function ringVisible(time: number, ring: Ring): boolean {
   return strokePhase(time, ring.time, TIMING.ringDraw, ring.hold) !== null;
 }

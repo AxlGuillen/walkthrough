@@ -1,0 +1,13 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+  html, body { margin: 0; height: 100%; background: #f4f1ea; font: 24px sans-serif; }
+  #target { position: absolute; left: 300px; top: 400px; width: 300px; height: 120px; background: #ddd; display: grid; place-items: center; }
+  #open { position: absolute; left: 60px; top: 60px; padding: 12px 20px; }
+  #panel { display: none; position: fixed; left: 0; right: 0; top: 150px; height: 500px; background: #333; }
+  body.open #panel { display: block; }
+</style></head>
+<body>
+  <button id="open" onclick="document.body.classList.add('open')">Open menu</button>
+  <div id="target">Marked</div>
+  <div id="panel"></div>
+</body></html>

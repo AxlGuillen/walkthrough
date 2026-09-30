@@ -1,5 +1,5 @@
 import { bendFor, cursorPosition, TIMING, travelTime } from '../effects/scene.ts';
-import { planScroll, queueScroll, scrollDuration } from './scroll.ts';
+import { planScroll, queueScroll, scrollBusyUntil, scrollDistance, scrollDuration } from './scroll.ts';
 import type { Stage } from './stage.ts';
 import { aimAt } from './targets.ts';
 
@@ -14,6 +14,19 @@ export async function prepareTargets(stage: Stage): Promise<void> {
   const { page, time, effects, pending, scrolls, log } = stage;
   while (pending[0] && pending[0].prepAt <= time + EPSILON) {
     const step = pending[0];
+    // Measured mid-scroll, a target's reveal would aim at where it is passing, and cut the
+    // scroll short. Wait for the page to stop; if it only stops after the action, leave that
+    // scroll alone; the timing audit points out a mark that lands while it moves.
+    const still = scrollBusyUntil(scrolls, time);
+    if (still > time + EPSILON) {
+      if (still < step.action.time - EPSILON) {
+        step.prepAt = still;
+        pending.sort((a, b) => a.prepAt - b.prepAt);
+      } else {
+        pending.shift();
+      }
+      continue;
+    }
     const target = page.locator(step.target).first();
     const aim = await aimAt(target);
     if (!aim && time < step.action.time - EPSILON) return;
@@ -27,7 +40,7 @@ export async function prepareTargets(stage: Stage): Promise<void> {
       const room = step.action.time - time - (step.pointer ? TIMING.travelMin : 0);
       const duration = Math.max(MIN_SCROLL, Math.min(scrollDuration(planned.plans), room));
       for (const plan of planned.plans) queueScroll(scrolls, plan, time, duration);
-      log.push({ kind: 'scroll', time, duration });
+      log.push({ kind: 'scroll', time, duration, distance: Math.round(scrollDistance(planned.plans)) });
       shift = planned.shift;
       ready = time + duration;
     }

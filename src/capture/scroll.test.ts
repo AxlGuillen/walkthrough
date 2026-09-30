@@ -1,14 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { queueScroll, scrollDuration, scrollPositionAt, scrollsDue, type ScrollAnimation } from './scroll.ts';
+import { queueScroll, scrollBusyUntil, scrollDuration, scrollPositionAt, scrollsDue, type ScrollAnimation } from './scroll.ts';
 
 const plan = (y: number) => ({ key: 'window', from: { x: 0, y: 0 }, to: { x: 0, y } });
 
 describe('scrollDuration', () => {
   it('grows with distance within bounds', () => {
-    expect(scrollDuration([plan(10)])).toBe(0.45);
-    expect(scrollDuration([plan(1500)])).toBeCloseTo(1);
-    expect(scrollDuration([plan(20_000)])).toBe(1.1);
-    expect(scrollDuration([plan(300), { ...plan(1500), key: '1' }])).toBeCloseTo(1);
+    expect(scrollDuration([plan(10)])).toBe(0.6);
+    expect(scrollDuration([plan(1500)])).toBeCloseTo(1.6);
+    expect(scrollDuration([plan(20_000)])).toBe(3.2);
+    expect(scrollDuration([plan(300), { ...plan(1500), key: '1' }])).toBeCloseTo(1.6);
+  });
+
+  it('keeps the average speed readable until the longest scrolls', () => {
+    for (const distance of [800, 1500, 2500, 3000]) expect(distance / scrollDuration([plan(distance)])).toBeLessThanOrEqual(1200);
+  });
+});
+
+describe('scrollBusyUntil', () => {
+  it('is the end of the latest scroll already under way, or now when nothing moves', () => {
+    const animations = [{ ...plan(1000), start: 1, duration: 1 }, { ...plan(1000), key: 'x', start: 1.5, duration: 1.2 }];
+    expect(scrollBusyUntil(animations, 1.6)).toBeCloseTo(2.7);
+    expect(scrollBusyUntil(animations, 0.5)).toBe(0.5);
+    expect(scrollBusyUntil(animations, 3)).toBe(3);
   });
 });
 

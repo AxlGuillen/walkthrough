@@ -4,6 +4,7 @@ declare global {
       syncAnimations?(afterSettle: boolean): Promise<void>;
       draw?(markup: string): void;
       scrollTo?(key: string, x: number, y: number): void;
+      fadeFrom?(src: string, ms: number): Promise<void>;
     };
   }
 }
@@ -96,6 +97,33 @@ export function scrollControl(): void {
     scrollTo(key, x, y) {
       const el = key === 'window' ? document.scrollingElement : document.querySelector(`[data-walkthrough-scroll="${key}"]`);
       el?.scrollTo({ left: x, top: y, behavior: 'instant' });
+    },
+  };
+}
+
+// A change of screen dissolves instead of cutting: the last frame of the old page, as an
+// image, fades out over the new one. It sits in the top layer under the effects layer,
+// which draw() moves back on top every frame.
+export function transitionLayer(): void {
+  const ID = '__walkthrough-fade';
+  window.__walkthrough = {
+    ...window.__walkthrough,
+    async fadeFrom(src, ms) {
+      document.getElementById(ID)?.remove();
+      const host = document.createElement('div');
+      host.id = ID;
+      host.setAttribute('popover', 'manual');
+      host.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;margin:0;padding:0;border:0;'
+        + 'background:transparent;overflow:hidden;pointer-events:none;';
+      const image = new Image();
+      image.src = src;
+      image.style.cssText = 'display:block;width:100%;height:100%;';
+      await image.decode();
+      host.append(image);
+      document.documentElement.append(host);
+      host.showPopover();
+      const fade = host.animate([{ opacity: 1 }, { opacity: 0 }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
+      void fade.finished.then(() => host.remove(), () => {});
     },
   };
 }

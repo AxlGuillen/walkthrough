@@ -2,6 +2,9 @@ import type { TimedAction } from '../timeline/build.ts';
 
 export const TYPING_RATE = 14;
 
+// How long a change of screen dissolves from the old page into the new one.
+export const TRANSITION = 0.5;
+
 export function frameCount(duration: number, fps: number): number {
   return Math.max(1, Math.ceil(duration * fps - 1e-9));
 }
@@ -22,8 +25,9 @@ export interface PrepStep {
   center: boolean;
 }
 
-// A scroll without its own duration takes about this long.
-const SCROLL_ESTIMATE = 0.8;
+// A scroll without its own duration takes about this long; the capture also waits for the
+// real end of any scroll before preparing the next target (prep.ts).
+const SCROLL_ESTIMATE = 1.4;
 
 // Each selector action is prepared ahead of time (scroll it into view, send the cursor),
 // but never before the previous action ran, or a scroll finished: either may change what

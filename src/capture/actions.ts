@@ -1,10 +1,10 @@
-import { clickVisible, labelVisible, ringVisible, TIMING } from '../effects/scene.ts';
+import { clickVisible, endLabelAt, endRingAt, labelVisible, ringVisible, TIMING } from '../effects/scene.ts';
 import type { TimedAction } from '../timeline/build.ts';
 import { fullFrame } from '../timeline/camera.ts';
-import { charsDue } from './schedule.ts';
+import { charsDue, TRANSITION } from './schedule.ts';
 import { assertSignedIn, dismissDialogs } from './setup.ts';
 import type { Stage } from './stage.ts';
-import { planScroll, queueScroll, scrollDuration, type ScrollMode } from './scroll.ts';
+import { planScroll, queueScroll, scrollDistance, scrollDuration, type ScrollMode } from './scroll.ts';
 import { aimAt, visibleBox, zoomRect } from './targets.ts';
 
 const ZOOM_DURATION = 0.8;
@@ -14,21 +14,28 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
   switch (action.kind) {
     case 'goto': {
       // The opening load is the start of the video, not a change of screen.
-      if (stage.time > 0) log.push({ kind: 'navigate', time: stage.time });
+      const opening = stage.time === 0;
+      if (!opening) log.push({ kind: 'navigate', time: stage.time });
+      const still = opening ? null : await snapshot(page);
       const requested = new URL(action.url, tour.url);
       await clock.settle(async () => {
         await page.goto(requested.href);
         await dismissDialogs(page, tour);
       });
-      return assertSignedIn(page, tour, requested);
+      await assertSignedIn(page, tour, requested);
+      if (still) await dissolveFrom(page, still);
+      return;
     }
     case 'click': {
       const before = new URL(page.url());
+      // A click that waits for another screen dissolves into it, like a goto.
+      const still = action.wait ? await snapshot(page) : null;
       await clickWithMark(stage, action.on, seed);
       if (action.wait) {
         log.push({ kind: 'navigate', time: stage.time });
         await waitFor(stage, action.wait);
         await assertSignedIn(page, tour, before);
+        if (still) await dissolveFrom(page, still);
       }
       return;
     }
@@ -40,7 +47,7 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       const planned = await planScroll(page, edge ? null : action.to, mode, action.within);
       const duration = action.duration ?? scrollDuration(planned.plans);
       for (const plan of planned.plans) queueScroll(stage.scrolls, plan, stage.time, duration);
-      if (planned.plans.length) log.push({ kind: 'scroll', time: stage.time, duration });
+      if (planned.plans.length) log.push({ kind: 'scroll', time: stage.time, duration, distance: Math.round(scrollDistance(planned.plans)) });
       return;
     }
     case 'hover': {
@@ -88,6 +95,17 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
   }
 }
 
+// The page as the viewer last saw it, without the effects layer: the marks carry on live
+// above the dissolve instead of fading out with the old page.
+async function snapshot(page: Stage['page']): Promise<string> {
+  await page.evaluate(() => window.__walkthrough?.draw?.(''));
+  return (await page.screenshot({ type: 'jpeg', quality: 90 })).toString('base64');
+}
+
+async function dissolveFrom(page: Stage['page'], still: string): Promise<void> {
+  await page.evaluate(([src, ms]) => window.__walkthrough?.fadeFrom?.(src, ms), [`data:image/jpeg;base64,${still}`, TRANSITION * 1000] as const);
+}
+
 // The mark is placed before clicking: the click may navigate away from the target.
 async function clickWithMark({ page, time, effects, log }: Stage, selector: string, seed: number): Promise<void> {
   const target = page.locator(selector).first();
@@ -107,22 +125,64 @@ async function waitFor({ page, clock, tour }: Stage, selector: string): Promise<
   });
 }
 
-// Keeps rings and click marks on their element while the page scrolls under them.
+// Marks are looked up every frame; an element that went away must not stall the capture.
+const MARK_LOOKUP = 150;
+
+type Presence = 'shown' | 'covered' | 'gone';
+
+// Whether the viewer can still see a marked element: at least half of it (or of the
+// screen, for a huge one) on screen, and most of five points across that part hitting the
+// element itself. The effects and dissolve layers ignore pointer events, so they are not hit.
+async function presence(page: Stage['page'], selector: string): Promise<Presence> {
+  return page.locator(selector).first().evaluate((el): Presence => {
+    const r = el.getBoundingClientRect();
+    const [left, top] = [Math.max(r.left, 0), Math.max(r.top, 0)];
+    const [right, bottom] = [Math.min(r.right, innerWidth), Math.min(r.bottom, innerHeight)];
+    const onScreen = Math.max(0, right - left) * Math.max(0, bottom - top);
+    const whole = Math.min(r.width * r.height, innerWidth * innerHeight);
+    if (whole <= 0 || onScreen < whole * 0.5) return 'gone';
+    const at = (fx: number, fy: number) => document.elementFromPoint(left + (right - left) * fx, top + (bottom - top) * fy);
+    const points = [[0.5, 0.5], [0.2, 0.2], [0.8, 0.2], [0.2, 0.8], [0.8, 0.8]] as const;
+    const covered = points.filter(([fx, fy]) => {
+      const hit = at(fx, fy);
+      return hit !== null && hit !== el && !el.contains(hit) && !hit.contains(el);
+    }).length;
+    return covered >= 3 ? 'covered' : 'shown';
+  }, undefined, { timeout: MARK_LOOKUP }).catch((): Presence => 'gone');
+}
+
+// Fades out any mark whose element the viewer can no longer see.
+export async function fadeHiddenMarks({ page, time, effects, log }: Stage): Promise<void> {
+  for (const ring of effects.rings) {
+    if (!ring.track || !ringVisible(time, ring) || (await presence(page, ring.track)) === 'shown') continue;
+    const shown = endRingAt(ring, time);
+    if (shown !== null) log.push({ kind: 'cut', time, mark: 'ring', shown });
+  }
+  for (const label of effects.labels) {
+    if (!label.track || !labelVisible(time, label) || (await presence(page, label.track)) === 'shown') continue;
+    const shown = endLabelAt(label, time);
+    if (shown !== null) log.push({ kind: 'cut', time, mark: 'label', shown });
+  }
+}
+
+// Keeps rings and click marks on their element while the page moves under them.
 export async function retrackMarks({ page, time, effects }: Stage): Promise<void> {
   for (const ring of effects.rings) {
     if (!ring.track || !ringVisible(time, ring)) continue;
-    const box = await page.locator(ring.track).first().boundingBox().catch(() => null);
+    const box = await page.locator(ring.track).first().boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
     if (box) ring.rect = box;
   }
   for (const label of effects.labels) {
     if (!label.track || !labelVisible(time, label)) continue;
-    const box = await page.locator(label.track).first().boundingBox().catch(() => null);
+    const box = await page.locator(label.track).first().boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
     if (box) label.rect = box;
   }
   for (const click of effects.clicks) {
     if (!click.track || !clickVisible(time, click)) continue;
-    const box = await page.locator(click.track.selector).first().boundingBox().catch(() => null);
+    const box = await page.locator(click.track.selector).first().boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
+    // A click that navigated leaves its mark where it happened; no need to look again.
     if (box) click.at = { x: box.x + click.track.offset.x, y: box.y + click.track.offset.y };
+    else delete click.track;
   }
 }
 

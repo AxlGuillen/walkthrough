@@ -6,7 +6,10 @@ export type CaptureEvent =
   | { kind: 'ring'; time: number }
   | { kind: 'label'; time: number }
   | { kind: 'zoom'; time: number; direction: 'in' | 'out' }
-  | { kind: 'scroll'; time: number; duration: number }
-  | { kind: 'navigate'; time: number };
+  // distance in CSS pixels, for the timing audit; older captures lack it.
+  | { kind: 'scroll'; time: number; duration: number; distance?: number }
+  | { kind: 'navigate'; time: number }
+  // A ring or label that faded early because its element was covered or went away.
+  | { kind: 'cut'; time: number; mark: 'ring' | 'label'; shown: number };
 
 export const EVENTS_FILE = 'events.json';

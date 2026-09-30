@@ -112,7 +112,7 @@ describe('smooth scrolling', () => {
       - goto: ${url}
       - scroll: { to: bottom, at: 0.5 }
       - scroll: { to: "#item-6", within: "#lane", at: 0.5 }
-      - scroll: { to: top, at: 2.5, duration: 0.6 }
+      - scroll: { to: top, at: 3, duration: 0.6 }
 `, page => page.evaluate(() => scrollY));
 
     expect(Math.max(...samples)).toBe(3000 - device.viewport.height);

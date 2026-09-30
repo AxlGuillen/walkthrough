@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bendFor, cursorPosition, emptyPlan, sceneAt, strokePhase, TIMING, travelTime, type EffectsPlan } from './scene.ts';
+import { bendFor, cursorPosition, emptyPlan, endLabelAt, endRingAt, labelVisible, ringVisible, sceneAt, strokePhase, TIMING, travelTime, type EffectsPlan } from './scene.ts';
 
 const home = { x: 800, y: 450 };
 
@@ -111,5 +111,23 @@ describe('strokePhase', () => {
     expect(strokePhase(2, 1, 0.4, 1)).toEqual({ progress: 1, opacity: 1 });
     expect(strokePhase(1.4 + 1 + TIMING.fade / 2, 1, 0.4, 1)!.opacity).toBeCloseTo(0.5);
     expect(strokePhase(1.4 + 1 + TIMING.fade, 1, 0.4, 1)).toBeNull();
+  });
+});
+
+describe('ending a mark early', () => {
+  it('fades a ring from now, says how long it was up, and never lengthens it', () => {
+    const ring = { time: 1, rect: { x: 0, y: 0, width: 10, height: 10 }, hold: 1.5, seed: 1 };
+    expect(endRingAt(ring, 2)).toBeCloseTo(1);
+    expect(ring.hold).toBeCloseTo(0.5);
+    expect(endRingAt(ring, 2.5)).toBeNull();
+    expect(ring.hold).toBeCloseTo(0.5);
+    expect(ringVisible(2.2, ring)).toBe(true);
+    expect(ringVisible(2 + TIMING.fade + 0.01, ring)).toBe(false);
+  });
+
+  it('does the same for a label', () => {
+    const label = { time: 1, rect: { x: 0, y: 0, width: 10, height: 10 }, text: 'x', hold: 2.2, seed: 1 };
+    expect(endLabelAt(label, 1.5)).toBeCloseTo(0.5);
+    expect(labelVisible(1.5 + TIMING.fade + 0.01, label)).toBe(false);
   });
 });

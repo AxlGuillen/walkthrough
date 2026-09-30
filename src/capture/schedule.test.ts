@@ -61,7 +61,7 @@ describe('prepSchedule', () => {
       time, segment: 0, action: { kind: 'scroll', to: '.x', within: undefined, duration, at: undefined },
     });
     expect(prepSchedule([scroll(1, 2), highlight(2.5)], 1.6).map(s => s.prepAt)).toEqual([2.5]);
-    expect(prepSchedule([scroll(1), highlight(3)], 1.6).map(s => s.prepAt)).toEqual([1.8]);
+    expect(prepSchedule([scroll(1), highlight(3)], 1.6).map(s => s.prepAt)).toEqual([2.4]);
   });
 
   it('covers every selector action, marking which move the cursor and which want centering', () => {

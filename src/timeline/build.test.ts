@@ -58,7 +58,7 @@ describe('buildTimeline', () => {
 
   it('defaults overlays to run until the end of their segment', () => {
     expect(timeline.overlays).toEqual([
-      { src: 'overlays/new.html', params: {}, start: 4.5, end: 7, fade: 0.3, segment: 1 },
+      { src: 'overlays/new.html', params: {}, start: 4.5, end: 7, fade: 0.3, segment: 1, beats: {} },
     ]);
   });
 
@@ -243,5 +243,35 @@ describe('spreadTimes', () => {
     const times = spreadTimes([5, undefined, undefined], 0, 5);
     expect(times[1]! - times[0]!).toBeCloseTo(0.6);
     expect(times[2]! - times[1]!).toBeCloseTo(0.6);
+  });
+});
+
+describe('overlay beats', () => {
+  const words = ['This', 'is', 'Sunset', 'Shores,', 'a', 'resort', 'where', 'every', 'venue', 'is', 'a', 'resort', 'booking.']
+    .map((text, i) => ({ text, start: i * 0.5, end: i * 0.5 + 0.4 }));
+  const build = (overlay: string) => buildTimeline(parseTour(`
+title: Beats
+url: https://example.com
+segments:
+  - say: This is Sunset Shores, a resort where every venue is a resort booking.
+    overlays:
+      - ${overlay}
+`), [{ duration: 6.5, words }], options).overlays[0]!;
+
+  it('puts each beat on its word, on the overlay clock, looking past the beat before', () => {
+    const overlay = build('{ src: title-card.html, from: Sunset, beats: { title: Sunset, line: resort, again: resort, end: 5 } }');
+    expect(overlay.start).toBe(1.5);
+    // resort is said at 2.5s and 5.5s of speech; the lead-in adds 0.5s.
+    expect(overlay.beats).toEqual({ title: 0, line: 1.5, again: 4.5, end: 3.5 });
+  });
+
+  it('carries structured data through untouched', () => {
+    const overlay = build('{ src: chart.html, data: { series: [{ label: Mon, value: 3 }] } }');
+    expect(overlay.data).toEqual({ series: [{ label: 'Mon', value: 3 }] });
+  });
+
+  it('rejects a beat before the overlay starts or on a word never said', () => {
+    expect(() => build('{ src: a.html, from: resort, beats: { early: Sunset } }')).toThrow(/outside the overlay/);
+    expect(() => build('{ src: a.html, beats: { missing: marina } }')).toThrow(TimelineError);
   });
 });

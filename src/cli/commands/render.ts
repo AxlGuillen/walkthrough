@@ -38,7 +38,8 @@ export async function render(tourFile: string, from: string | undefined, preview
   if (from !== 'compose') {
     await renderOverlays({
       overlays: timeline.overlays, tourDir: paths.dir, outDir,
-      canvas: deviceProfile(tour.device).output, output: deviceProfile(tour.device, quality).output, fps: FPS[quality], accent: tour.accent,
+      canvas: deviceProfile(tour.device).output, output: deviceProfile(tour.device, quality).output, fps: FPS[quality],
+      look: { accent: tour.accent, theme: tour.theme, lang: tour.language },
       onFrame: (overlay, frame, total) => process.stderr.write(`\r  overlay ${overlay}: ${frame}/${total}   `),
     });
     if (timeline.overlays.length) process.stderr.write('\n');

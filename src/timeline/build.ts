@@ -49,6 +49,9 @@ export interface TimedOverlay {
   end: number;
   fade: number;
   segment: number;
+  // Seconds on the overlay's own clock, which starts at zero when it appears.
+  beats: Record<string, number>;
+  data?: unknown;
   flow?: TimedFlow;
 }
 
@@ -109,10 +112,27 @@ export function buildTimeline(
     timeline.actions.push(...actions);
 
     for (const overlay of segment.overlays) {
-      const from = resolve(overlay.from, start, `overlay ${overlay.src}`);
-      const to = resolve(overlay.to, end, `overlay ${overlay.src}`);
-      if (to <= from) throw new TimelineError(`${label}: overlay ${overlay.src} ends before it starts`);
-      timeline.overlays.push({ src: overlay.src, params: overlay.params, start: from, end: to, fade: overlay.fade, segment: index });
+      const what = `overlay ${overlay.src}`;
+      const from = resolve(overlay.from, start, what);
+      const to = resolve(overlay.to, end, what);
+      if (to <= from) throw new TimelineError(`${label}: ${what} ends before it starts`);
+      // Each word is looked for after the one before, so a repeated word can mark two beats.
+      let lastWord: number | undefined;
+      const beats = Object.fromEntries(Object.entries(overlay.beats).map(([name, at]) => {
+        let time: number;
+        if (typeof at === 'number') time = resolve(at, start, `${what} beat "${name}"`);
+        else {
+          const match = locate(at, `${what} beat "${name}"`, lastWord);
+          lastWord = match.start;
+          time = resolve(leadIn + match.start, start, `${what} beat "${name}"`);
+        }
+        if (time < from || time >= to) throw new TimelineError(`${label}: ${what} beat "${name}" falls outside the overlay`);
+        return [name, time - from];
+      }));
+      timeline.overlays.push({
+        src: overlay.src, params: overlay.params, start: from, end: to, fade: overlay.fade, segment: index, beats,
+        ...(overlay.data === undefined ? {} : { data: overlay.data }),
+      });
     }
 
     if (segment.flow) {
@@ -151,7 +171,7 @@ export function buildTimeline(
       }
 
       timeline.overlays.push({
-        src: FLOW_TEMPLATE, params: {}, start: from, end: to, fade: flow.fade, segment: index,
+        src: FLOW_TEMPLATE, params: {}, start: from, end: to, fade: flow.fade, segment: index, beats: {},
         flow: {
           shape: flow.shape, mode: flow.mode, ...(flow.title ? { title: flow.title } : {}),
           steps: steps.map(({ text, detail, branch, lane }, i) => ({

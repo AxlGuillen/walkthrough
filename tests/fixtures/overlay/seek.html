@@ -1,0 +1,17 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:transparent} #box{position:absolute;left:0;top:400px;width:100px;height:100px;background:#00ff00} #n{position:absolute;left:40px;top:40px;font:700 80px sans-serif;color:#fff}</style>
+</head><body>
+<div id="box"></div><div id="n"></div>
+<script src="../../../templates/overlays/params.js"></script>
+<script src="../../../templates/overlays/vendor/gsap/gsap.min.js"></script>
+<script src="../../../templates/overlays/vendor/gsap/SplitText.min.js"></script>
+<script src="../../../templates/overlays/kit.js"></script>
+<script>
+  // The box leaves on beat "go" and crosses 1000px in exactly one second, linearly.
+  const tl = kit.timeline();
+  tl.fromTo('#box', { x: 0 }, { x: 1000, duration: 1, ease: 'none' }, kit.beat('go', 0));
+  tl.add(kit.count(document.getElementById('n'), { to: 1500, duration: 1 }), kit.beat('go', 0));
+  document.body.dataset.data = JSON.stringify(walkthrough.data);
+</script>
+</body></html>

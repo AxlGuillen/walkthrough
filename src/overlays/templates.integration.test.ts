@@ -38,14 +38,22 @@ describe('overlay templates', () => {
     const context = await browser.newContext({ viewport: canvas });
     try {
       const page = await context.newPage();
-      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'chapter.html'), tourDir, { index: '2', total: '6', label: 'Board', position: 'top-left' }, '#00AA88'));
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'chapter.html'), tourDir, { index: '2', total: '6', label: 'Board', position: 'top-left' }, { accent: '#00AA88' }));
       expect(await page.locator('.pill').innerText()).toMatch(/2\s*\/\s*6\s*Board/);
       expect(await page.locator('.pill').getAttribute('class')).toContain('top-left');
       expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim())).toBe('#00AA88');
       const onAccent = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--on-accent').trim());
       expect(await onAccent()).toBe('#ffffff');
-      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'chapter.html'), tourDir, { index: '1', total: '2' }, '#D9F24A'));
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'chapter.html'), tourDir, { index: '1', total: '2' }, { accent: '#D9F24A' }));
       expect(await onAccent()).toBe('#111111');
+
+      await page.goto(overlayUrl(path.join(ROOT, 'tests/fixtures/overlay/seek.html'), tourDir,
+        { beats: JSON.stringify({ go: 1.5 }), data: JSON.stringify({ rows: [1, 2] }) }, { theme: 'light' }));
+      expect(await page.evaluate(() => [document.documentElement.dataset.theme, window.walkthrough?.beat('go'), document.body.dataset.data]))
+        .toEqual(['light', 1.5, '{"rows":[1,2]}']);
+      // The counter is painted at its start, formatted for the language (es by default).
+      await page.evaluate(() => window.__walkthroughSeek?.(3));
+      expect(await page.locator('#n').innerText()).toBe('1,500');
 
       await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'shortcut.html'), tourDir, { keys: '⌘ + K' }));
       expect(await page.locator('kbd').allInnerTexts()).toEqual(['⌘', 'K']);

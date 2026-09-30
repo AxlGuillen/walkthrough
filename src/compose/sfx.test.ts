@@ -4,7 +4,7 @@ import type { TimedAction, TimedOverlay } from '../timeline/build.ts';
 import { audioGraph } from './audio.ts';
 import { eventsFromTimeline, sfxGraph, soundEvents } from './sfx.ts';
 
-const overlay = (start: number): TimedOverlay => ({ src: 'a.html', params: {}, start, end: start + 1, fade: 0, segment: 0 });
+const overlay = (start: number): TimedOverlay => ({ src: 'a.html', params: {}, start, end: start + 1, fade: 0, segment: 0, beats: {} });
 
 describe('soundEvents', () => {
   const captured: CaptureEvent[] = [

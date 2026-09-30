@@ -47,7 +47,7 @@ segments:
       - { src: overlays/lower-third.html, params: { title: Tablero, week: 38 } }
 `);
     expect(tour.segments[0]!.overlays[0]).toEqual({
-      src: 'overlays/lower-third.html', fade: 0.3, params: { title: 'Tablero', week: '38' },
+      src: 'overlays/lower-third.html', fade: 0.3, params: { title: 'Tablero', week: '38' }, beats: {},
     });
   });
 

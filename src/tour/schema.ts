@@ -88,13 +88,17 @@ const action = z.union([goto, click, hover, type, zoom, highlight, label, scroll
 export type Action = z.infer<typeof action>;
 
 // An HTML page laid over the video. params reach it as a query string, so one
-// template (a lower third, a title card) serves many texts.
+// template (a lower third, a title card) serves many texts. beats name the moments its
+// animation lands on, each on a word of the narration; data is structured input (a chart's
+// series, a code block) that each resource validates for itself.
 const overlay = z.strictObject({
   src: z.string().min(1),
   from: anchor.optional(),
   to: anchor.optional(),
   fade: z.number().nonnegative().default(0.3),
   params: z.record(z.string(), z.union([z.string(), z.number()]).transform(String)).default({}),
+  beats: z.record(z.string().regex(/^[a-zA-Z][\w-]*$/, 'use letters, digits, - and _'), anchor).default({}),
+  data: z.unknown().optional(),
 });
 export type Overlay = z.infer<typeof overlay>;
 
@@ -194,6 +198,8 @@ export const tourSchema = z.strictObject({
     volume: z.number().min(0).max(1).default(0.04),
   }).optional(),
   subtitles: z.enum(['karaoke', 'none']).default('none'),
+  // The overlays' look: dark (the default) or light, always with the tour's accent.
+  theme: z.enum(['dark', 'light']).default('dark'),
   // Gets the app past its own onboarding: storage is written before every page of the
   // tour's origin loads, and dismiss selectors are clicked after each navigation.
   setup: z.strictObject({

@@ -37,13 +37,13 @@ afterAll(async () => { await rm(dir, { recursive: true, force: true }); });
 
 describe('overlayUrl', () => {
   it('carries the tour folder, its accent and the params as a query string', () => {
-    const url = new URL(overlayUrl('/repo/templates/overlays/title.html', '/repo/tours/x', { title: 'Hola mundo' }, '#FF3B5C'));
+    const url = new URL(overlayUrl('/repo/templates/overlays/title.html', '/repo/tours/x', { title: 'Hola mundo' }, { accent: '#FF3B5C' }));
     expect(url.pathname).toBe('/repo/templates/overlays/title.html');
     expect(Object.fromEntries(url.searchParams)).toEqual({ base: 'file:///repo/tours/x/', accent: '#FF3B5C', title: 'Hola mundo' });
   });
 
   it('lets params override the automatic ones', () => {
-    expect(new URL(overlayUrl('/t.html', '/x', { accent: '#000000' }, '#FFFFFF')).searchParams.get('accent')).toBe('#000000');
+    expect(new URL(overlayUrl('/t.html', '/x', { accent: '#000000' }, { accent: '#FFFFFF' })).searchParams.get('accent')).toBe('#000000');
   });
 });
 
@@ -86,3 +86,40 @@ segments:
     expect(isWhite(pixel('video.mp4', 2.05, 1160, 590))).toBe(true);
   }, 120_000);
 });
+
+describe('animations placed by second', () => {
+  const render = async (name: string) => {
+    const tour = parseTour(`
+title: Fixture
+url: https://example.com
+segments:
+  - hold: 2
+    overlays:
+      - { src: ${path.join(ROOT, 'tests/fixtures/overlay/seek.html')}, fade: 0, beats: { go: 0.5 }, data: { rows: [1, 2] } }
+`);
+    const out = path.join(dir, name);
+    await mkdir(out, { recursive: true });
+    await renderOverlays({ overlays: buildTimeline(tour, []).overlays, tourDir: dir, outDir: out, canvas: output, output, fps: 10 });
+    return path.join(name, 'overlays', '01.mov');
+  };
+
+  it('lands a GSAP timeline on its beat, frame for frame, and renders the same twice', async () => {
+    const first = await render('seek-a');
+    const alpha = (time: number, x: number) => {
+      const rgba = execFileSync('ffmpeg', ['-v', 'error', '-ss', String(time), '-i', path.join(dir, first), '-frames:v', '1',
+        '-vf', `format=rgba,crop=1:1:${x}:450`, '-f', 'rawvideo', '-pix_fmt', 'rgba', '-']);
+      return rgba[3]!;
+    };
+    // Still before the beat; 0.5s after it, halfway: x = 500, so the box covers 500..600.
+    expect(alpha(0.3, 50)).toBeGreaterThan(200);
+    expect(alpha(1.0, 550)).toBeGreaterThan(200);
+    expect(alpha(1.0, 50)).toBe(0);
+    expect(alpha(1.0, 700)).toBe(0);
+
+    const second = await render('seek-b');
+    const hashes = (file: string) => execFileSync('ffmpeg', ['-v', 'error', '-i', path.join(dir, file), '-f', 'framemd5', '-']).toString()
+      .split('\n').filter(line => line && !line.startsWith('#'));
+    expect(hashes(second)).toEqual(hashes(first));
+  }, 120_000);
+});
+

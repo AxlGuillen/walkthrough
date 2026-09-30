@@ -1,5 +1,5 @@
 import type { Size } from '../timeline/camera.ts';
-import type { TimedFlow, TimedOverlay } from '../timeline/build.ts';
+import type { TimedFlow } from '../timeline/build.ts';
 import { flowCues, type FlowCues } from './cues.ts';
 import { flowEdges } from './graph.ts';
 import { layoutFlow, type FlowLayout } from './layout.ts';
@@ -32,7 +32,3 @@ export function flowScene(flow: TimedFlow, start: number, canvas: Size): FlowSce
   return { layout, cues, groups };
 }
 
-export function overlayParams(overlay: TimedOverlay, canvas: Size): Record<string, string> {
-  if (!overlay.flow) return overlay.params;
-  return { ...overlay.params, scene: JSON.stringify(flowScene(overlay.flow, overlay.start, canvas)) };
-}

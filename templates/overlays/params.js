@@ -9,6 +9,29 @@ if (accent) {
 }
 window.param = (name, fallback = '') => params.get(name) ?? fallback;
 window.asset = name => new URL(name, params.get('base') ?? location.href).href;
+document.documentElement.dataset.theme = params.get('theme') ?? 'dark';
+
+// What a template animates with. beats are seconds on the overlay's own clock, each on a word
+// of the narration; data is the overlay's structured input. An animation is registered paused
+// and the render places it at the exact second of every frame (__walkthroughSeek), so it
+// never runs on wall time and two renders give the same frames.
+const json = name => {
+  try { return JSON.parse(params.get(name) ?? 'null'); } catch { return null; }
+};
+const seekers = [];
+window.walkthrough = {
+  beats: json('beats') ?? {},
+  data: json('data'),
+  theme: document.documentElement.dataset.theme,
+  beat(name, fallback = 0) { return this.beats[name] ?? fallback; },
+  timeline(seek) { seekers.push(seek); },
+  gsap(timeline) {
+    timeline.pause(0);
+    seekers.push(t => timeline.seek(t, false));
+    return timeline;
+  },
+};
+window.__walkthroughSeek = t => { for (const seek of seekers) seek(t); };
 
 // Same rule as src/effects/color.ts: dark text only on a light accent.
 function onAccent(hex) {

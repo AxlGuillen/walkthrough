@@ -3,7 +3,7 @@ import type { TimedOverlay } from '../timeline/build.ts';
 import { auditTiming, formatTiming } from './timing.ts';
 
 const flow = (start: number, mode: 'full' | 'card' = 'full'): TimedOverlay => ({
-  src: 'flow.html', params: {}, start, end: start + 5, fade: 0.3, segment: 0,
+  src: 'flow.html', params: {}, start, end: start + 5, fade: 0.3, segment: 0, beats: {},
   flow: { shape: 'linear', mode, steps: [{ text: 'a', time: start + 1 }, { text: 'b', time: start + 2 }] },
 });
 

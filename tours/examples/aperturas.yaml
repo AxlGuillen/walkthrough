@@ -1,0 +1,38 @@
+title: Catálogo de aperturas
+url: https://sunsetshores.urresort.com/
+accent: "#C8633A"
+# Muestra de los tres estilos de apertura, capítulo y cierre (docs/recursos.md), sobre un sitio
+# público de solo lectura. Nada aquí hace clic.
+segments:
+  - say: Esta es la apertura cinética. El título se arma letra por letra, y al terminar, el velo sube y deja ver la app.
+    do:
+      - goto: /
+    overlays:
+      - src: opening.html
+        params: { style: kinetic, eyebrow: UrVenue · Resort microsite, title: Sunset Shores, subtitle: Un recorrido guiado }
+        beats: { title: cinética, subtitle: letra, out: terminar }
+
+  - say: La apertura sobre la app muestra el título encima de la primera pantalla, y luego la revela sin taparla del todo.
+    overlays:
+      - src: opening.html
+        params: { style: over-app, eyebrow: UrVenue · Resort microsite, title: Sunset Shores, subtitle: Un recorrido guiado }
+        beats: { title: título, reveal: revela }
+
+  - say: Un capítulo separa las partes del video, con su número y su nombre.
+    overlays:
+      - src: chapter-card.html
+        params: { style: kinetic, eyebrow: Capítulo, index: 2, total: 5, title: Reservas }
+        beats: { title: separa, out: nombre }
+
+  - say: La apertura de marca dibuja el logo del proyecto, y después presenta su nombre.
+    overlays:
+      - src: opening.html
+        params: { style: brand, eyebrow: UrVenue · Resort microsite, title: Sunset Shores, subtitle: Un recorrido guiado }
+        beats: { mark: dibuja, title: proyecto }
+
+  - say: Y el cierre deja la dirección en pantalla hasta el final.
+    hold: 5
+    overlays:
+      - src: closing.html
+        params: { style: kinetic, title: Gracias, subtitle: Resort microsite en UrVenue, url: sunsetshores.urresort.com }
+        beats: { title: cierre, url: dirección }

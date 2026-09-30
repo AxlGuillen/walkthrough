@@ -94,7 +94,7 @@ export function seriesTimes(count: number, beats: Record<string, number>, first 
   return spreadTimes(anchored, first, first + pace * (count - 1), pace);
 }
 
-export function chartScene(chart: Chart, canvas: Size, lang: string, beats: Record<string, number> = {}): ChartScene {
+export function chartScene(chart: Chart, canvas: Size, lang: string, beats: Record<string, number> = {}, _duration = Infinity): ChartScene {
   const u = Math.min(canvas.width, canvas.height) / 100;
   const portrait = canvas.height > canvas.width;
   const style: NumberStyle = { lang, decimals: chart.decimals ?? 0, prefix: chart.prefix ?? '', unit: chart.unit ?? '' };

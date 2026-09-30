@@ -60,7 +60,7 @@ export function overlayParams(overlay: TimedOverlay, canvas: Size, lang = 'es'):
     ...(Object.keys(overlay.beats).length ? { beats: JSON.stringify(overlay.beats) } : {}),
     ...(overlay.data === undefined ? {} : { data: JSON.stringify(overlay.data) }),
     ...(overlay.flow ? { scene: JSON.stringify(flowScene(overlay.flow, overlay.start, canvas)) } : {}),
-    ...(resource && overlay.data !== undefined ? { scene: JSON.stringify(resource.scene(overlay.data, canvas, lang, overlay.beats)) } : {}),
+    ...(resource && overlay.data !== undefined ? { scene: JSON.stringify(resource.scene(overlay.data, canvas, lang, overlay.beats, overlay.end - overlay.start)) } : {}),
   };
 }
 

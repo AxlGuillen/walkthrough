@@ -5,6 +5,7 @@ import { dismissDialogs, installSetup } from '../capture/setup.ts';
 import { dataDependent, suggest } from '../inspect/selectors.ts';
 import { snapshotPage } from '../inspect/snapshot.ts';
 import { layoutFlow } from '../flow/layout.ts';
+import { resourceFor } from '../resources/registry.ts';
 import { resolveOverlay } from '../overlays/render.ts';
 import type { Size } from '../timeline/camera.ts';
 import type { Timeline, TimedAction } from '../timeline/build.ts';
@@ -42,6 +43,16 @@ export function checkFlows(timeline: Timeline, canvas: Size): CheckItem[] {
       if (box.truncated) notes.push(`"${flow.steps[i]!.text}" does not fit its box and gets cut; shorten it or move words to detail`);
     });
     return [{ time: start, label: `flow (${flow.steps.length} steps)`, status: notes.length ? 'warn' : 'ok', notes }];
+  });
+}
+
+// Resource overlays (charts, code) laid out as the render will, reporting what would not read.
+export function checkResources(timeline: Timeline, canvas: Size, lang: string): CheckItem[] {
+  return timeline.overlays.flatMap(overlay => {
+    const resource = resourceFor(overlay.src);
+    if (!resource || overlay.data === undefined) return [];
+    const notes = resource.warnings(overlay.data, canvas, lang, overlay.beats, overlay.end - overlay.start);
+    return [{ time: overlay.start, label: `${overlay.src} data`, status: notes.length ? 'warn' : 'ok', notes }];
   });
 }
 

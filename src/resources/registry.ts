@@ -1,7 +1,9 @@
 import path from 'node:path';
 import type { ZodType } from 'zod';
-import { chartBeats, chartScene } from '../charts/layout.ts';
+import { chartBeats, chartScene, type ChartScene } from '../charts/layout.ts';
 import { chartSchema } from '../charts/schema.ts';
+import { codeBeats, codeScene, type CodeScene } from '../code/layout.ts';
+import { codeSchema } from '../code/schema.ts';
 import type { Size } from '../timeline/camera.ts';
 import type { Anchor } from '../tour/schema.ts';
 
@@ -10,12 +12,22 @@ import type { Anchor } from '../tour/schema.ts';
 export interface Resource<T> {
   schema: ZodType<T>;
   beats(data: T): Record<string, Anchor>;
-  // beats are the overlay's, in seconds on its own clock.
-  scene(data: T, canvas: Size, lang: string, beats: Record<string, number>): unknown;
+  // beats are the overlay's, in seconds on its own clock; duration is how long it is shown.
+  scene(data: T, canvas: Size, lang: string, beats: Record<string, number>, duration: number): unknown;
+  // What would not read well, for `check`: text that is cut, code that is still typing when
+  // the overlay leaves.
+  warnings(data: T, canvas: Size, lang: string, beats: Record<string, number>, duration: number): string[];
 }
 
 const RESOURCES: Record<string, Resource<never>> = {
-  'chart.html': { schema: chartSchema, beats: chartBeats, scene: chartScene } as unknown as Resource<never>,
+  'chart.html': {
+    schema: chartSchema, beats: chartBeats, scene: chartScene,
+    warnings: (...args: Parameters<typeof chartScene>) => (chartScene(...args) as ChartScene).truncated.map(text => `label "${text}" does not fit and is cut`),
+  } as unknown as Resource<never>,
+  'code.html': {
+    schema: codeSchema, beats: codeBeats, scene: codeScene,
+    warnings: (...args: Parameters<typeof codeScene>) => (codeScene(...args) as CodeScene).warnings,
+  } as unknown as Resource<never>,
 };
 
 // By file name, so a tour's own chart.html restyles the shared one with the same data.

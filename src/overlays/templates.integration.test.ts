@@ -6,6 +6,8 @@ import { chromium, type Browser } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { chartScene, type BarScene, type CompareScene } from '../charts/layout.ts';
 import { chartSchema } from '../charts/schema.ts';
+import { codeScene } from '../code/layout.ts';
+import { codeSchema } from '../code/schema.ts';
 import { flowScene } from '../flow/scene.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
@@ -259,6 +261,31 @@ describe('chart template', () => {
       const compare = scene as CompareScene;
       expect(await page.locator('.value').allInnerTexts()).toEqual([compare.before.value.text, compare.after.value.text]);
       expect(await page.locator('.change').innerText()).toBe('−93%');
+    } finally {
+      await context.close();
+    }
+  }, 60_000);
+});
+
+describe('code template', () => {
+  it('types a command character by character and lights its highlight with the note in the bar', async () => {
+    const scene = codeScene(codeSchema.parse({ view: 'terminal', code: '$ bun test\nall green', highlight: [{ lines: 2, note: 'Pasa todo', at: 3 }] }), canvas, 'es', { h0: 3 });
+    const context = await browser.newContext({ viewport: canvas });
+    try {
+      const page = await context.newPage();
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'code.html'), tourDir, { duration: '5', scene: JSON.stringify(scene) }));
+      const clip = (t: number) => page.evaluate(time => {
+        window.__walkthroughSeek?.(time);
+        return (document.querySelector('.row.command .text') as HTMLElement).style.clipPath;
+      }, t);
+      // "bun test" is 8 characters typed at 22 per second from 0.6s.
+      expect(await clip(0.5)).toBe('inset(0px 8ch 0px 0px)');
+      expect(await clip(0.6 + 4 / 22 + 0.01)).toBe('inset(0px 4ch 0px 0px)');
+      expect(await clip(2)).toBe('inset(0px 0ch 0px 0px)');
+      await page.evaluate(() => window.__walkthroughSeek?.(4.5));
+      expect(Number(await page.locator('.band').evaluate(el => getComputedStyle(el).opacity))).toBe(1);
+      expect(await page.locator('.bar .note').innerText()).toBe('Pasa todo');
+      expect(await page.locator('.row.command .function').innerText()).toBe('bun');
     } finally {
       await context.close();
     }

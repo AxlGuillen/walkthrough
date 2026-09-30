@@ -95,7 +95,7 @@ url: https://example.com
 segments:
   - say: El lunes hubo pocas, el sábado muchas.
     overlays:
-      - src: chart.html
+      - src: ${data.includes('view:') ? 'code.html' : 'chart.html'}
         ${beats}
         data: ${data}
 `);
@@ -104,6 +104,11 @@ segments:
     const overlay = tour("{ type: bar, series: [{ label: Lun, value: 3, at: lunes }, { label: Sáb, value: 9, at: sábado }] }").segments[0]!.overlays[0]!;
     expect(overlay.beats).toEqual({ p0: 'lunes', p1: 'sábado' });
     expect(overlay.data).toMatchObject({ type: 'bar', mode: 'full' });
+  });
+
+  it('lifts the words of code highlights and commands too', () => {
+    const overlay = tour('{ view: terminal, code: "$ bun test", run: [lunes], highlight: [{ lines: 1, at: sábado }] }').segments[0]!.overlays[0]!;
+    expect(overlay.beats).toEqual({ h0: 'sábado', r0: 'lunes' });
   });
 
   it('lets explicit beats win over the words inside the data', () => {

@@ -202,6 +202,7 @@ overlays:
   | `chapter.html` | `index`, `total`, `label`, `position` (`top-right` por defecto; en uws-tasks conviene `bottom-right`, porque arriba tapa «New ticket») |
   | `shortcut.html` | `keys` («⌘ + K»), `label` |
   | `compare.html` | `before`, `after` (imágenes del tour), `beforeLabel`, `afterLabel` |
+  | `opening.html`, `chapter-card.html`, `closing.html` | Aperturas, capítulos y cierres en tres estilos (`kinetic`, `over-app`, `brand`), con `beats`; comparten `titles.css` y las coreografías de `titles.js`. Guía en `docs/recursos.md` |
 - **Render aparte** (`src/overlays/render.ts`): cada overlay se abre en su propia página, al tamaño de salida, con `deviceScaleFactor: 1` y fondo transparente (`omitBackground`). Se guarda como `overlays/NN.mov` con PNG por cuadro, sin pérdida y con alfa.
 - **Reloj propio que empieza en cero.** La página se carga con el reloj congelado, no vía `settle()`, así que sus animaciones de entrada arrancan justo cuando el overlay aparece en el video. Antes del primer cuadro se espera a las fuentes, imágenes y videos, por evento, porque los timers están congelados.
 - **`params`** reutiliza una plantilla con distintos textos: el HTML los lee con `URLSearchParams`.
@@ -221,6 +222,7 @@ overlays:
 - **Animación por posición:** `params.js` expone `walkthrough` (`beats`, `data`, `theme`, `beat(nombre)`) y dos formas de registrar una animación en pausa: `walkthrough.timeline(t => …)` o `walkthrough.gsap(timeline)`. En cada cuadro el render llama `__walkthroughSeek(t)` antes de la captura, así la animación cae en el segundo exacto y dos renders dan los mismos cuadros (lo comprueba una prueba con `framemd5`). Las plantillas que animan con CSS siguen con la sincronía de siempre.
 - **GSAP vendorizado** en `templates/overlays/vendor/gsap/` (3.15.0: núcleo, SplitText, DrawSVG, MorphSVG, CustomEase; licencia en su `AVISO.md`).
 - **Kit de movimiento** (`templates/overlays/kit.js`): curvas y duraciones de la familia, `kit.timeline()`, `kit.split()` (letras o palabras, nunca líneas, para no depender de que carguen las fuentes), `kit.count()` (números en `es-MX` o `en-US` según el tour) y `kit.draw()`.
+- **Duración y acento como texto:** la plantilla recibe `?duration=` (sus segundos en pantalla, para calcular una salida desde el final) y `--accent-ink`, el acento para texto y líneas finas: con un acento claro en tema claro pasa a tinta, porque el lima no se lee sobre blanco.
 - **Tema** (`theme: dark | light` en el tour): llega como `?theme=` junto con el acento y el idioma (`lang`). `base.css` define los tokens (`--stage`, `--panel`, `--surface`, `--line`, `--stroke`, `--scrim`) y las plantillas, flujos incluidos, solo usan tokens.
 - **Probador:** `walkthrough overlay <plantilla> --beats=… --params=… --data=archivo --theme=… --device=…` renderiza un overlay suelto sobre gris medio en `~/Library/Caches/walkthrough/probe/`, para diseñar un recurso sin armar un tour. Las rutas relativas se resuelven desde la carpeta actual.
 

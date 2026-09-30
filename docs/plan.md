@@ -171,7 +171,7 @@ Referencia visual: [archify](https://github.com/tt-a1i/archify) (MIT). Se toman 
 
 ## Fase 7 — Biblioteca de recursos animados (en curso)
 
-Hecho el 30/sep/2026: 7.1.
+Hecho el 30/sep/2026: 7.1 y 7.2. `docs/recursos.md` ya reúne la guía de lo hecho.
 
 Escrita el 30/sep/2026. Los overlays pueden ser cualquier HTML, pero hoy solo los flujos saben ir al ritmo de la voz, y cada plantilla anima a mano con CSS. La meta es una **biblioteca de recursos**: piezas que se declaran en el YAML con sus datos y sus palabras clave, y que sirven igual en un demo, en documentación o en una entrega semanal, sin escribir código por video.
 
@@ -195,7 +195,7 @@ Escrita el 30/sep/2026. Los overlays pueden ser cualquier HTML, pero hoy solo lo
 - **Probador:** `walkthrough overlay <plantilla> [--data archivo] [--device]` renderiza un recurso suelto en segundos, con palabras clave de prueba, para diseñarlo sin armar un tour.
 - **Pruebas:** dos renders del mismo overlay dan cuadros idénticos; las palabras clave llegan resueltas; el seek cae en el cuadro correcto.
 
-### 7.2 Aperturas y cierres cinéticos
+### 7.2 Aperturas y cierres cinéticos ✅
 
 La apertura es lo más visible del video y hoy es una tarjeta estática. Una familia de 3 aperturas, cada una con su cierre y su separador de capítulo en el mismo estilo:
 

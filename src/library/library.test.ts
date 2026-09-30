@@ -90,15 +90,18 @@ describe('clean', () => {
     await writeFile(path.join(storage.work, 'tours', 'p', 't', 'capture.mp4'), Buffer.alloc(100));
     await mkdir(path.join(storage.work, 'voice'), { recursive: true });
     await writeFile(path.join(storage.work, 'voice', 'x.wav'), Buffer.alloc(50));
+    await mkdir(path.join(storage.work, 'posters', 'videos'), { recursive: true });
+    await writeFile(path.join(storage.work, 'posters', 'videos', 'a.jpg'), Buffer.alloc(7));
     const videoDir = path.join(storage.videos, 'uws-tasks', 'tablero');
     for (const hour of [9, 10, 11]) await publishVideo(await source(), videoDir, meta, new Date(2026, 8, 28, hour));
 
     const report = await clean(storage, { keepVideos: 1, trash });
 
     expect(existsSync(path.join(storage.work, 'tours'))).toBe(false);
+    expect(existsSync(path.join(storage.work, 'posters'))).toBe(false);
     expect(existsSync(path.join(storage.work, 'voice', 'x.wav'))).toBe(true);
     expect((await listVideos(storage.videos)).map(v => path.basename(v.file))).toEqual(['2026-09-28_110000.mp4']);
-    expect(report.freed).toBe(100 + 10 * 2);
+    expect(report.freed).toBe(100 + 7 + 10 * 2);
     expect(report.trashed).toHaveLength(2);
     expect(await readdir(trash)).toHaveLength(4);
   });

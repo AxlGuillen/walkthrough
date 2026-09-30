@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseRange, resolvePreview, resolveVideo, startGallery } from './gallery.ts';
 import { publishVideo } from './library.ts';
 import { isGallery } from './launch.ts';
-import { escapeHtml, formatBytes, formatDuration, galleryPage, previewAnchor, videoAnchor } from './page.ts';
+import { escapeHtml, formatBytes, formatDuration, formatWhen, galleryPage, previewAnchor, stillAt, summarize, videoAnchor } from './page.ts';
 
 describe('resolveVideo', () => {
   it('accepts only mp4 files inside the library', () => {
@@ -51,16 +51,31 @@ describe('galleryPage', () => {
 
   it('groups videos by project and escapes what it shows', () => {
     const page = galleryPage({ videos: [video], cacheBytes: 0, videosRoot: '/v' });
-    expect(page).toContain('<h2>uws-tasks</h2>');
+    expect(page).toContain('>uws-tasks</h2>');
     expect(page).toContain('&lt;b&gt;Tour&lt;/b&gt;');
+    expect(page).not.toContain('<b>Tour</b>');
     expect(page).toContain('src="/video?file=uws-tasks%2Ftablero%2Fa.mp4"');
+    expect(page).toContain('poster="/poster?file=uws-tasks%2Ftablero%2Fa.mp4&amp;t=12.9"');
     expect(page).toContain('1:05');
   });
 
   it('shows previews in their own section, served from the cache', () => {
     const page = galleryPage({ videos: [], previews: [{ ...video, key: 'uws-tasks/tablero' }], cacheBytes: 0, videosRoot: '/v' });
-    expect(page).toContain('<h2>Vistas previas</h2>');
+    expect(page).toContain('>Vistas previas</h2>');
     expect(page).toContain('src="/video?preview=uws-tasks%2Ftablero"');
+    expect(galleryPage({ videos: [video], cacheBytes: 0, videosRoot: '/v' })).toContain('No hay vistas previas');
+  });
+
+  it('sums up the library and marks the latest render as new', () => {
+    const older = { ...video, title: 'Old', relative: 'uws-tasks/tablero/b.mp4', createdAt: '2026-09-27T18:00:00.000Z' };
+    const phone = { ...video, project: 'portfolio', tour: 'axl13', device: 'mobile' as const, relative: 'portfolio/axl13/c.mp4', createdAt: '2026-09-26T18:00:00.000Z' };
+    expect(summarize([older, video, phone])).toMatchObject({ videos: 3, tours: 2, projects: 2, bytes: 15 * 1024 * 1024, latest: video });
+    const page = galleryPage({ videos: [older, video, phone], cacheBytes: 0, videosRoot: '/Users/someone/Movies/walkthrough' });
+    expect(page.match(/NUEVO/g)).toHaveLength(1);
+    expect(page).toContain(`data-play="${videoAnchor(video.relative)}"`);
+    expect(page).toContain('<span>9:16</span>');
+    expect(page).toContain('~/Movies/walkthrough');
+    expect(page).toContain('rel="icon" type="image/svg+xml"');
   });
 
   it('gives every card a stable anchor and focuses the one in the URL hash', () => {
@@ -79,6 +94,20 @@ describe('galleryPage', () => {
 
   it('explains how to make the first video when there are none', () => {
     expect(galleryPage({ videos: [], cacheBytes: 0, videosRoot: '/v' })).toContain('Todavía no hay videos');
+  });
+
+  it('picks a still past the opening title card, within the video', () => {
+    expect(stillAt(100)).toBe('20.0');
+    expect(stillAt(55)).toBe('11.0');
+    expect(stillAt(5)).toBe('2.0');
+    expect(stillAt(1)).toBe('0.5');
+  });
+
+  it('says when a video was made the way a person would', () => {
+    const now = new Date(2026, 8, 30, 15, 0);
+    expect(formatWhen(new Date(2026, 8, 30, 13, 18).toISOString(), now)).toMatch(/^hoy, 1:18/);
+    expect(formatWhen(new Date(2026, 8, 29, 11, 28).toISOString(), now)).toMatch(/^ayer, 11:28/);
+    expect(formatWhen(new Date(2026, 8, 28, 14, 4).toISOString(), now)).toMatch(/^28 sept?\.?, 2:04/);
   });
 
   it('formats sizes, durations and HTML', () => {

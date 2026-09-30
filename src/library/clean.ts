@@ -17,12 +17,12 @@ export interface CleanReport {
   trashed: string[];
 }
 
-// Working files and the voice cache are regenerable, so they are deleted outright.
+// Working files, gallery stills and the voice cache are regenerable, so they are deleted outright.
 // Anything a person might want back (videos, the old in-repo out/) goes to the Trash.
 export async function clean(storage: Storage, { voice = false, keepVideos, legacy, trash }: CleanOptions = {}): Promise<CleanReport> {
   const report: CleanReport = { freed: 0, deleted: [], trashed: [] };
 
-  const disposable = [path.join(storage.work, 'tours'), ...(voice ? [voiceCacheDir(storage)] : [])];
+  const disposable = [path.join(storage.work, 'tours'), path.join(storage.work, 'posters'), ...(voice ? [voiceCacheDir(storage)] : [])];
   for (const dir of disposable.filter(existsSync)) {
     report.freed += await sizeOf(dir);
     await rm(dir, { recursive: true, force: true });

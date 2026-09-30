@@ -1,0 +1,72 @@
+title: Catálogo de gráficas
+url: https://sunsetshores.urresort.com/
+accent: "#C8633A"
+# Muestra de los cinco tipos de gráfica (docs/recursos.md). Los datos son de ejemplo; cada
+# punto con `at` aparece en su palabra. El sitio de fondo es público y aquí nada hace clic.
+segments:
+  - say: Las barras crecen al nombrarlas. El lunes hubo pocas reservas, el viernes subieron, y el sábado fue el mejor día.
+    do:
+      - goto: /
+    overlays:
+      - src: chart.html
+        data:
+          type: bar
+          title: Reservas por día
+          highlight: Sáb
+          series:
+            - { label: Lun, value: 42, at: lunes }
+            - { label: Mar, value: 38 }
+            - { label: Mié, value: 55 }
+            - { label: Jue, value: 71 }
+            - { label: Vie, value: 128, at: viernes }
+            - { label: Sáb, value: 163, at: sábado }
+            - { label: Dom, value: 97 }
+
+  - say: La línea se dibuja semana a semana, hasta el pico de la sexta.
+    overlays:
+      - src: chart.html
+        data:
+          type: line
+          title: Commits por semana
+          series:
+            - { label: S1, value: 12, at: línea }
+            - { label: S2, value: 18 }
+            - { label: S3, value: 9 }
+            - { label: S4, value: 26 }
+            - { label: S5, value: 31 }
+            - { label: S6, value: 79, at: pico }
+            - { label: S7, value: 44 }
+
+  - say: Una dona muestra una parte del total. Ya está reservado el sesenta y ocho por ciento de las mesas.
+    overlays:
+      - src: chart.html
+        data: { type: donut, label: De las mesas del sábado, value: 68, unit: "%", at: reservado }
+
+  - say: Una cifra cuenta hasta su valor. Este mes llevamos mil doscientas ochenta y cuatro reservas.
+    overlays:
+      - src: chart.html
+        data: { type: stat, label: reservas este mes, value: 1284, at: llevamos }
+
+  - say: Y una comparación muestra el cambio. Antes, una cotización tomaba cuarenta y cinco minutos. Ahora toma tres.
+    hold: 7
+    overlays:
+      - src: chart.html
+        data:
+          type: compare
+          title: Tiempo por cotización
+          unit: min
+          before: { label: Antes, value: 45, at: Antes }
+          after: { label: Ahora, value: 3, at: Ahora }
+
+  - say: En modo tarjeta, la gráfica acompaña a la app sin taparla.
+    overlays:
+      - src: chart.html
+        data:
+          type: bar
+          mode: card
+          title: Ocupación por venue
+          unit: "%"
+          series:
+            - { label: Vera, value: 82, at: tarjeta }
+            - { label: Pool, value: 64 }
+            - { label: Spa, value: 71 }

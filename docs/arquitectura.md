@@ -120,8 +120,10 @@ El anillo de resaltado y el clic dibujado **sí** van en la página: se inyectan
 - **Cursor natural:** trayectoria Bézier con una comba lateral de 8–18 % (sembrada por acción) y duración según la distancia, entre 0,35 s y 0,9 s. El movimiento arranca justo a tiempo para llegar cuando corre la acción.
 - **Scroll determinista:** Node interpola cada contenedor (la ventana o un elemento con `overflow` que se marca con `data-walkthrough-scroll`) cuadro por cuadro con easing de seno, y lo aplica con `scrollTo({ behavior: 'instant' })`. Así el `scroll-behavior: smooth` del CSS de la app, que correría en tiempo real, nunca interviene. El seno tiene una velocidad pico de ~1,6 veces la promedio; el cúbico, de 3, y se veía como un jalón.
 - **Acción `scroll`:** `scroll: { to: <selector> | top | bottom, within: <contenedor>, duration }`. Sirve para recorrer contenedores horizontales como las columnas del Board.
-- **Un scroll por contenedor a la vez:** uno nuevo corta al que está en curso y arranca desde donde iba, y la preparación de la siguiente acción espera a que termine un `scroll` explícito. Si no, dos animaciones se peleaban cuadro a cuadro por la misma posición.
-- **Marcas que siguen al contenido:** mientras hay scroll, los anillos y círculos visibles se vuelven a medir para no quedar flotando.
+- **Ritmo del scroll** (`scrollDuration`): 0,35 s más 1 s por cada 1 200 px, entre 0,6 s y 3,2 s, así el promedio no pasa de ~1 200 px/s y el texto se alcanza a leer al pasar. Antes el tope era 1,1 s y 3 000 px volaban a casi 2 700 px/s. Un scroll más largo que eso lleva su `duration` o se parte en varios.
+- **Un scroll por contenedor a la vez:** uno nuevo corta al que está en curso y arranca desde donde iba. La preparación de la siguiente acción espera a que la página se detenga (`scrollBusyUntil`); si el scroll sigue en curso cuando llega la acción, no calcula ningún ajuste. Medido a media animación, el ajuste apuntaba a donde el objetivo iba pasando y cortaba el scroll bueno.
+- **Marcas que siguen al contenido:** en cada cuadro, los anillos, etiquetas y círculos visibles se vuelven a medir, no solo tras nuestros scrolls, porque la app también mueve la página (un menú que sube hasta arriba al abrirse).
+- **Marcas que se retiran:** si el elemento marcado queda tapado (tres de cinco puntos le pegan a otro elemento, como un menú abierto encima), sale de la pantalla (menos de la mitad visible) o desaparece (una navegación), su marca se desvanece en ese momento en vez de flotar sobre lo que lo reemplazó (`endRingAt`, `endLabelAt`). Queda un evento `cut` con cuánto se vio.
 
 ## Etiquetas
 
@@ -135,6 +137,8 @@ El anillo de resaltado y el clic dibujado **sí** van en la página: se inyectan
 ## Transiciones entre pantallas
 
 `click: { on, wait: <selector> }` y la acción `wait: { until: <selector> }` esperan a que la siguiente pantalla muestre ese elemento con el reloj corriendo, fuera del tiempo del video, como `goto`. En el video, el elemento ya está en el cuadro del clic: no se ven estados de carga a medias.
+
+**Disolvencia en vez de corte** (`TRANSITION`, 0,5 s): antes de un `goto` o de un clic con `wait`, se toma una captura de la página sin la capa de efectos. Ya cargada la nueva, esa imagen se pone encima en el top layer (`transitionLayer`) y se desvanece con una animación que la sincronía congela cuadro a cuadro. La capa de efectos se vuelve a subir en cada cuadro, así las marcas siguen vivas encima de la disolvencia.
 
 ## Efectos en la página
 
@@ -317,6 +321,13 @@ setup:
 - **`walkthrough inspect <url> [--session] [--device]`** es solo lectura: navega sin hacer clics y escribe un reporte Markdown con captura en `~/Library/Caches/walkthrough/inspect/<host>/`. Por pantalla lista encabezados, anclas estables (`data-tour` > `data-testid` > enlaces internos > `aria-label` > ids no generados > texto corto), diálogos abiertos, zonas con scroll y claves de `localStorage` que parecen de onboarding.
   - Sigue solo los enlaces de navegación y una vez por ruta, ignorando el query.
   - Los controles por fila («Edit <título>») se agrupan en un selector de prefijo, porque llevan datos en la etiqueta.
+- **Auditoría de tiempos** (`src/check/timing.ts`): al terminar cada render, lee `events.json` (lo que de verdad pasó en la captura) y avisa de lo que se vería a destiempo:
+  - un scroll de más de 1 500 px/s;
+  - un anillo o una etiqueta que aparece con la página todavía en movimiento (hasta 0,3 s después de que para) o durante una disolvencia;
+  - dos clics a menos de 0,8 s (abrir un menú y su enlace), porque no se alcanza a ver qué abrió el primero;
+  - una marca que un flujo a pantalla completa o una tarjeta de título tapa antes de 1,2 s, o que se retiró antes de ese tiempo porque la taparon.
+
+  Cada aviso dice cómo corregirlo, casi siempre moviendo `at` a una palabra posterior. Las reglas de escritura están en `docs/guiones.md`.
 - **`walkthrough render --preview`** mantiene el viewport (la app se ve idéntica) y reduce la salida a la mitad y a 15 fps. Los overlays se diseñan sobre el lienzo completo y se escalan. Queda en `…/<tour>/preview/`, fuera de `~/Movies`, y la galería lo muestra en «Vistas previas». Comparte voz y timeline con el render final.
   - En uws-tasks tardó 2 min 10 s contra unos 11 min del final: 5× más rápido.
   - Por cuadro ya domina el costo fijo (sincronía, efectos, reloj) más que los píxeles: 132 ms contra ~360 ms.

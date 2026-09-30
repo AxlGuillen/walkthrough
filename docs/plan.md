@@ -13,6 +13,7 @@ Escrito el 28/sep/2026, después de la primera versión completa (tour de uws-ta
 5. **Fase 4 — Robustez.** Datos que cambian, sesiones que caducan, onboardings y móvil.
 6. **Fase 5 — Tour de uws-tasks v2.** Aplica todo lo anterior y recorre más vistas.
 7. **Fase 6 — Flujos.** Diagramas de pasos que aparecen al ritmo de la voz, con directrices para usarlos en cualquier video (añadida el 29/sep/2026).
+8. **Fase 7 — Biblioteca de recursos animados.** Aperturas, gráficas y código como piezas reutilizables que se declaran en el YAML y van al ritmo de la voz (añadida el 30/sep/2026).
 
 Cada fase termina con pruebas en verde, documentación al día y commits que compilan por separado.
 
@@ -168,6 +169,71 @@ Un tour de ejemplos con todas las formas en 16:9 y 9:16: catálogo visual para e
 
 Referencia visual: [archify](https://github.com/tt-a1i/archify) (MIT). Se toman ideas (esquema por forma, validación del layout, carriles y fases), no código: su visor es interactivo, no va al ritmo de la voz y su estética es de documentación técnica.
 
+## Fase 7 — Biblioteca de recursos animados
+
+Escrita el 30/sep/2026. Los overlays pueden ser cualquier HTML, pero hoy solo los flujos saben ir al ritmo de la voz, y cada plantilla anima a mano con CSS. La meta es una **biblioteca de recursos**: piezas que se declaran en el YAML con sus datos y sus palabras clave, y que sirven igual en un demo, en documentación o en una entrega semanal, sin escribir código por video.
+
+### Principios
+
+- **Declarativo.** Un recurso se usa con `src`, datos y palabras clave. Si un video necesita código propio, falta un recurso o una opción, no un parche.
+- **Al ritmo de la voz.** Todo momento importante de una animación cae en una palabra de la narración, como los pasos de un flujo.
+- **Determinista.** La animación se coloca en el segundo exacto de cada cuadro, nunca corre en tiempo real: dos renders dan los mismos cuadros.
+- **De la marca del tour.** Tema, acento y tipografía salen del tour, no de cada plantilla.
+- **16:9 y 9:16** desde el primer día, con zonas seguras.
+- **Cada recurso llega con** pruebas, un ejemplo en el catálogo y su sección en la guía.
+
+### 7.1 Base: palabras clave y animación por posición
+
+- **`beats` en cualquier overlay:** `beats: { title: Sunset, line: every }`. La timeline resuelve cada palabra (después de la anterior, como en los flujos) y la plantilla recibe los segundos en su propio reloj. `check` avisa si una palabra no está en la narración.
+- **`data` estructurada:** hoy los `params` son solo texto. Las gráficas y el código necesitan listas y objetos, así que el overlay acepta `data` (YAML que llega como JSON), validada por el esquema de cada recurso.
+- **Protocolo de seek:** la plantilla registra su animación en pausa (`walkthrough.timeline(t => …)` o una timeline de GSAP) y el render la coloca en el segundo de cada cuadro antes de la captura. Las plantillas con CSS siguen funcionando con la sincronía actual.
+- **GSAP copiado al repo** (`templates/vendor/`), sin CDN, con su licencia revisada antes para videos de clientes: timelines, escalonados, texto por letras, trazos de SVG y números que cuentan.
+- **Kit compartido** (`templates/overlays/kit/`): tokens de tema, curvas y duraciones de movimiento, y ayudas para partir texto, contar números y dibujar trazos. Así las piezas se sienten de la misma familia.
+- **Tema de overlays por tour:** `theme: dark | light` más el acento y, opcional, una tipografía de marca. Resuelve de paso que los flujos tengan siempre fondo morado.
+- **Probador:** `walkthrough overlay <plantilla> [--data archivo] [--device]` renderiza un recurso suelto en segundos, con palabras clave de prueba, para diseñarlo sin armar un tour.
+- **Pruebas:** dos renders del mismo overlay dan cuadros idénticos; las palabras clave llegan resueltas; el seek cae en el cuadro correcto.
+
+### 7.2 Aperturas y cierres cinéticos
+
+La apertura es lo más visible del video y hoy es una tarjeta estática. Una familia de 3 aperturas, cada una con su cierre y su separador de capítulo en el mismo estilo:
+
+- **Cinética:** el título se arma letra por letra, la línea de acento se dibuja y el subtítulo entra en la palabra que lo nombra.
+- **Sobre la app:** el título aparece encima de la primera pantalla grabada con un velo, y al salir revela la app. Funciona porque los overlays se componen con transparencia.
+- **Marca:** el logo del proyecto (un asset del tour) se dibuja o se arma, luego el nombre y el tagline.
+- **Capítulos:** separadores cinéticos («02 · Reservas») en el estilo de la apertura elegida.
+
+Todas reciben `beats` para que el título, el subtítulo y el logo caigan en sus palabras.
+
+### 7.3 Gráficas
+
+- **Tipos:** barras, línea, dona o progreso, cifra grande que cuenta («de 45 min a 3 min») y comparación de dos cifras.
+- **Datos en el YAML** (`data: { series, unit, format }`), validados por esquema, con formato de números por idioma (es/en).
+- **Cálculo puro en Node** (`src/charts/`): escalas, marcas del eje con números redondos, etiquetas que caben y colores del tema. Probado sin navegador, como el layout de los flujos. La plantilla solo pinta y anima.
+- **Al ritmo de la voz:** cada barra, punto o cifra puede tener su palabra, y la línea se dibuja hasta el punto que se está nombrando.
+
+### 7.4 Código
+
+- **Resaltado en Node** al preparar el render (sin librerías en la página), con un tema que sigue al tema del tour.
+- **Modos:** editor (con nombre de archivo), terminal (comando y salida) y diff (líneas agregadas y quitadas).
+- **Animación:** el código se escribe solo o aparece por bloques, y se resaltan líneas en sus palabras («este **endpoint**…»). Con zoom a la línea activa si el bloque es largo.
+- **Validación:** `check` avisa si una línea no cabe o si el bloque no entra en el cuadro.
+
+### 7.5 Catálogo y guía
+
+- **`tours/examples/`:** un tour por familia (aperturas, gráficas, código) en 16:9 y 9:16, que sirve de catálogo y de prueba de regresión. Se une al catálogo de flujos (6.4).
+- **`docs/recursos.md`:** qué recurso usar en cada caso, sus datos y cómo escribir la narración para sus palabras clave.
+- **Skill `recursos`** del repo, como la de flujos: elegir el recurso, escribirlo, validarlo y revisar los cuadros antes de entregar.
+
+### Orden
+
+1. **7.1 Base.** Sin ella, cualquier animación nueva corre a su ritmo.
+2. **7.2 Aperturas.** Es lo que más mejora a todos los videos, desde el primero.
+3. **7.3 Gráficas.**
+4. **7.4 Código.**
+5. **7.5 Catálogo y guía**, que se completa con cada recurso nuevo.
+
+Después, y solo si un video lo pide: novedades de la semana (una lista al ritmo de la voz, para las entregas a dymmsa), pantalla dividida y marcos de dispositivo.
+
 ## Estimación
 
 | Fase | Tamaño |
@@ -179,3 +245,4 @@ Referencia visual: [archify](https://github.com/tt-a1i/archify) (MIT). Se toman 
 | 4 | Mediana |
 | 5 | Chica, una vez hecho lo anterior |
 | 6 | Mediana (6.1 es lo más grande) |
+| 7 | Grande: 7.1 mediana, cada recurso de 7.2 a 7.4 mediano |

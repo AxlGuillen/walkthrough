@@ -9,6 +9,10 @@ music: { track: ../uws-tasks/assets/music/corporate-calm-background.mp3 }
 # trip creates a stay and a cart on UrVenue UAT (/_api/stay, /_api/cart), so the itinerary is
 # shown empty and a flow explains it. The cabana panel is not opened either: its live
 # availability never finishes loading, and it would sit on "Checking what is open".
+#
+# Pacing: one scroll per sentence, a mark only on a later word once the page is still, and
+# the sticky header's menus for moving between pages, so every change of screen is a click
+# that dissolves instead of a cut.
 segments:
   - say: This is Sunset Shores, a resort microsite built on UrVenue, where every venue on the property can be booked.
     do:
@@ -18,54 +22,63 @@ segments:
         to: 3.6
         params: { eyebrow: UrVenue · Resort microsite, title: Sunset Shores, subtitle: A guided overview }
 
-  - say: It opens on the property itself, two miles of private shoreline, with availability one step away.
-    do:
-      - scroll: { to: 'h2:has-text("Find your room")', at: availability, duration: 1.4 }
+  - say: It opens on the property itself. Two miles of private shoreline on the south coast.
+    hold: 5
 
-  # One long glide instead of a stop per section: six scrolls 0.6s apart queued up and lagged the voice.
-  - say: Scrolling down, the home page walks through the whole resort. The rooms, the restaurant, the spa and golf, the pool, and what happens after dark.
+  - say: Right below, guests check availability for their own dates, without leaving the page.
     do:
-      - scroll: { to: 'h2:has-text("After eight")', at: rooms, duration: 6 }
+      - scroll: { to: '#h-stayform', at: below }
+      - highlight: { on: '#h-stayform', at: dates }
 
-  - say: The menu groups every venue into five sections. Stay, eat and drink, relax and play, after dark, and gather.
+  - say: Further down, every part of the resort gets its own section. First the rooms and suites.
     do:
-      - scroll: { to: top, at: menu, duration: 1.2 }
-      - click: { on: 'nav[aria-label="Primary"] button:has-text("Eat & Drink")', at: eat }
-      - highlight: { on: '#mega-eat', at: gather }
+      - scroll: { to: 'h2:has-text("Rooms and suites that open onto the water")', at: rooms }
 
-  - say: Vera's menu is written every afternoon, when the boats come in. Five courses in the dining room, or eight at the chef's counter.
+  - say: Then the restaurant, with a tasting menu that changes with the catch.
     do:
-      - click: { on: '#mega-eat a[href="/dining/vera-restaurant/"]', at: 0.2, wait: 'h2:has-text("Tonight")' }
-      - scroll: { to: 'h2:has-text("Tonight")', at: written }
-      - label: { on: 'h3:has-text("Eight courses")', text: "Six seats at the pass", at: eight }
+      - scroll: { to: 'h2:has-text("A tasting menu")', at: restaurant }
 
-  - say: Five room types, and every one of them faces the water.
+  - say: And every venue is one click away in the menu, grouped the way a guest thinks about a stay.
     do:
-      - goto: /accommodations/
-      - scroll: { to: 'h2:has-text("The five room types")', at: room }
-      - highlight: { on: 'h2:has-text("The five room types")', at: every }
+      - click: { on: 'nav[aria-label="Primary"] button:has-text("Eat & Drink")', at: venue }
+      - highlight: { on: '#mega-eat', at: grouped }
 
-  - say: At Emerald Pool, cabanas and daybeds are reserved ahead, each with its own fee, including the cabana out on the point.
+  - say: At Vera, the menu is written every afternoon, when the boats come in. Five courses in the dining room, or eight at the chef's counter.
     do:
-      - goto: /pool/
-      - scroll: { to: 'h2:has-text("What you can reserve")', at: cabanas }
+      - click: { on: '#mega-eat a[href="/dining/vera-restaurant/"]', at: Vera, wait: 'h2:has-text("Tonight")' }
+      - scroll: { to: 'h2:has-text("Tonight")', at: menu }
+      - label: { on: 'h3:has-text("Eight courses")', text: "Six seats at the pass", at: counter }
+
+  - say: The rooms work the same way. Five room types, and every one of them faces the water.
+    do:
+      - click: { on: 'nav[aria-label="Primary"] button:has-text("Stay")', at: rooms }
+      - click: { on: '#mega-stay a[href="/accommodations/"]', at: way, wait: 'h2:has-text("The five room types")' }
+      - scroll: { to: 'h2:has-text("The five room types")', at: Five }
+      - highlight: { on: 'h2:has-text("The five room types")', at: faces }
+
+  - say: Under relax and play, Emerald Pool has cabanas and daybeds, reserved ahead, each with its own fee. The best one sits out on the point.
+    do:
+      - click: { on: 'nav[aria-label="Primary"] button:has-text("Relax & Play")', at: relax }
+      - click: { on: '#mega-relax a[href="/pool/"]', at: Pool, wait: 'h2:has-text("What you can reserve")' }
+      - scroll: { to: 'h2:has-text("What you can reserve")', at: reserved }
       - label: { on: 'h3:has-text("Cabana 2")', text: "The one on the point", at: point }
 
-  - say: The spa works the same way. Pick a treatment, then a time.
+  - say: The same section holds the spa. Guests pick a treatment first, and then choose the time that suits them.
     do:
-      - goto: /wellness/spa-at-paradise/
-      - scroll: { to: 'h2:has-text("Pick a treatment")', at: same }
-      - highlight: { on: 'h2:has-text("Pick a treatment")', at: Pick }
+      - click: { on: 'nav[aria-label="Primary"] button:has-text("Relax & Play")', at: same }
+      - click: { on: '#mega-relax a[href="/wellness/spa-at-paradise/"]', at: spa, wait: 'h2:has-text("Pick a treatment")' }
+      - scroll: { to: 'h2:has-text("Pick a treatment")', at: Guests }
+      - highlight: { on: 'h2:has-text("Pick a treatment")', at: suits }
 
-  - say: And after eight, three rooms that get louder in order.
+  - say: And after dark, the property changes. Three rooms that get louder in order.
     do:
-      - goto: /nightlife/
+      - click: { on: 'nav[aria-label="Primary"] button:has-text("After Dark")', at: dark }
+      - click: { on: '#mega-dark a[href="/nightlife/"]', at: changes, wait: 'h1' }
 
-  - say: Everything a guest reserves comes together in one place. Their guest itinerary.
+  - say: Everything a guest reserves comes together in one place, their guest itinerary. Right now it is empty, waiting for the first booking.
     do:
-      - click: { on: 'header a[href="/guest-itinerary/"] >> nth=0', at: together, wait: 'h2:has-text("Your trip so far")' }
-      - scroll: { to: 'h2:has-text("Your trip so far")', at: place }
-      - highlight: { on: 'p:has-text("Nothing in your trip yet")', at: itinerary }
+      - click: { on: 'header a[href="/guest-itinerary/"] >> nth=0', at: Everything, wait: 'h2:has-text("Your trip so far")' }
+      - highlight: { on: '.cartempty', at: empty }
 
   - say: A guest reserves a room, a cabana, a table, or a tee time. The itinerary groups it all by day. They confirm it once, and nothing is charged until they do.
     flow:

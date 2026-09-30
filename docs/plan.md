@@ -169,7 +169,9 @@ Un tour de ejemplos con todas las formas en 16:9 y 9:16: catálogo visual para e
 
 Referencia visual: [archify](https://github.com/tt-a1i/archify) (MIT). Se toman ideas (esquema por forma, validación del layout, carriles y fases), no código: su visor es interactivo, no va al ritmo de la voz y su estética es de documentación técnica.
 
-## Fase 7 — Biblioteca de recursos animados
+## Fase 7 — Biblioteca de recursos animados (en curso)
+
+Hecho el 30/sep/2026: 7.1.
 
 Escrita el 30/sep/2026. Los overlays pueden ser cualquier HTML, pero hoy solo los flujos saben ir al ritmo de la voz, y cada plantilla anima a mano con CSS. La meta es una **biblioteca de recursos**: piezas que se declaran en el YAML con sus datos y sus palabras clave, y que sirven igual en un demo, en documentación o en una entrega semanal, sin escribir código por video.
 
@@ -182,7 +184,7 @@ Escrita el 30/sep/2026. Los overlays pueden ser cualquier HTML, pero hoy solo lo
 - **16:9 y 9:16** desde el primer día, con zonas seguras.
 - **Cada recurso llega con** pruebas, un ejemplo en el catálogo y su sección en la guía.
 
-### 7.1 Base: palabras clave y animación por posición
+### 7.1 Base: palabras clave y animación por posición ✅
 
 - **`beats` en cualquier overlay:** `beats: { title: Sunset, line: every }`. La timeline resuelve cada palabra (después de la anterior, como en los flujos) y la plantilla recibe los segundos en su propio reloj. `check` avisa si una palabra no está en la narración.
 - **`data` estructurada:** hoy los `params` son solo texto. Las gráficas y el código necesitan listas y objetos, así que el overlay acepta `data` (YAML que llega como JSON), validada por el esquema de cada recurso.

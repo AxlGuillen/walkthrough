@@ -208,6 +208,21 @@ overlays:
 - **Montaje:** `setpts` desplaza el overlay a su inicio, `fade` con `alpha=1` lo desvanece y `overlay=eof_action=pass` lo compone en el orden del tour. Los subtítulos van encima de todo.
 - **Lo que no le afecta:** el CSS de la app ni la cámara. Cambiar un overlay solo requiere `render --from=overlays`.
 - **El lienzo** es el video completo (1920×1080 o 1080×1920). La posición la decide el CSS del overlay; los subtítulos ocupan la franja inferior.
+- **Palabras clave y datos** (fase 7.1): cualquier overlay acepta `beats` y `data`:
+
+  ```yaml
+  overlays:
+    - src: title-card.html
+      beats: { title: Sunset, line: every }   # palabra de la narración o segundos del segmento
+      data: { series: [{ label: Lun, value: 3 }] }
+  ```
+
+  La timeline busca cada palabra después de la anterior, como en los flujos, y la plantilla recibe los segundos en su propio reloj (`?beats=` y `?data=` como JSON). Un beat fuera del overlay o una palabra que no se dice detienen el render.
+- **Animación por posición:** `params.js` expone `walkthrough` (`beats`, `data`, `theme`, `beat(nombre)`) y dos formas de registrar una animación en pausa: `walkthrough.timeline(t => …)` o `walkthrough.gsap(timeline)`. En cada cuadro el render llama `__walkthroughSeek(t)` antes de la captura, así la animación cae en el segundo exacto y dos renders dan los mismos cuadros (lo comprueba una prueba con `framemd5`). Las plantillas que animan con CSS siguen con la sincronía de siempre.
+- **GSAP vendorizado** en `templates/overlays/vendor/gsap/` (3.15.0: núcleo, SplitText, DrawSVG, MorphSVG, CustomEase; licencia en su `AVISO.md`).
+- **Kit de movimiento** (`templates/overlays/kit.js`): curvas y duraciones de la familia, `kit.timeline()`, `kit.split()` (letras o palabras, nunca líneas, para no depender de que carguen las fuentes), `kit.count()` (números en `es-MX` o `en-US` según el tour) y `kit.draw()`.
+- **Tema** (`theme: dark | light` en el tour): llega como `?theme=` junto con el acento y el idioma (`lang`). `base.css` define los tokens (`--stage`, `--panel`, `--surface`, `--line`, `--stroke`, `--scrim`) y las plantillas, flujos incluidos, solo usan tokens.
+- **Probador:** `walkthrough overlay <plantilla> --beats=… --params=… --data=archivo --theme=… --device=…` renderiza un overlay suelto sobre gris medio en `~/Library/Caches/walkthrough/probe/`, para diseñar un recurso sin armar un tour. Las rutas relativas se resuelven desde la carpeta actual.
 
 ## Flujos
 
@@ -343,6 +358,7 @@ walkthrough doctor                      revisar el entorno
 walkthrough check  <tour>               validar sin renderizar
 walkthrough inspect <url> [--session=<s>] [--device=mobile]
 walkthrough render <tour> [--preview] [--open] [--from=overlays|compose]
+walkthrough overlay <plantilla> [--beats --params --data --theme --device --open]   probar un overlay suelto
 walkthrough gallery [--no-open]           ver los videos generados
 walkthrough clean [--voice] [--keep=<n>]  limpiar caché y renders viejos
 ```

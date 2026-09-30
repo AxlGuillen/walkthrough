@@ -87,3 +87,44 @@ Todas aceptan `title`, `unit` («min», «%», «MXN»; un símbolo va pegado al
 - **Datos reales o marcados como ejemplo.** Una gráfica de un video para cliente usa cifras que se pueden respaldar.
 
 Ejemplos de los cinco tipos en `tours/examples/graficas.yaml`.
+
+## Código
+
+Una plantilla, `code.html`, con el código en `data`. Node lo valida, lo colorea (un resaltador propio en `src/code/highlight.ts`, sin dependencias: TypeScript/JavaScript, JSON, YAML, shell, CSS, SQL, HTML y Python) y calcula el tamaño de letra para que todo quepa.
+
+| `view` | Para | Cómo se escribe `code` |
+|---|---|---|
+| `editor` (por defecto) | Un archivo, con números de línea | El código tal cual |
+| `terminal` | Comandos y su salida | Las líneas con `$ ` son comandos que se escriben solos; las demás, su salida |
+| `diff` | Qué cambió | Cada línea empieza con `+`, `-` o un espacio (usa `code: \|2` para que YAML respete el espacio inicial) |
+
+Otros campos: `language` (el editor y el diff), `file` o `title` (la barra de la ventana), `reveal` (`lines`, por defecto; `type`, que lo teclea; `all`), `run` (las palabras en que empieza cada comando de una terminal), `highlight` y `mode` (`full` o `card`).
+
+`highlight` es una lista de líneas que señalar, cada una en su palabra y con una nota corta que aparece en la barra de la ventana: `{ lines: "5-8", at: cupo, note: Revisa el cupo }`. Las líneas se cuentan como las ve el espectador, desde 1 (`3`, `"3-5"` o `"3-5, 8"`). Mientras una está activa el resto se atenúa; en código de más de 14 líneas la cámara se acerca a ella sin que ninguna línea salga por la derecha.
+
+```yaml
+- say: Primero revisa que la mesa tenga cupo, y si lo tiene, la aparta para el huésped.
+  overlays:
+    - src: code.html
+      data:
+        language: ts
+        file: src/api/reservations.ts
+        code: |
+          const taken = await db.count('reservations', { table: table.id });
+          if (taken >= table.capacity) throw new Error('This table is full');
+          return db.insert('reservations', { guest: guest.id, table: table.id });
+        highlight:
+          - { lines: "1-2", at: cupo, note: Revisa el cupo }
+          - { lines: 3, at: aparta, note: Aparta la mesa }
+```
+
+### Cómo escribirlo
+
+- **Poco código.** Lo que la voz alcanza a explicar: hasta unas 20 líneas en 16:9 y 12 en 9:16, sin líneas de más de ~90 caracteres. Recorta imports y lo que no se nombra.
+- **Una nota por resaltado, de pocas palabras:** qué hace esa parte, no cómo.
+- **Los comandos se teclean a unas 22 letras por segundo** y el código con `reveal: type` a unas 38. `check` avisa si el overlay termina antes de que acabe de escribirse; alarga la frase, dale un `hold` o escribe menos.
+- **Resaltados con aire:** por lo menos un segundo entre uno y otro, y el último no en el último segundo del overlay.
+- **Las notas con comas van entre comillas** en YAML (`note: "1,200 px/s como máximo"`).
+- **Código real o marcado como ejemplo**, sin claves ni datos de clientes.
+
+Ejemplos de las tres vistas en `tours/examples/codigo.yaml`.

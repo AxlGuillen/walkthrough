@@ -171,7 +171,7 @@ Referencia visual: [archify](https://github.com/tt-a1i/archify) (MIT). Se toman 
 
 ## Fase 7 — Biblioteca de recursos animados (en curso)
 
-Hecho el 30/sep/2026: 7.1, 7.2 y 7.3. `docs/recursos.md` ya reúne la guía de lo hecho.
+Hecho el 30/sep/2026: 7.1, 7.2, 7.3 y 7.4. `docs/recursos.md` ya reúne la guía de lo hecho.
 
 Escrita el 30/sep/2026. Los overlays pueden ser cualquier HTML, pero hoy solo los flujos saben ir al ritmo de la voz, y cada plantilla anima a mano con CSS. La meta es una **biblioteca de recursos**: piezas que se declaran en el YAML con sus datos y sus palabras clave, y que sirven igual en un demo, en documentación o en una entrega semanal, sin escribir código por video.
 
@@ -213,7 +213,7 @@ Todas reciben `beats` para que el título, el subtítulo y el logo caigan en sus
 - **Cálculo puro en Node** (`src/charts/`): escalas, marcas del eje con números redondos, etiquetas que caben y colores del tema. Probado sin navegador, como el layout de los flujos. La plantilla solo pinta y anima.
 - **Al ritmo de la voz:** cada barra, punto o cifra puede tener su palabra, y la línea se dibuja hasta el punto que se está nombrando.
 
-### 7.4 Código
+### 7.4 Código ✅
 
 - **Resaltado en Node** al preparar el render (sin librerías en la página), con un tema que sigue al tema del tour.
 - **Modos:** editor (con nombre de archivo), terminal (comando y salida) y diff (líneas agregadas y quitadas).

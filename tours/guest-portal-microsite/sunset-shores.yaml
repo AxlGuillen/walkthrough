@@ -1,0 +1,85 @@
+title: Sunset Shores resort overview
+url: https://sunsetshores.urresort.com/
+device: desktop
+language: en
+voice: 933563129e564b19a115bedd57b7406a  # "Sarah", the same English voice as the TAO demo
+accent: "#C8633A"  # the site's terracotta eyebrow, brightened so rings read on dark photos too
+music: { track: ../uws-tasks/assets/music/corporate-calm-background.mp3 }
+# Public demo, no login, for the internal team. Read-only on purpose: adding anything to the
+# trip creates a stay and a cart on UrVenue UAT (/_api/stay, /_api/cart), so the itinerary is
+# shown empty and a flow explains it. The cabana panel is not opened either: its live
+# availability never finishes loading, and it would sit on "Checking what is open".
+segments:
+  - say: This is Sunset Shores, a resort microsite built on UrVenue, where every venue on the property can be booked.
+    do:
+      - goto: /
+    overlays:
+      - src: title-card.html
+        to: 3.6
+        params: { eyebrow: UrVenue · Resort microsite, title: Sunset Shores, subtitle: A guided overview }
+
+  - say: It opens on the property itself, two miles of private shoreline, with availability one step away.
+    do:
+      - scroll: { to: 'h2:has-text("Find your room")', at: availability, duration: 1.4 }
+
+  # One long glide instead of a stop per section: six scrolls 0.6s apart queued up and lagged the voice.
+  - say: Scrolling down, the home page walks through the whole resort. The rooms, the restaurant, the spa and golf, the pool, and what happens after dark.
+    do:
+      - scroll: { to: 'h2:has-text("After eight")', at: rooms, duration: 6 }
+
+  - say: The menu groups every venue into five sections. Stay, eat and drink, relax and play, after dark, and gather.
+    do:
+      - scroll: { to: top, at: menu, duration: 1.2 }
+      - click: { on: 'nav[aria-label="Primary"] button:has-text("Eat & Drink")', at: eat }
+      - highlight: { on: '#mega-eat', at: gather }
+
+  - say: Vera's menu is written every afternoon, when the boats come in. Five courses in the dining room, or eight at the chef's counter.
+    do:
+      - click: { on: '#mega-eat a[href="/dining/vera-restaurant/"]', at: 0.2, wait: 'h2:has-text("Tonight")' }
+      - scroll: { to: 'h2:has-text("Tonight")', at: written }
+      - label: { on: 'h3:has-text("Eight courses")', text: "Six seats at the pass", at: eight }
+
+  - say: Five room types, and every one of them faces the water.
+    do:
+      - goto: /accommodations/
+      - scroll: { to: 'h2:has-text("The five room types")', at: room }
+      - highlight: { on: 'h2:has-text("The five room types")', at: every }
+
+  - say: At Emerald Pool, cabanas and daybeds are reserved ahead, each with its own fee, including the cabana out on the point.
+    do:
+      - goto: /pool/
+      - scroll: { to: 'h2:has-text("What you can reserve")', at: cabanas }
+      - label: { on: 'h3:has-text("Cabana 2")', text: "The one on the point", at: point }
+
+  - say: The spa works the same way. Pick a treatment, then a time.
+    do:
+      - goto: /wellness/spa-at-paradise/
+      - scroll: { to: 'h2:has-text("Pick a treatment")', at: same }
+      - highlight: { on: 'h2:has-text("Pick a treatment")', at: Pick }
+
+  - say: And after eight, three rooms that get louder in order.
+    do:
+      - goto: /nightlife/
+
+  - say: Everything a guest reserves comes together in one place. Their guest itinerary.
+    do:
+      - click: { on: 'header a[href="/guest-itinerary/"] >> nth=0', at: together, wait: 'h2:has-text("Your trip so far")' }
+      - scroll: { to: 'h2:has-text("Your trip so far")', at: place }
+      - highlight: { on: 'p:has-text("Nothing in your trip yet")', at: itinerary }
+
+  - say: A guest reserves a room, a cabana, a table, or a tee time. The itinerary groups it all by day. They confirm it once, and nothing is charged until they do.
+    flow:
+      title: How the guest itinerary works
+      steps:
+        - { text: Reserve anything, detail: "Room, cabana, table, tee time", at: reserves }
+        - { text: Grouped by day, at: groups }
+        - { text: Confirm once, at: confirm }
+        - { text: Charged only then, at: charged }
+
+  # The hold leaves the closing card on screen after the last line.
+  - say: One resort, and every venue in a single trip.
+    hold: 5.5
+    overlays:
+      - src: outro.html
+        from: 0.4
+        params: { title: Sunset Shores, subtitle: Resort microsite on UrVenue, url: sunsetshores.urresort.com }

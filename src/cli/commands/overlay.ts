@@ -2,8 +2,10 @@ import { execFile, execFileSync } from 'node:child_process';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
+import { z } from 'zod';
 import { deviceProfile, type Device } from '../../capture/devices.ts';
 import { probeOverlay } from '../../overlays/probe.ts';
+import { resourceFor } from '../../resources/registry.ts';
 import { overlayFile, renderOverlays } from '../../overlays/render.ts';
 import { STORAGE } from '../context.ts';
 
@@ -27,7 +29,11 @@ const BACKDROP = '0x5a5a5a';
 
 export async function overlay(options: OverlayCommand): Promise<void> {
   const device: Device = options.device === 'mobile' ? 'mobile' : 'desktop';
-  const data = options.data === undefined ? undefined : parse(await readFile(options.data, 'utf8')) as unknown;
+  const raw = options.data === undefined ? undefined : parse(await readFile(options.data, 'utf8')) as unknown;
+  // Same check a tour gets on load, so the probe fails the way a render would.
+  const checked = resourceFor(options.src)?.schema.safeParse(raw);
+  if (checked && !checked.success) throw new Error(`${options.data} does not fit ${options.src}:\n${z.prettifyError(checked.error)}`);
+  const data = checked ? checked.data : raw;
   const timed = probeOverlay({
     src: options.src, duration: Number(options.duration ?? 5),
     ...(options.beats ? { beats: options.beats } : {}), ...(options.params ? { params: options.params } : {}),

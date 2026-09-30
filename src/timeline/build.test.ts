@@ -266,7 +266,7 @@ segments:
   });
 
   it('carries structured data through untouched', () => {
-    const overlay = build('{ src: chart.html, data: { series: [{ label: Mon, value: 3 }] } }');
+    const overlay = build('{ src: custom.html, data: { series: [{ label: Mon, value: 3 }] } }');
     expect(overlay.data).toEqual({ series: [{ label: 'Mon', value: 3 }] });
   });
 

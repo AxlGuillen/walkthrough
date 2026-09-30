@@ -7,6 +7,7 @@ import { installClock } from '../capture/clock.ts';
 import { startEncoder } from '../capture/encoder.ts';
 import { frameCount } from '../capture/schedule.ts';
 import { flowScene } from '../flow/scene.ts';
+import { resourceFor } from '../resources/registry.ts';
 import type { Size } from '../timeline/camera.ts';
 import type { TimedOverlay } from '../timeline/build.ts';
 
@@ -51,13 +52,15 @@ export function overlayUrl(file: string, tourDir: string, params: Record<string,
 
 // What a template reads besides its own params: how long it is on screen, its beats and data
 // as JSON, and for a flow the scene Node laid out.
-export function overlayParams(overlay: TimedOverlay, canvas: Size): Record<string, string> {
+export function overlayParams(overlay: TimedOverlay, canvas: Size, lang = 'es'): Record<string, string> {
+  const resource = resourceFor(overlay.src);
   return {
     duration: (overlay.end - overlay.start).toFixed(3),
     ...overlay.params,
     ...(Object.keys(overlay.beats).length ? { beats: JSON.stringify(overlay.beats) } : {}),
     ...(overlay.data === undefined ? {} : { data: JSON.stringify(overlay.data) }),
     ...(overlay.flow ? { scene: JSON.stringify(flowScene(overlay.flow, overlay.start, canvas)) } : {}),
+    ...(resource && overlay.data !== undefined ? { scene: JSON.stringify(resource.scene(overlay.data, canvas, lang, overlay.beats)) } : {}),
   };
 }
 
@@ -95,7 +98,7 @@ export async function renderOverlays({
         const page = await context.newPage();
         const clock = await installClock(page);
         // Loaded with the clock frozen, not through settle(): nothing may run before frame 0.
-        await page.goto(overlayUrl(source, tourDir, overlayParams(overlay, canvas), look));
+        await page.goto(overlayUrl(source, tourDir, overlayParams(overlay, canvas, look.lang), look));
         await mediaReady(page);
 
         const total = frameCount(overlay.end - overlay.start, fps);

@@ -204,7 +204,7 @@ const SPREAD_MIN = 0.6;
 
 // Fills the gaps between anchored times evenly; leading and trailing gaps run from `first`
 // and to `last`, which bound the steps nothing anchors.
-export function spreadTimes(anchored: readonly (number | undefined)[], first: number, last: number): number[] {
+export function spreadTimes(anchored: readonly (number | undefined)[], first: number, last: number, minGap = SPREAD_MIN): number[] {
   const times = [...anchored];
   let i = 0;
   while (i < times.length) {
@@ -214,8 +214,8 @@ export function spreadTimes(anchored: readonly (number | undefined)[], first: nu
     const before = i > 0 ? times[i - 1]! : undefined;
     const after = j < times.length ? times[j]! : undefined;
     const count = j - i;
-    const lo = before ?? (after === undefined ? first : Math.min(first, after - SPREAD_MIN * count));
-    const hi = after ?? Math.max(last, lo + SPREAD_MIN * (count - (before === undefined ? 1 : 0)));
+    const lo = before ?? (after === undefined ? first : Math.min(first, after - minGap * count));
+    const hi = after ?? Math.max(last, lo + minGap * (count - (before === undefined ? 1 : 0)));
     // Open at an anchored end, closed at a free one: a free first step lands on `first`.
     const slots = count + (before === undefined ? 0 : 1) + (after === undefined ? 0 : 1) - 1;
     for (let k = i; k < j; k++) {

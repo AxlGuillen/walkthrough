@@ -87,3 +87,32 @@ segments:
     expect(() => parseTour('title: [unclosed')).toThrow(/invalid YAML/);
   });
 });
+
+describe('resource data', () => {
+  const tour = (data: string, beats = '') => parseTour(`
+title: Charts
+url: https://example.com
+segments:
+  - say: El lunes hubo pocas, el sábado muchas.
+    overlays:
+      - src: chart.html
+        ${beats}
+        data: ${data}
+`);
+
+  it('checks a chart against its schema and lifts each point\'s word into the beats', () => {
+    const overlay = tour("{ type: bar, series: [{ label: Lun, value: 3, at: lunes }, { label: Sáb, value: 9, at: sábado }] }").segments[0]!.overlays[0]!;
+    expect(overlay.beats).toEqual({ p0: 'lunes', p1: 'sábado' });
+    expect(overlay.data).toMatchObject({ type: 'bar', mode: 'full' });
+  });
+
+  it('lets explicit beats win over the words inside the data', () => {
+    const overlay = tour('{ type: stat, label: reservas, value: 9, at: lunes }', 'beats: { value: sábado }').segments[0]!.overlays[0]!;
+    expect(overlay.beats).toEqual({ value: 'sábado' });
+  });
+
+  it('fails on load with the overlay and the field that is wrong', () => {
+    expect(() => tour('{ type: donut, label: x, value: 120 }')).toThrow(/overlays\[0\] \(chart.html\) data:[\s\S]*value is more than total/);
+  });
+});
+

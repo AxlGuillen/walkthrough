@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { chromium, type Browser } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { chartScene, type BarScene, type CompareScene } from '../charts/layout.ts';
+import { chartSchema } from '../charts/schema.ts';
 import { flowScene } from '../flow/scene.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
@@ -219,6 +221,44 @@ describe('title templates', () => {
     const { page, context } = await open('opening.html', { title: 'Hola', eyebrow: 'UrVenue' }, { accent: '#D9F24A', theme: 'light' });
     try {
       expect(await page.locator('.eyebrow').evaluate(el => getComputedStyle(el).color)).toBe('rgb(17, 18, 17)');
+    } finally {
+      await context.close();
+    }
+  }, 60_000);
+});
+
+describe('chart template', () => {
+  const show = async (data: unknown, size = canvas) => {
+    const scene = chartScene(chartSchema.parse(data), size, 'es');
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+    await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'chart.html'), tourDir, { duration: '6', scene: JSON.stringify(scene) }, { lang: 'es' }));
+    await page.evaluate(() => window.__walkthroughSeek?.(5.9));
+    return { scene, page, context };
+  };
+
+  it('grows every bar to its place and ends each count on the formatted value', async () => {
+    const { scene, page, context } = await show({ type: 'bar', unit: 'min', series: [{ label: 'Lun', value: 42 }, { label: 'Sáb', value: 163 }], highlight: 'Sáb' });
+    try {
+      const bars = scene as BarScene;
+      const drawn = await page.evaluate(() => [...document.querySelectorAll('rect.bar')].map(r => [Number(r.getAttribute('y')), Number(r.getAttribute('height')), r.classList.contains('lead')]));
+      bars.bars.forEach((bar, i) => {
+        expect(drawn[i]![0]).toBeCloseTo(bar.rect.y, 1);
+        expect(drawn[i]![1]).toBeCloseTo(bar.rect.height, 1);
+        expect(drawn[i]![2]).toBe(bar.highlight);
+      });
+      expect(await page.locator('.value').allInnerTexts()).toEqual(bars.bars.map(b => b.value.text));
+    } finally {
+      await context.close();
+    }
+  }, 60_000);
+
+  it('counts both sides of a comparison and shows the change', async () => {
+    const { scene, page, context } = await show({ type: 'compare', unit: 'min', before: { label: 'Antes', value: 45 }, after: { label: 'Ahora', value: 3 } }, { width: 1080, height: 1920 });
+    try {
+      const compare = scene as CompareScene;
+      expect(await page.locator('.value').allInnerTexts()).toEqual([compare.before.value.text, compare.after.value.text]);
+      expect(await page.locator('.change').innerText()).toBe('−93%');
     } finally {
       await context.close();
     }

@@ -4,7 +4,7 @@ import { SOUNDS } from '../compose/sounds.ts';
 const selector = z.string().trim().min(1);
 
 // A number is seconds from the segment start; a string is a word or phrase in its narration.
-const anchor = z.union([z.number().nonnegative(), z.string().trim().min(1)]);
+export const anchor = z.union([z.number().nonnegative(), z.string().trim().min(1)]);
 export type Anchor = z.infer<typeof anchor>;
 
 // Shorthands spell out every optional key so both forms of an action share one type.

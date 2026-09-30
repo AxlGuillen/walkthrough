@@ -60,6 +60,8 @@ describe('codeScene', () => {
     expect(codeScene(code({ code: wide, highlight: [{ lines: 10 }] }), desktop, 'es').highlights[0]!.focus.scale).toBe(1);
     expect(codeScene(code({ code: 'short', highlight: [{ lines: 1 }] }), desktop, 'es').highlights[0]!.focus.scale).toBe(1);
     expect(codeScene(code({ code: 'x'.repeat(400) }), mobile, 'es').warnings[0]).toMatch(/does not fit/);
+    expect(codeScene(code({ code: 'x'.repeat(88) }), mobile, 'es').warnings[0]).toMatch(/set small: lines of 88 characters.*under \d+/);
+    expect(codeScene(code({ code: 'x'.repeat(88) }), desktop, 'es').warnings).toEqual([]);
     expect(codeScene(code({ code: 'a', highlight: [{ lines: 3 }] }), desktop, 'es').warnings[0]).toMatch(/past the end/);
     // 40 characters typed at 22 per second from 0.6s end near 2.4s: a 2s overlay leaves first.
     expect(codeScene(code({ view: 'terminal', code: `$ ${'x'.repeat(40)}` }), desktop, 'es', {}, 2).warnings[0]).toMatch(/still typing/);

@@ -103,6 +103,14 @@ export function codeScene(code: Code, canvas: Size, _lang: string, beats: Record
       : `${parts.length} lines do not fit; show less code or highlight the part that matters`);
     font = min;
   }
+  // Legible at a glance in a video: below this the viewer squints.
+  const readable = 1.8 * u;
+  if (font < readable && !warnings.length) {
+    const fits = Math.floor(innerWidth / (readable * MONO_EM)) - gutterChars;
+    warnings.push(fitWidth < fitHeight
+      ? `the code is set small: lines of ${longest} characters shrink it; keep them under ${fits} in this format`
+      : `the code is set small: ${parts.length} lines shrink it; show fewer lines`);
+  }
   const line = font * LINE;
   const gutter = gutterChars * font * MONO_EM;
   const bodyHeight = parts.length * line;

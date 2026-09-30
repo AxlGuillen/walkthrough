@@ -135,9 +135,9 @@ Con `inspect`, scroll, etiquetas y la biblioteca de overlays:
 - Indicador de capítulo por sección.
 - Selectores estables, validados con `check` antes de renderizar.
 
-## Fase 6 — Flujos sincronizados con la voz (en curso)
+## Fase 6 — Flujos sincronizados con la voz ✅ (30/sep/2026)
 
-Hecho el 29/sep/2026: 6.1, 6.2 y 6.3. Falta el catálogo completo.
+Hecho el 29/sep/2026: 6.1, 6.2 y 6.3. El catálogo (6.4) quedó dentro del catálogo de recursos de la fase 7.5.
 
 Explicar un proceso («cómo se reserva una mesa», «cómo se asigna un ticket») con pasos conectados que aparecen justo cuando la narración los nombra. El autor del tour escribe solo los pasos y la palabra de cada uno; el layout, la coreografía y el sonido salen del repo, iguales en todos los videos.
 
@@ -163,15 +163,15 @@ Explicar un proceso («cómo se reserva una mesa», «cómo se asigna un ticket�
 - **Carriles** ✅: quién hace qué (huésped, venue, host).
 - **Antes y después** ✅: dos flujos lado a lado.
 
-### 6.4 Catálogo
+### 6.4 Catálogo ✅
 
 Un tour de ejemplos con todas las formas en 16:9 y 9:16: catálogo visual para elegir y prueba de regresión.
 
 Referencia visual: [archify](https://github.com/tt-a1i/archify) (MIT). Se toman ideas (esquema por forma, validación del layout, carriles y fases), no código: su visor es interactivo, no va al ritmo de la voz y su estética es de documentación técnica.
 
-## Fase 7 — Biblioteca de recursos animados (en curso)
+## Fase 7 — Biblioteca de recursos animados ✅ (30/sep/2026)
 
-Hecho el 30/sep/2026: 7.1, 7.2, 7.3 y 7.4. `docs/recursos.md` ya reúne la guía de lo hecho.
+Hecho el 30/sep/2026: todo. El catálogo es `tours/examples/catalogo.yaml` (sin voz), que renderiza `walkthrough catalog` en 16:9 y 9:16 con una hoja de contacto; la guía, `docs/recursos.md`, y la skill, `recursos`. `docs/recursos.md` ya reúne la guía de lo hecho.
 
 Escrita el 30/sep/2026. Los overlays pueden ser cualquier HTML, pero hoy solo los flujos saben ir al ritmo de la voz, y cada plantilla anima a mano con CSS. La meta es una **biblioteca de recursos**: piezas que se declaran en el YAML con sus datos y sus palabras clave, y que sirven igual en un demo, en documentación o en una entrega semanal, sin escribir código por video.
 
@@ -220,7 +220,7 @@ Todas reciben `beats` para que el título, el subtítulo y el logo caigan en sus
 - **Animación:** el código se escribe solo o aparece por bloques, y se resaltan líneas en sus palabras («este **endpoint**…»). Con zoom a la línea activa si el bloque es largo.
 - **Validación:** `check` avisa si una línea no cabe o si el bloque no entra en el cuadro.
 
-### 7.5 Catálogo y guía
+### 7.5 Catálogo y guía ✅
 
 - **`tours/examples/`:** un tour por familia (aperturas, gráficas, código) en 16:9 y 9:16, que sirve de catálogo y de prueba de regresión. Se une al catálogo de flujos (6.4).
 - **`docs/recursos.md`:** qué recurso usar en cada caso, sus datos y cómo escribir la narración para sus palabras clave.

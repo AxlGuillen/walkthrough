@@ -2,11 +2,40 @@
 
 Piezas animadas que se declaran en el YAML con sus datos y sus palabras clave, y sirven igual en un demo, en documentación o en una entrega. Todas van al ritmo de la voz (`beats`), toman el acento, el tema (`theme`) y el idioma del tour, y funcionan en 16:9 y 9:16. El mecanismo está en `docs/arquitectura.md`, «Overlays»; los flujos tienen su propia guía en `docs/flujos.md`.
 
-Para diseñar o revisar uno sin armar un tour:
+## Qué recurso usar
 
-```bash
-bun run walkthrough overlay opening.html --params="title=Sunset Shores,style=brand" --beats="mark=0.3,title=1" --open
-```
+| Quiero… | Recurso |
+|---|---|
+| Abrir el video, separar sus partes, cerrarlo | `opening.html`, `chapter-card.html`, `closing.html` (un mismo `style` en los tres) |
+| Explicar un proceso con pasos, quién hace qué, antes/después de un proceso | Un flujo (`flow:` en el segmento; `docs/flujos.md`) |
+| Comparar cantidades entre categorías | `chart.html` con `type: bar` |
+| Mostrar cómo evolucionó algo en el tiempo | `chart.html` con `type: line` |
+| Una parte de un total (ocupación, avance) | `chart.html` con `type: donut` |
+| Una cifra que impresione | `chart.html` con `type: stat` |
+| El cambio entre dos cifras («de 45 a 3 min») | `chart.html` con `type: compare` |
+| Enseñar código, un comando o un cambio | `code.html` con `view: editor`, `terminal` o `diff` |
+| Señalar algo que ya está en la pantalla | No es un recurso: `highlight` o `label` |
+| Un texto corto encima de la app | `lower-third.html`; un atajo de teclado, `shortcut.html`; dos capturas lado a lado, `compare.html` |
+
+Un recurso dice algo que la app no muestra por sí sola. Uno por frase, y no más de uno o dos seguidos antes de volver a la app.
+
+## Probar y revisar
+
+- **Un recurso suelto**, para diseñarlo sin armar un tour:
+
+  ```bash
+  bun run walkthrough overlay opening.html --params="title=Sunset Shores,style=brand" --beats="mark=0.3,title=1" --open
+  ```
+
+- **El catálogo completo** (`tours/examples/catalogo.yaml`, sin voz): todos los recursos y sus variantes en una pasada, con un video y una hoja de contacto (un cuadro por recurso) en `~/Library/Caches/walkthrough/catalog/`. Tarda unos 4 minutos por formato.
+
+  ```bash
+  bun run walkthrough catalog --device=both --open
+  ```
+
+  Al cambiar una plantilla o agregar un recurso, agrega su ejemplo al catálogo y revisa las hojas antes del commit. Una prueba de `verify` comprueba que cada entrada sea válida y quepa en 16:9 y 9:16.
+- **Ejemplos narrados**, con voz y un sitio de fondo: `tours/examples/aperturas.yaml`, `graficas.yaml`, `codigo.yaml` y `flujos.yaml`.
+- **La skill `recursos`** del repo guía cómo elegirlos, escribirlos y revisarlos.
 
 ## Aperturas, capítulos y cierres
 
@@ -120,7 +149,7 @@ Otros campos: `language` (el editor y el diff), `file` o `title` (la barra de la
 
 ### Cómo escribirlo
 
-- **Poco código.** Lo que la voz alcanza a explicar: hasta unas 20 líneas en 16:9 y 12 en 9:16, sin líneas de más de ~90 caracteres. Recorta imports y lo que no se nombra.
+- **Poco código.** Lo que la voz alcanza a explicar: hasta unas 20 líneas en 16:9 y 12 en 9:16. Las líneas, de hasta ~90 caracteres en 16:9 y ~70 en 9:16; más largas encogen la letra y `check` avisa. Recorta imports y lo que no se nombra.
 - **Una nota por resaltado, de pocas palabras:** qué hace esa parte, no cómo.
 - **Los comandos se teclean a unas 22 letras por segundo** y el código con `reveal: type` a unas 38. `check` avisa si el overlay termina antes de que acabe de escribirse; alarga la frase, dale un `hold` o escribe menos.
 - **Resaltados con aire:** por lo menos un segundo entre uno y otro, y el último no en el último segundo del overlay.

@@ -364,6 +364,7 @@ walkthrough check  <tour>               validar sin renderizar
 walkthrough inspect <url> [--session=<s>] [--device=mobile]
 walkthrough render <tour> [--preview] [--open] [--from=overlays|compose]
 walkthrough overlay <plantilla> [--beats --params --data --theme --device --open]   probar un overlay suelto
+walkthrough catalog [--device=mobile|both] [--theme=light] [--open]           todos los recursos y una hoja de contacto
 walkthrough gallery [--no-open]           ver los videos generados
 walkthrough clean [--voice] [--keep=<n>]  limpiar caché y renders viejos
 ```

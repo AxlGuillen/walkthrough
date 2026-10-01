@@ -137,6 +137,29 @@ segments:
             - { label: Marca propia, values: [no, yes, yes] }
             - { label: Precio, values: [$0, $12, $24] }
 
+  # Líneas de tiempo
+  - hold: 6
+    overlays:
+      - src: roadmap.html
+        data:
+          title: Hacia la versión 2
+          milestones:
+            - { date: Ene, title: Primer tour, detail: Grabado a mano, emoji: rocket }
+            - { date: Mar, title: Voz y subtítulos, detail: Narración sincronizada, emoji: microphone }
+            - { date: Jun, title: Recursos animados, detail: "Gráficas, código y flujos", emoji: sparkles, status: now }
+            - { date: Sep, title: Marcos y tablas, emoji: laptop, status: next }
+            - { date: Dic, title: Galería pública, emoji: globe-with-meridians, status: next }
+  - hold: 5
+    overlays:
+      - src: roadmap.html
+        data:
+          mode: card
+          milestones:
+            - { date: Semana 1, title: Diseño }
+            - { date: Semana 2, title: Desarrollo, status: now }
+            - { date: Semana 3, title: Pruebas, status: next }
+            - { date: Semana 4, title: Entrega, status: next }
+
   # Flujos
   - hold: 5
     flow:

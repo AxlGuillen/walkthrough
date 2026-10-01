@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!-- Roadmap: milestones on a line that draws itself from one to the next, each done, now or
+     next. Horizontal in 16:9, vertical in 9:16. Node validates `data` and lays out the scene
+     (src/roadmap/), which this page paints. Beats: m0, m1… for each milestone. -->
+<link rel="stylesheet" href="base.css">
+<style>
+  body.full { background: var(--stage); }
+  .abs { position: absolute; box-sizing: border-box; }
+  .title { position: absolute; font-weight: 800; letter-spacing: -0.02em; line-height: 1; white-space: nowrap; }
+  svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .way { fill: none; stroke: var(--accent); stroke-linecap: round; }
+  .way.upcoming { stroke: var(--muted); opacity: 0.45; }
+  .node { position: absolute; translate: -50% -50%; border-radius: 50%; box-sizing: border-box; display: grid; place-items: center; }
+  .node.done { background: var(--accent); }
+  .node.now { background: var(--accent); box-shadow: 0 0 0 0.5vmin color-mix(in srgb, var(--accent) 35%, transparent); }
+  .node.next { background: var(--panel); box-shadow: inset 0 0 0 0.35vmin color-mix(in srgb, var(--muted) 70%, transparent); }
+  .node.emoji.done, .node.emoji.now { background: var(--panel); box-shadow: inset 0 0 0 0.45vmin var(--accent); }
+  .node img { width: 62%; height: 62%; object-fit: contain; }
+  .node.next img { opacity: 0.55; filter: saturate(0.4); }
+  .halo { position: absolute; translate: -50% -50%; border-radius: 50%; border: 0.35vmin solid var(--accent); box-sizing: border-box; opacity: 0; }
+  .box { position: absolute; display: flex; flex-direction: column; }
+  .box.center { translate: -50% 0; text-align: center; align-items: center; }
+  .box.bottom { translate: -50% -100%; }
+  .date { font-weight: 700; color: var(--accent-ink); letter-spacing: 0.04em; text-transform: uppercase; }
+  .next .date { color: var(--muted); }
+  .name { font-weight: 800; line-height: 1.2; letter-spacing: -0.01em; text-wrap: balance; }
+  .detail { color: var(--muted); line-height: 1.4; text-wrap: balance; }
+  .next .name { color: var(--muted); }
+  .tag { display: inline-block; align-self: center; padding: 0.3em 0.8em; border-radius: 99em; background: var(--accent); color: var(--on-accent); font-weight: 800; font-size: 0.8em; letter-spacing: 0.05em; text-transform: uppercase; }
+  .box.left .tag { align-self: flex-start; }
+</style>
+</head>
+<body>
+<script src="params.js"></script>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="vendor/gsap/SplitText.min.js"></script>
+<script src="vendor/gsap/DrawSVGPlugin.min.js"></script>
+<script src="kit.js"></script>
+<script>
+  const scene = JSON.parse(new URLSearchParams(location.search).get('scene') ?? 'null');
+  const NS = 'http://www.w3.org/2000/svg';
+  const px = n => `${n}px`;
+  const tl = kit.timeline();
+  const nowLabel = { es: 'Hoy', en: 'Now' }[kit.lang] ?? 'Now';
+  document.body.classList.add(scene.mode);
+  const el = (className, parent = document.body, tag = 'div') => {
+    const node = document.createElement(tag);
+    node.className = className;
+    parent.append(node);
+    return node;
+  };
+
+  if (scene.panel) {
+    const panel = el('abs panel');
+    Object.assign(panel.style, { left: px(scene.panel.x), top: px(scene.panel.y), width: px(scene.panel.width), height: px(scene.panel.height) });
+    tl.fromTo(panel, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5 }, 0);
+  }
+  if (scene.title) {
+    const title = el('title');
+    Object.assign(title.style, { left: px(scene.title.x), top: px(scene.title.y), fontSize: px(scene.title.size) });
+    title.textContent = scene.title.text;
+    tl.fromTo(title, { opacity: 0, y: '0.4em' }, { opacity: 1, y: 0 }, 0.1);
+  }
+
+  const svg = document.createElementNS(NS, 'svg');
+  document.body.append(svg);
+  for (const segment of scene.segments) {
+    const line = document.createElementNS(NS, 'line');
+    const inset = scene.node * 0.5;
+    const dx = segment.to.x - segment.from.x, dy = segment.to.y - segment.from.y, length = Math.hypot(dx, dy) || 1;
+    // From edge to edge of the nodes, so the line never shows through an emoji's disc.
+    line.setAttribute('x1', segment.from.x + dx / length * inset); line.setAttribute('y1', segment.from.y + dy / length * inset);
+    line.setAttribute('x2', segment.to.x - dx / length * inset); line.setAttribute('y2', segment.to.y - dy / length * inset);
+    line.setAttribute('class', `way${segment.upcoming ? ' upcoming' : ''}`);
+    line.setAttribute('stroke-width', String(Math.max(3, scene.u * 0.45)));
+    svg.append(line);
+    tl.add(kit.draw(line, { duration: segment.end - segment.start, ease: 'none' }), segment.start);
+  }
+
+  const box = (spec, parent) => {
+    const node = el(`box ${spec.align} ${spec.anchor}`, parent);
+    Object.assign(node.style, { left: px(spec.x), top: px(spec.y), width: px(spec.width), gap: px(scene.gap) });
+    return node;
+  };
+  for (const m of scene.milestones) {
+    const group = el(m.status);
+    const size = scene.node * 2;
+    if (m.status === 'now') {
+      const halo = el('halo', group);
+      Object.assign(halo.style, { left: px(m.x), top: px(m.y), width: px(size), height: px(size) });
+      const pulses = Math.max(1, Math.ceil((walkthrough.duration - m.time) / 1.4));
+      tl.fromTo(halo, { scale: 1, opacity: 0.7 }, { scale: 1.9, opacity: 0, duration: 1.4, ease: 'power1.out', repeat: pulses - 1 }, m.time + 0.3);
+    }
+    const node = el(`node ${m.status}${m.emoji ? ' emoji' : ''}`, group);
+    Object.assign(node.style, { left: px(m.x), top: px(m.y), width: px(size), height: px(size) });
+    if (m.emoji) {
+      const img = el('', node, 'img');
+      img.alt = '';
+      img.src = walkthrough.emoji(m.emoji);
+    }
+    tl.fromTo(node, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(2)' }, m.time - 0.05);
+
+    const parts = [];
+    if (m.dateBox) {
+      const date = box(m.dateBox, group);
+      el('date', date).textContent = m.date;
+      Object.assign(date.style, { fontSize: px(scene.font.date) });
+      parts.push(date);
+    }
+    const body = box(m.body, group);
+    if (m.date && !m.dateBox) Object.assign(el('date', body), { textContent: m.date }).style.fontSize = px(scene.font.date);
+    Object.assign(el('name', body), { textContent: m.title }).style.fontSize = px(scene.font.title);
+    if (m.detail) Object.assign(el('detail', body), { textContent: m.detail }).style.fontSize = px(scene.font.detail);
+    if (m.status === 'now') Object.assign(el('tag', body), { textContent: nowLabel }).style.fontSize = px(scene.font.date);
+    parts.push(body);
+    tl.fromTo(parts, { opacity: 0, y: m.body.align === 'center' ? 14 : 0, x: m.body.align === 'left' ? -14 : 0 }, { opacity: 1, y: 0, x: 0, duration: 0.45 }, m.time + 0.05);
+  }
+</script>
+</body>
+</html>

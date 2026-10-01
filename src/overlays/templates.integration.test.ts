@@ -9,6 +9,8 @@ import { chartSchema } from '../charts/schema.ts';
 import { codeScene } from '../code/layout.ts';
 import { codeSchema } from '../code/schema.ts';
 import { flowScene } from '../flow/scene.ts';
+import { roadmapScene } from '../roadmap/layout.ts';
+import { roadmapSchema } from '../roadmap/schema.ts';
 import { tableScene } from '../table/layout.ts';
 import { tableSchema } from '../table/schema.ts';
 import { buildTimeline } from '../timeline/build.ts';
@@ -288,6 +290,29 @@ describe('code template', () => {
       expect(Number(await page.locator('.band').evaluate(el => getComputedStyle(el).opacity))).toBe(1);
       expect(await page.locator('.bar .note').innerText()).toBe('Pasa todo');
       expect(await page.locator('.row.command .function').innerText()).toBe('bun');
+    } finally {
+      await context.close();
+    }
+  }, 60_000);
+});
+
+describe('roadmap template', () => {
+  it('pops each milestone on its beat and pulses the current one', async () => {
+    const roadmap = roadmapSchema.parse({ milestones: [{ title: 'Uno' }, { title: 'Dos', status: 'now', at: 2 }, { title: 'Tres', status: 'next' }] });
+    const scene = roadmapScene(roadmap, canvas, 'es', { m1: 2 });
+    const context = await browser.newContext({ viewport: canvas });
+    try {
+      const page = await context.newPage();
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'roadmap.html'), tourDir, { duration: '5', scene: JSON.stringify(scene) }));
+      const shown = (t: number) => page.evaluate(time => {
+        window.__walkthroughSeek?.(time);
+        return [...document.querySelectorAll('.node')].map(el => Number(getComputedStyle(el).opacity) > 0.99);
+      }, t);
+      expect(await shown(1.6)).toEqual([true, false, false]);
+      expect(await shown(4.5)).toEqual([true, true, true]);
+      expect(await page.locator('.halo').count()).toBe(1);
+      expect(await page.locator('.way.upcoming').count()).toBe(1);
+      expect(await page.locator('.tag').innerText()).toBe('HOY');
     } finally {
       await context.close();
     }

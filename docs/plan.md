@@ -14,6 +14,7 @@ Escrito el 28/sep/2026, después de la primera versión completa (tour de uws-ta
 6. **Fase 5 — Tour de uws-tasks v2.** Aplica todo lo anterior y recorre más vistas.
 7. **Fase 6 — Flujos.** Diagramas de pasos que aparecen al ritmo de la voz, con directrices para usarlos en cualquier video (añadida el 29/sep/2026).
 8. **Fase 7 — Biblioteca de recursos animados.** Aperturas, gráficas y código como piezas reutilizables que se declaran en el YAML y van al ritmo de la voz (añadida el 30/sep/2026).
+9. **Fase 8 — Marca, texturas y emojis.** Logos y colores por proyecto, fondos con textura y emojis cuidados dentro de los recursos (añadida el 1/oct/2026).
 
 Cada fase termina con pruebas en verde, documentación al día y commits que compilan por separado.
 
@@ -236,6 +237,32 @@ Todas reciben `beats` para que el título, el subtítulo y el logo caigan en sus
 
 Después, y solo si un video lo pide: novedades de la semana (una lista al ritmo de la voz, para las entregas a dymmsa), pantalla dividida y marcos de dispositivo.
 
+## Fase 8 — Marca, texturas y emojis
+
+Escrita el 1/oct/2026. Los recursos de la fase 7 se ven todos iguales: el mismo fondo morado o claro y solo el acento cambia. La meta es que cada proyecto se vea como suyo en todos sus videos y que haya más variedad visual sin perder el orden, siempre declarado en el YAML.
+
+### 8.1 Marcas
+
+- **`assets/brands/<marca>/`**, compartida por todos los tours: `brand.yaml` (nombre, acento, tema y textura preferidos), el logo, un isotipo cuadrado si lo hay y `FUENTE.md` (de dónde salió y cómo se puede usar).
+- **`brand: dymmsa` en el tour:** da el acento, el tema y la textura por defecto (el tour puede cambiarlos) y el logo a las aperturas `brand`, los capítulos y el cierre.
+- **Marca de agua opcional** (`watermark: true`): el isotipo en una esquina durante el recorrido, sin tapar la apertura ni el cierre.
+- **Primeras marcas:** 4XL (`portafoliov3`), UrVenue (`uvme-microsite`) y DYMMSA (`DYMMSA-WEB`), copiadas de los repos locales. Los logos de terceros solo en su contexto: DYMMSA en sus entregas, UrVenue en lo interno.
+
+### 8.2 Texturas
+
+- **Fondos generados por código** (sin imágenes ni licencias): `plain`, `grain`, `dots`, `lines`, `mesh` y `brand` (la malla con el color de la marca). Se eligen con `texture:` en el tour o vienen de la marca.
+- **Donde haya un fondo propio:** aperturas, capítulos, cierres, flujos, gráficas y código a pantalla completa. Mismos tokens, así sirven en tema claro y oscuro.
+
+### 8.3 Emojis
+
+- **Fluent Emoji de Microsoft** (MIT), una selección curada de 71 en `templates/overlays/vendor/fluent-emoji/`, en estilo Color (vectorial) y 3D. Se escriben por nombre (`emoji: rocket`) y el esquema rechaza uno que no exista.
+- **Dentro de los recursos, nunca sueltos:** en los pasos de un flujo, en una cifra o comparación, en un capítulo y en la apertura. Entran con una animación corta.
+- **Sticker** (`sticker.html`): un emoji con un texto breve que aparece en su palabra para subrayar un momento («🎉 Listo»), en una esquina o junto al centro.
+
+### 8.4 Catálogo y guía
+
+Las variantes nuevas (marcas, texturas, emojis) se agregan a `tours/examples/catalogo.yaml`; `docs/recursos.md` y la skill `recursos` explican cuándo usarlas.
+
 ## Estimación
 
 | Fase | Tamaño |
@@ -248,3 +275,4 @@ Después, y solo si un video lo pide: novedades de la semana (una lista al ritmo
 | 5 | Chica, una vez hecho lo anterior |
 | 6 | Mediana (6.1 es lo más grande) |
 | 7 | Grande: 7.1 mediana, cada recurso de 7.2 a 7.4 mediano |
+| 8 | Mediana |

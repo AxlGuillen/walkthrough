@@ -292,3 +292,21 @@ describe('code template', () => {
   }, 60_000);
 });
 
+describe('emojis in templates', () => {
+  it('load from the vendored set in the tour\'s style', async () => {
+    const context = await browser.newContext({ viewport: canvas });
+    try {
+      const page = await context.newPage();
+      const src = async (emojiStyle?: string) => {
+        await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'sticker.html'), tourDir, { duration: '3', emoji: 'rocket', text: 'Go' }, emojiStyle ? { emojiStyle } : {}));
+        await page.waitForFunction(() => document.querySelector('img')!.complete);
+        return page.evaluate(() => { const img = document.querySelector('img')!; return [img.src.split('/').pop(), img.naturalWidth > 0]; });
+      };
+      expect(await src()).toEqual(['rocket.svg', true]);
+      expect(await src('3d')).toEqual(['rocket.3d.png', true]);
+    } finally {
+      await context.close();
+    }
+  }, 60_000);
+});
+

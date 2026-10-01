@@ -135,3 +135,15 @@ describe('brands', () => {
   });
 });
 
+describe('emojis', () => {
+  const tour = (overlay: string) => parseTour(`title: E\nurl: https://example.com\nsegments:\n  - hold: 3\n    overlays:\n      - ${overlay}\n`);
+  it('accepts emojis of the set in params, flow steps and charts, and names close ones otherwise', () => {
+    expect(tour('{ src: sticker.html, params: { emoji: party-popper, text: Listo } }').segments[0]!.overlays[0]!.params.emoji).toBe('party-popper');
+    expect(() => tour('{ src: opening.html, params: { emoji: party } }')).toThrow(/close: .*party-popper/);
+    expect(() => tour('{ src: sticker.html, params: { text: Hola } }')).toThrow(/needs params.emoji/);
+    expect(() => tour('{ src: chart.html, data: { type: stat, label: x, value: 1, emoji: rockets } }')).toThrow(/rockets/);
+    const flow = parseTour('title: F\nurl: https://example.com\nsegments:\n  - hold: 3\n    flow: { steps: [{ text: A, emoji: rocket }, B] }\n');
+    expect(flow.segments[0]!.flow!.steps[0]!.emoji).toBe('rocket');
+  });
+});
+

@@ -55,8 +55,17 @@ export interface DonutScene extends Base {
   label: ChartText;
 }
 
+// An emoji placed by Node, square, centered on (x, y).
+export interface ChartEmoji {
+  name: string;
+  x: number;
+  y: number;
+  size: number;
+}
+
 export interface StatScene extends Base {
   type: 'stat';
+  emoji?: ChartEmoji;
   value: ChartText;
   count: Count;
   label: ChartText;
@@ -64,6 +73,7 @@ export interface StatScene extends Base {
 
 export interface CompareScene extends Base {
   type: 'compare';
+  emoji?: ChartEmoji;
   before: { label: ChartText; value: ChartText; count: Count };
   after: { label: ChartText; value: ChartText; count: Count };
   arrow: string;
@@ -190,6 +200,7 @@ export function chartScene(chart: Chart, canvas: Size, lang: string, beats: Reco
     const size = Math.min((card ? 16 : 22) * u, body.width / (Math.max(text.length, formatNumber(chart.from, style).length) * CHAR_EM));
     return {
       ...base, type: 'stat', count: count(chart.value, chart.from),
+      ...(chart.emoji ? { emoji: { name: chart.emoji, x: cx, y: cy - size * 0.95, size: Math.min(size * 0.75, 14 * u) } } : {}),
       value: { text, x: cx, y: cy - size * 0.1, size },
       label: { text: fit(chart.label, body.width, labelSize * 1.5), x: cx, y: cy + size * 0.7, size: labelSize * 1.5 },
     };
@@ -215,5 +226,7 @@ export function chartScene(chart: Chart, canvas: Size, lang: string, beats: Reco
   return {
     ...base, type: 'compare', before: side(chart.before, a, texts[0]!), after: side(chart.after, b, texts[1]!), arrow,
     change: { text: formatChange(chart.before.value, chart.after.value, lang), x: b.x, y: b.y + size * 0.75, size: labelSize * 1.4 },
+    // Above the after value, where the change lands.
+    ...(chart.emoji ? { emoji: { name: chart.emoji, x: b.x, y: b.y - size * 1.45, size: Math.min(size * 0.6, 10 * u) } } : {}),
   };
 }

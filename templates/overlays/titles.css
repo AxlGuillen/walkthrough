@@ -24,6 +24,7 @@
 .mark.wide { width: auto; height: auto; }
 .mark.wide img { width: 44vmin; height: 16vmin; }
 .mark.wide svg { display: none; }
+.emoji-badge { display: block; width: 10vmin; height: 10vmin; object-fit: contain; margin-bottom: 0.5vmin; }
 .brandline { display: block; height: 6.5vmin; width: 34vmin; object-fit: contain; object-position: left center; margin-bottom: 1vmin; }
 .monogram { width: 13vmin; height: 13vmin; border-radius: 3.4vmin; background: var(--accent); color: var(--on-accent);
   display: grid; place-items: center; font-size: 7vmin; font-weight: 800; }

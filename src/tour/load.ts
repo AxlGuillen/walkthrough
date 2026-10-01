@@ -1,6 +1,7 @@
 import { parse } from 'yaml';
 import { z } from 'zod';
 import { BrandError, BRANDS_DIR, loadBrand } from '../brands/brand.ts';
+import { emojiProblem } from '../emoji/emoji.ts';
 import { resourceFor } from '../resources/registry.ts';
 import { tourSchema, type Tour } from './schema.ts';
 
@@ -37,6 +38,10 @@ function withBrand(raw: unknown, brandsDir: string): unknown {
 // on load, not mid-render; each `at` inside it becomes a beat (explicit beats win).
 function withResources(tour: Tour): Tour {
   tour.segments.forEach((segment, s) => segment.overlays.forEach((overlay, o) => {
+    const emoji = overlay.params.emoji;
+    const problem = emoji === undefined ? null : emojiProblem(emoji);
+    if (problem) throw new TourError(`segments[${s}].overlays[${o}] (${overlay.src}) params: ${problem}`);
+    if (overlay.src === 'sticker.html' && emoji === undefined) throw new TourError(`segments[${s}].overlays[${o}] (sticker.html) needs params.emoji`);
     const resource = resourceFor(overlay.src);
     if (!resource) return;
     const parsed = resource.schema.safeParse(overlay.data);

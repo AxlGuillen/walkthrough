@@ -24,6 +24,7 @@ export interface OverlayCommand {
   lang: string | undefined;
   texture: string | undefined;
   brand: string | undefined;
+  emojiStyle: string | undefined;
   open: boolean;
 }
 

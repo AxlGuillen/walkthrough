@@ -28,9 +28,12 @@
       if (!ownLogo && brandMark && params.get('markShape') === 'wide') mark.classList.add('wide');
       mark.insertAdjacentHTML('afterbegin', image ? `<img alt="" src="${image}">` : `<span class="monogram">${($('.title')?.textContent.trim()[0] ?? '·').toUpperCase()}</span>`);
     }
-    // In the other styles the brand's widest logo sits above the eyebrow.
+    // An emoji (params.emoji) leads the block, above the logo and the eyebrow.
+    if (params.get('emoji')) $('.block')?.insertAdjacentHTML('afterbegin', `<img class="emoji-badge" alt="" src="${walkthrough.emoji(params.get('emoji'))}">`);
+    // In the other styles the brand's widest logo sits above the eyebrow of an opening or a
+    // closing; on every chapter card it would only repeat itself.
     const brandLogo = params.get('brandLogo');
-    if (brandLogo && style !== 'brand') $('.block')?.insertAdjacentHTML('afterbegin', `<img class="brandline" alt="${params.get('brand') ?? ''}" src="${brandLogo}">`);
+    if (brandLogo && style !== 'brand' && role !== 'chapter') ($('.emoji-badge') ?? $('.block'))?.insertAdjacentHTML($('.emoji-badge') ? 'afterend' : 'afterbegin', `<img class="brandline" alt="${params.get('brand') ?? ''}" src="${brandLogo}">`);
     const title = $('.title');
     return {
       style, title,
@@ -40,7 +43,7 @@
       words: has($('.subtitle')) ? kit.split($('.subtitle'), 'words') : [],
       url: has($('.url')) ? $('.url') : null,
       indexChars: has(index) ? kit.split(index, 'chars', { mask: true }) : [],
-      mark: $('.mark'), ring: $('.mark:not(.wide) circle'), brandline: $('.brandline'), veil: $('.veil'), scrim: $('.scrim'),
+      mark: $('.mark'), ring: $('.mark:not(.wide) circle'), brandline: $('.brandline'), emoji: $('.emoji-badge'), veil: $('.veil'), scrim: $('.scrim'),
       block: [...document.querySelectorAll('.block > *')].filter(el => getComputedStyle(el).display !== 'none'),
     };
   }
@@ -61,6 +64,7 @@
   // The shared entrance: eyebrow, the title rising letter by letter out of its mask, the
   // accent rule, the subtitle word by word and a closing's url.
   function enter(tl, el, at) {
+    if (el.emoji) tl.fromTo(el.emoji, { opacity: 0, scale: 0.4, rotation: -14 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.7, ease: 'back.out(2.2)' }, Math.max(0, at.title - 0.45));
     if (el.brandline) tl.fromTo(el.brandline, { opacity: 0, y: '0.6vmin' }, { opacity: 1, y: 0, duration: 0.6 }, Math.max(0, at.title - 0.35));
     if (el.eyebrow) tl.fromTo(el.eyebrow, { opacity: 0, letterSpacing: '0.9em' }, { opacity: 1, letterSpacing: '0.35em', duration: 0.9 }, Math.max(0, at.title - 0.15));
     if (el.indexChars.length) tl.fromTo(el.indexChars, { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: 'power4.out', stagger: 0.06 }, at.title - 0.1);

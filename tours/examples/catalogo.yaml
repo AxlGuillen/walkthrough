@@ -54,7 +54,7 @@ segments:
   - hold: 4
     overlays:
       - src: chart.html
-        data: { type: stat, label: reservas este mes, value: 1284 }
+        data: { type: stat, label: reservas este mes, value: 1284, emoji: party-popper }
   - hold: 5
     overlays:
       - src: chart.html
@@ -156,3 +156,22 @@ segments:
       mode: card
       title: Vida de un ticket
       steps: [{ text: Se crea, at: 0.5 }, { text: Se asigna, at: 1.3 }, { text: Se entrega, at: 2.1 }]
+
+  # Emojis
+  - hold: 5
+    flow:
+      title: Una entrega
+      steps:
+        - { text: Se planea, emoji: memo, at: 0.5 }
+        - { text: Se construye, emoji: hammer-and-wrench, at: 1.3 }
+        - { text: Se prueba, emoji: magnifying-glass-tilted-left, at: 2.1 }
+        - { text: Se entrega, emoji: rocket, at: 2.9 }
+  - hold: 3
+    overlays:
+      - src: sticker.html
+        params: { emoji: check-mark-button, text: Listo, position: top-right }
+  - hold: 3.5
+    overlays:
+      - src: chapter-card.html
+        params: { style: kinetic, eyebrow: Capítulo, index: 3, total: 5, title: Reportes, emoji: bar-chart }
+

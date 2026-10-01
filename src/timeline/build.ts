@@ -29,6 +29,7 @@ export interface TimedFlowStep {
   time: number;
   branch?: 0 | 1;
   lane?: number;
+  emoji?: string;
 }
 
 export interface TimedFlow {
@@ -177,8 +178,8 @@ export function buildTimeline(
         src: FLOW_TEMPLATE, params: {}, start: from, end: to, fade: flow.fade, segment: index, beats: {},
         flow: {
           shape: flow.shape, mode: flow.mode, ...(flow.title ? { title: flow.title } : {}),
-          steps: steps.map(({ text, detail, branch, lane }, i) => ({
-            text, ...(detail ? { detail } : {}), time: times[i]!, ...(branch === undefined ? {} : { branch }),
+          steps: steps.map(({ text, detail, branch, lane, emoji }, i) => ({
+            text, ...(detail ? { detail } : {}), ...(emoji ? { emoji } : {}), time: times[i]!, ...(branch === undefined ? {} : { branch }),
             ...(lane === undefined || !flow.lanes ? {} : { lane: flow.lanes.indexOf(lane) }),
           })),
           ...(sides.length ? { branches: [sides[0]!.label, sides[1]!.label] as [string, string] } : {}),

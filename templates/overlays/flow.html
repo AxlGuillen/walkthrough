@@ -22,6 +22,9 @@
   .badge { flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--accent); color: var(--on-accent); font-weight: 800;
     font-variant-numeric: tabular-nums; }
   .text { font-weight: 650; }
+  .badge.emoji { background: none; border-radius: 0; }
+  .badge.emoji img { width: 100%; height: 100%; object-fit: contain; }
+  .box.muted .badge.emoji { background: none; }
   .box.decision { background: color-mix(in srgb, var(--accent) 16%, var(--surface));
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 55%, transparent), 0 1.2vmin 3vmin var(--shadow); }
   .box.decision .badge { border-radius: 22%; transform: rotate(45deg) scale(0.82); }
@@ -92,7 +95,16 @@
 
       const badge = el('div', 'badge', node);
       Object.assign(badge.style, { width: px(font.badge), height: px(font.badge), fontSize: px(font.text * 0.8) });
-      el('span', '', badge).textContent = box.badge;
+      if (box.emoji) {
+        // An emoji takes the number's place, a little larger and with no disc behind it.
+        badge.classList.add('emoji');
+        Object.assign(badge.style, { width: px(font.badge * 1.25), height: px(font.badge * 1.25) });
+        const img = el('img', '', badge, 'img');
+        img.src = walkthrough.emoji(box.emoji);
+        img.alt = '';
+      } else {
+        el('span', '', badge).textContent = box.badge;
+      }
       badge.style[box.inline ? 'marginRight' : 'marginBottom'] = px(font.badgeGap);
 
       const body = el('div', '', node);

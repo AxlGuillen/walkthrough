@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { emojiName } from '../emoji/emoji.ts';
 import { anchor } from '../tour/schema.ts';
 
 // A series label sits under its bar or point; a caption (donut, stat) is a phrase.
@@ -22,9 +23,9 @@ export const chartSchema = z.discriminatedUnion('type', [
   // A share of a whole: value out of total (100 by default).
   z.strictObject({ type: z.literal('donut'), ...style, label: caption, value: z.number().nonnegative(), total: z.number().positive().default(100), at: anchor.optional() }),
   // One big number that counts up from `from`.
-  z.strictObject({ type: z.literal('stat'), ...style, label: caption, value: z.number(), from: z.number().default(0), at: anchor.optional() }),
+  z.strictObject({ type: z.literal('stat'), ...style, label: caption, value: z.number(), from: z.number().default(0), at: anchor.optional(), emoji: emojiName.optional() }),
   // Before and after: two values and the change between them.
-  z.strictObject({ type: z.literal('compare'), ...style, before: point, after: point }),
+  z.strictObject({ type: z.literal('compare'), ...style, before: point, after: point, emoji: emojiName.optional() }),
 ]).superRefine((chart, ctx) => {
   if (chart.type === 'donut' && chart.value > chart.total) ctx.addIssue({ code: 'custom', message: 'value is more than total', path: ['value'] });
   if (chart.type === 'bar' && chart.highlight && !chart.series.some(p => p.label === chart.highlight)) {

@@ -39,6 +39,7 @@ export interface OverlayLook {
   theme?: string;
   lang?: string;
   texture?: string;
+  emojiStyle?: string;
   // From the tour's brand: its name, two colors ("#a,#b") and images as file URLs.
   brand?: string;
   colors?: string;

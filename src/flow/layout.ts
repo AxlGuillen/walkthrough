@@ -7,6 +7,7 @@ import { badgeTexts, flowEdges, mainLength, type FlowEdge } from './graph.ts';
 export interface FlowBox {
   rect: Rect;
   badge: string;
+  emoji?: string;
   kind: 'step' | 'decision';
   // The number beside the text instead of above it: for wide, short boxes.
   inline: boolean;
@@ -94,6 +95,7 @@ export function layoutFlow(flow: Input, canvas: Size): FlowLayout {
   const boxes: FlowBox[] = placed.boxes.map(({ rect, lines, detail, truncated }, i) => ({
     rect: shift(rect),
     badge: badges[i]!,
+    ...(flow.steps[i]!.emoji ? { emoji: flow.steps[i]!.emoji } : {}),
     kind: flow.shape === 'decision' && i === main - 1 ? 'decision' : 'step',
     inline: placed.inline,
     muted: flow.shape === 'compare' && flow.steps[i]!.branch === 0,

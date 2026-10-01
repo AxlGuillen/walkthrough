@@ -37,6 +37,8 @@ window.walkthrough = {
   // Seconds the overlay stays on screen, so an exit can be timed from the end.
   duration: Number(params.get('duration') ?? 0),
   beat(name, fallback = 0) { return this.beats[name] ?? fallback; },
+  // An emoji of the vendored Fluent set by name, in the tour's style (color or 3d).
+  emoji(name) { return new URL(`vendor/fluent-emoji/${name}${params.get('emojiStyle') === '3d' ? '.3d.png' : '.svg'}`, location.href).href; },
   timeline(seek) { seekers.push(seek); },
   gsap(timeline) {
     timeline.pause(0);

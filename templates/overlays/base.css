@@ -7,7 +7,7 @@
   --accent-ink: var(--accent);
   --ink: #ffffff;
   --muted: #cbc4ea;
-  --panel: rgba(20, 16, 40, 0.92);
+  --panel: color-mix(in srgb, var(--stage-tint) 30%, rgb(14 12 22 / 0.94));
   /* A full-screen ground, a light fill for boxes, their hairline, lines and a see-through veil. */
   /* The dark ground's glow: violet by default, the brand's color when the tour has one. */
   --stage-tint: #2a1d63;

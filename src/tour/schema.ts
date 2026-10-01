@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { TEXTURES } from '../brands/brand.ts';
 import { SOUNDS } from '../compose/sounds.ts';
+import { emojiName } from '../emoji/emoji.ts';
 
 const selector = z.string().trim().min(1);
 
@@ -106,11 +107,13 @@ export type Overlay = z.infer<typeof overlay>;
 // Connected steps that appear as the narration names them. `at` is the word of each step;
 // without it, steps are spread between their anchored neighbors.
 const flowStep = z.union([
-  z.string().trim().min(1).max(48).transform(text => ({ text, detail: undefined, lane: undefined, at: undefined })),
+  z.string().trim().min(1).max(48).transform(text => ({ text, detail: undefined, lane: undefined, emoji: undefined, at: undefined })),
   z.strictObject({
     text: z.string().trim().min(1).max(48),
     detail: z.string().trim().min(1).max(72).optional(),
     lane: z.string().trim().min(1).optional(),
+    // Shown in place of the step's number.
+    emoji: emojiName.optional(),
     at: anchor.optional(),
   }),
 ]);
@@ -207,6 +210,8 @@ export const tourSchema = z.strictObject({
   texture: z.enum(TEXTURES).default('plain'),
   // The brand's mark in a corner while the app is on screen, not over the opening or closing.
   watermark: z.boolean().default(false),
+  // Fluent Emoji in their vector Color style, or the 3D one.
+  emojiStyle: z.enum(['color', '3d']).default('color'),
   // Gets the app past its own onboarding: storage is written before every page of the
   // tour's origin loads, and dismiss selectors are clicked after each navigation.
   setup: z.strictObject({

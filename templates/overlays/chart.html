@@ -26,6 +26,7 @@
   .dot { fill: var(--accent); stroke: var(--ink); }
   .track { fill: none; stroke: var(--line); }
   .arrow { fill: none; stroke: var(--stroke); stroke-linecap: round; }
+  .emoji { position: absolute; translate: -50% -50%; object-fit: contain; }
 </style>
 </head>
 <body>
@@ -58,6 +59,17 @@
     if (className) el.setAttribute('class', className);
     svg.append(el);
     return el;
+  }
+  // An emoji that pops in on its beat with a little overshoot.
+  function emoji(spec, start) {
+    if (!spec) return;
+    const img = document.createElement('img');
+    img.className = 'emoji';
+    img.alt = '';
+    img.src = walkthrough.emoji(spec.name);
+    Object.assign(img.style, { left: px(spec.x), top: px(spec.y), width: px(spec.size), height: px(spec.size) });
+    document.body.append(img);
+    tl.fromTo(img, { opacity: 0, scale: 0.4, rotation: -12 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.6, ease: 'back.out(2.2)' }, start);
   }
   // A number that counts from its start to the value Node formatted, on the chart's beat.
   function counting(el, count, start, duration = 1) {
@@ -136,6 +148,7 @@
       tl.fromTo(value, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5 }, start);
       counting(value, scene.count, start, 1.4);
       tl.fromTo(label, { opacity: 0, y: '0.5em' }, { opacity: 1, y: 0 }, start + 0.3);
+      emoji(scene.emoji, start + 1.2);
     },
     compare() {
       const first = at('before', 0.4);
@@ -152,6 +165,7 @@
         const change = text(scene.change, 'change');
         tl.fromTo(change, { opacity: 0, scale: 0.7 }, { opacity: 1, scale: 1, duration: 0.5, ease: kit.ease.pop }, second + 0.9);
       }
+      emoji(scene.emoji, second + 1.1);
     },
   };
   draw[scene.type]();

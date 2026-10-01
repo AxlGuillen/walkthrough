@@ -1,0 +1,7 @@
+name: DYMMSA
+accent: "#DC2626"
+colors: ["#DC2626", "#7F1D1D"]
+theme: dark
+texture: lines
+logo: logo.webp
+mark: mark.webp

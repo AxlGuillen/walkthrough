@@ -1,0 +1,6 @@
+name: Axl Guillen
+accent: "#D9F24A"
+colors: ["#D9F24A", "#3A3B38"]
+theme: dark
+texture: grain
+mark: { dark: mark.svg, light: mark-light.svg }

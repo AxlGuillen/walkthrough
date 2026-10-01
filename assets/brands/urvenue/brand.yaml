@@ -1,0 +1,6 @@
+name: UrVenue
+accent: "#9646D8"
+colors: ["#9646D8", "#2CBBFF"]
+theme: dark
+texture: brand
+logo: { dark: logo.svg, light: logo-light.svg }

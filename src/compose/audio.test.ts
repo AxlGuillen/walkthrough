@@ -32,4 +32,10 @@ describe('audioGraph', () => {
     expect(second).toContain('measured_I=-22.1:measured_TP=-3.0:measured_LRA=6.2:measured_thresh=-32.5:offset=0.4:linear=true');
     expect(second).not.toContain('print_format');
   });
+
+  it('leaves silence as it is, which loudnorm cannot level', () => {
+    const silent = audioGraph({ clips: [], duration: 1, loudness: { input_i: '-inf', input_tp: '-inf', input_lra: '0.00', input_thresh: '-70.00', target_offset: 'inf' } });
+    expect(silent).not.toContain('loudnorm');
+    expect(silent).toMatch(/anull,aresample=48000,atrim=0:1\.000\[aout\]$/);
+  });
 });

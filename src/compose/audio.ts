@@ -64,7 +64,9 @@ export function audioGraph({ clips, duration, music, sfx = [], sfxVolume = 1, lo
     parts.push(`${mix}${effects.label}amix=inputs=2:normalize=0:duration=first[withsfx]`);
     mix = '[withsfx]';
   }
-  const normalize = loudness
+  // Pure silence measures -inf, which loudnorm refuses: there is nothing to level.
+  const silent = loudness !== undefined && !Number.isFinite(Number(loudness.input_i));
+  const normalize = silent ? 'anull' : loudness
     ? `loudnorm=${TARGET}:measured_I=${loudness.input_i}:measured_TP=${loudness.input_tp}:measured_LRA=${loudness.input_lra}`
       + `:measured_thresh=${loudness.input_thresh}:offset=${loudness.target_offset}:linear=true`
     : `loudnorm=${TARGET}:print_format=json`;

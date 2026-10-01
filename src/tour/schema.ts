@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { TEXTURES } from '../brands/brand.ts';
 import { SOUNDS } from '../compose/sounds.ts';
 
 const selector = z.string().trim().min(1);
@@ -200,6 +201,12 @@ export const tourSchema = z.strictObject({
   subtitles: z.enum(['karaoke', 'none']).default('none'),
   // The overlays' look: dark (the default) or light, always with the tour's accent.
   theme: z.enum(['dark', 'light']).default('dark'),
+  // A brand in assets/brands/: its accent, theme and texture become this tour's defaults, and
+  // its logo reaches openings, chapter cards and closings.
+  brand: z.string().regex(/^[a-z0-9-]+$/, 'use the brand folder name').optional(),
+  texture: z.enum(TEXTURES).default('plain'),
+  // The brand's mark in a corner while the app is on screen, not over the opening or closing.
+  watermark: z.boolean().default(false),
   // Gets the app past its own onboarding: storage is written before every page of the
   // tour's origin loads, and dismiss selectors are clicked after each navigation.
   setup: z.strictObject({

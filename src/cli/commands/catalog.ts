@@ -1,6 +1,7 @@
 import { execFile, execFileSync } from 'node:child_process';
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
+import { lookFrom } from '../../brands/look.ts';
 import { deviceProfile, FPS, type Device } from '../../capture/devices.ts';
 import { backdropArgs, catalogShots } from '../../overlays/catalog.ts';
 import { renderOverlays } from '../../overlays/render.ts';
@@ -13,16 +14,26 @@ const COLUMNS = 4;
 
 // Every resource rendered alone over a backdrop, at preview size, plus a contact sheet with
 // one still per entry: the visual catalog and the check that nothing broke.
-export async function catalog(devices: string | undefined, theme: string | undefined, open: boolean): Promise<void> {
+export interface CatalogOptions {
+  device: string | undefined;
+  theme: string | undefined;
+  texture: string | undefined;
+  brand: string | undefined;
+  open: boolean;
+}
+
+export async function catalog({ device: devices, theme, texture, brand, open }: CatalogOptions): Promise<void> {
   const base = parseTour(await readFile(CATALOG_TOUR, 'utf8'));
   if (base.segments.some(segment => segment.say !== undefined)) throw new Error('the catalog has no narration: use hold and beats in seconds');
   const list: Device[] = devices === 'both' ? ['desktop', 'mobile'] : [devices === 'mobile' ? 'mobile' : 'desktop'];
   const sheets: string[] = [];
 
   for (const device of list) {
-    const tour = { ...base, device, theme: theme === 'light' ? 'light' as const : base.theme };
+    // A brand, texture or theme given here shows the whole catalog in that look.
+    const look = lookFrom({ brand: brand ?? base.brand, accent: brand ? undefined : base.accent, theme: theme ?? (brand ? undefined : base.theme), texture: texture ?? (brand ? undefined : base.texture), lang: base.language });
+    const tour = { ...base, device, theme: (look.theme ?? base.theme) as typeof base.theme };
     const timeline = buildTimeline(tour, []);
-    const outDir = path.join(STORAGE.work, 'catalog', `${device}-${tour.theme}`);
+    const outDir = path.join(STORAGE.work, 'catalog', [device, tour.theme, look.texture, brand].filter(Boolean).join('-'));
     await rm(outDir, { recursive: true, force: true });
     await mkdir(path.join(outDir, 'shots'), { recursive: true });
     const output = deviceProfile(device, 'preview').output;
@@ -30,7 +41,7 @@ export async function catalog(devices: string | undefined, theme: string | undef
     await renderOverlays({
       overlays: timeline.overlays, tourDir: path.dirname(CATALOG_TOUR), outDir,
       canvas: deviceProfile(device).output, output, fps: FPS.preview,
-      look: { accent: tour.accent, theme: tour.theme, lang: tour.language },
+      look,
       onFrame: (overlay, frame, total) => process.stderr.write(`\r  ${device} ${overlay}/${timeline.overlays.length}: ${frame}/${total}   `),
     });
     process.stderr.write('\n');
@@ -45,7 +56,7 @@ export async function catalog(devices: string | undefined, theme: string | undef
     execFileSync('ffmpeg', ['-y', '-v', 'error', '-i', path.join(outDir, 'shots', '%03d.png'),
       '-vf', `tile=${COLUMNS}x${rows}:padding=12:margin=12:color=0x2a2a2a`, '-frames:v', '1', sheet]);
 
-    console.log(`✓ ${device} (${tour.theme}) in ${((Date.now() - started) / 1000).toFixed(0)}s\n  ${video}\n  ${sheet}`);
+    console.log(`✓ ${device} (${[tour.theme, look.texture, brand].filter(Boolean).join(', ')}) in ${((Date.now() - started) / 1000).toFixed(0)}s\n  ${video}\n  ${sheet}`);
     console.log(shots.map((shot, i) => `    ${String(i + 1).padStart(2)}. ${shot.label}`).join('\n'));
     sheets.push(sheet);
   }

@@ -38,6 +38,13 @@ export interface OverlayLook {
   accent?: string;
   theme?: string;
   lang?: string;
+  texture?: string;
+  // From the tour's brand: its name, two colors ("#a,#b") and images as file URLs.
+  brand?: string;
+  colors?: string;
+  brandLogo?: string;
+  brandMark?: string;
+  markShape?: string;
 }
 
 // Every overlay also learns the tour's look (accent, theme, language) and folder (`base`), so

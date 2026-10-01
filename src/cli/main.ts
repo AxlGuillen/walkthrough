@@ -30,9 +30,9 @@ const USAGE = `usage:
       --beats=title=0.4,line=1.2      its beats, in seconds
       --params=title=Hola             its params
       --data=<file.yaml|json>         its structured data
-      --duration=5  --device=mobile  --theme=light  --accent=#D9F24A  --lang=en  --open
+      --duration=5  --device=mobile  --theme=light  --accent=#D9F24A  --lang=en  --texture=grain  --brand=dymmsa  --open
   walkthrough catalog                 render every resource alone (tours/examples/catalogo.yaml) with a contact sheet
-      --device=mobile|both  --theme=light  --open
+      --device=mobile|both  --theme=light  --texture=grain  --brand=dymmsa  --open
   walkthrough gallery                 browse, reveal and trash generated videos
   walkthrough clean                   delete working files (videos are never touched)
       --voice                         also delete the voice cache
@@ -47,7 +47,7 @@ const { positionals, values } = parseArgs({
     from: { type: 'string' }, voice: { type: 'boolean' }, keep: { type: 'string' }, 'no-open': { type: 'boolean' },
     session: { type: 'string' }, device: { type: 'string' }, preview: { type: 'boolean' }, open: { type: 'boolean' },
     beats: { type: 'string' }, params: { type: 'string' }, data: { type: 'string' }, duration: { type: 'string' },
-    theme: { type: 'string' }, accent: { type: 'string' }, lang: { type: 'string' },
+    theme: { type: 'string' }, accent: { type: 'string' }, lang: { type: 'string' }, texture: { type: 'string' }, brand: { type: 'string' },
   },
 });
 const [command, target, url] = positionals;
@@ -59,10 +59,10 @@ try {
   else if (command === 'inspect' && target) await inspect(target, values.session, values.device);
   else if (command === 'render' && target) await render(target, values.from, values.preview ?? false, values.open ?? false);
   else if (command === 'overlay' && target) {
-    const { beats, params, data, duration, device, theme, accent, lang } = values;
-    await overlay({ src: target, open: values.open ?? false, beats, params, data, duration, device, theme, accent, lang });
+    const { beats, params, data, duration, device, theme, accent, lang, texture, brand } = values;
+    await overlay({ src: target, open: values.open ?? false, beats, params, data, duration, device, theme, accent, lang, texture, brand });
   }
-  else if (command === 'catalog') await catalog(values.device, values.theme, values.open ?? false);
+  else if (command === 'catalog') await catalog({ device: values.device, theme: values.theme, texture: values.texture, brand: values.brand, open: values.open ?? false });
   else if (command === 'gallery') await gallery(!values['no-open']);
   else if (command === 'doctor') await doctor();
   else if (command === 'clean') await cleanUp(values.voice ?? false, values.keep);

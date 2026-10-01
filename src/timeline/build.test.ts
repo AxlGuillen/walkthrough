@@ -275,3 +275,22 @@ segments:
     expect(() => build('{ src: a.html, beats: { missing: marina } }')).toThrow(TimelineError);
   });
 });
+
+describe('watermark', () => {
+  const tour = (extra: string) => parseTour(`
+title: Mark
+url: https://example.com
+brand: dymmsa
+${extra}
+segments:
+  - hold: 2
+  - hold: 3
+  - hold: 4
+`);
+  it('covers the tour between its opening and closing segments, silently', () => {
+    const overlay = buildTimeline(tour('watermark: true'), []).overlays.at(-1)!;
+    expect(overlay).toMatchObject({ src: 'watermark.html', start: 2, end: 5, silent: true });
+    expect(buildTimeline(tour(''), []).overlays).toEqual([]);
+  });
+});
+

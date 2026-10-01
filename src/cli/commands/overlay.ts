@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { deviceProfile, type Device } from '../../capture/devices.ts';
 import { probeOverlay } from '../../overlays/probe.ts';
 import { resourceFor } from '../../resources/registry.ts';
+import { lookFrom } from '../../brands/look.ts';
 import { backdropArgs } from '../../overlays/catalog.ts';
 import { renderOverlays } from '../../overlays/render.ts';
 import { STORAGE } from '../context.ts';
@@ -21,6 +22,8 @@ export interface OverlayCommand {
   theme: string | undefined;
   accent: string | undefined;
   lang: string | undefined;
+  texture: string | undefined;
+  brand: string | undefined;
   open: boolean;
 }
 
@@ -46,7 +49,7 @@ export async function overlay(options: OverlayCommand): Promise<void> {
   const started = Date.now();
   await renderOverlays({
     overlays: [timed], tourDir: process.cwd(), outDir, canvas: output, output, fps: FPS,
-    look: { accent: options.accent ?? '#FF3B5C', theme: options.theme ?? 'dark', lang: options.lang ?? 'es' },
+    look: lookFrom(options),
     onFrame: (_, frame, total) => process.stderr.write(`\r  frame ${frame}/${total}   `),
   });
   process.stderr.write('\n');

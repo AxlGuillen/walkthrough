@@ -9,7 +9,14 @@
   --muted: #cbc4ea;
   --panel: rgba(20, 16, 40, 0.92);
   /* A full-screen ground, a light fill for boxes, their hairline, lines and a see-through veil. */
-  --stage: radial-gradient(120vmax 90vmax at 20% 10%, #2a1d63 0%, #120d26 55%, #09070f 100%);
+  /* The dark ground's glow: violet by default, the brand's color when the tour has one. */
+  --stage-tint: #2a1d63;
+  --stage-base: radial-gradient(120vmax 90vmax at 20% 10%, var(--stage-tint) 0%, color-mix(in srgb, var(--stage-tint) 30%, #0b0a10) 55%, #08080b 100%);
+  --stage: var(--stage-base);
+  /* The brand's two colors (params.js), the accent when there is no brand. */
+  --brand-1: var(--accent);
+  --brand-2: var(--accent);
+  --texture-ink: rgba(255, 255, 255, 0.1);
   --surface: rgba(255, 255, 255, 0.07);
   --line: rgba(255, 255, 255, 0.14);
   --stroke: rgba(255, 255, 255, 0.78);
@@ -26,13 +33,33 @@
   --ink: #111211;
   --muted: #54564f;
   --panel: rgba(255, 255, 255, 0.95);
-  --stage: radial-gradient(120vmax 90vmax at 20% 10%, #ffffff 0%, #f1f1ee 60%, #e6e6e0 100%);
+  --stage-base: radial-gradient(120vmax 90vmax at 20% 10%, #ffffff 0%, #f1f1ee 60%, #e6e6e0 100%);
+  --texture-ink: rgba(17, 18, 17, 0.1);
   --surface: rgba(17, 18, 17, 0.04);
   --line: rgba(17, 18, 17, 0.12);
   --stroke: rgba(17, 18, 17, 0.6);
   --scrim: rgba(241, 241, 238, 0.8);
   --scrim-strong: rgba(241, 241, 238, 0.96);
   --shadow: rgba(17, 18, 17, 0.18);
+}
+/* Textures (data-texture on <html>, from the tour or its brand): each is --stage with layers
+   on top, drawn in CSS so renders stay deterministic and need no image files. */
+:root[data-texture="grain"] {
+  --stage: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 1.1 -0.42'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E") 0 0 / 240px 240px, var(--stage-base);
+}
+:root[data-texture="dots"] {
+  --stage: radial-gradient(circle, var(--texture-ink) 0.2vmin, transparent 0.3vmin) 0 0 / 3vmin 3vmin, var(--stage-base);
+}
+:root[data-texture="lines"] {
+  --stage: repeating-linear-gradient(135deg, var(--texture-ink) 0 0.12vmin, transparent 0.12vmin 2.4vmin), var(--stage-base);
+}
+:root[data-texture="mesh"] {
+  --stage: radial-gradient(70vmax 60vmax at 85% 15%, color-mix(in srgb, var(--accent) 26%, transparent), transparent 70%),
+    radial-gradient(60vmax 50vmax at 10% 95%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%), var(--stage-base);
+}
+:root[data-texture="brand"] {
+  --stage: radial-gradient(80vmax 70vmax at 90% 10%, color-mix(in srgb, var(--brand-2) 42%, transparent), transparent 65%),
+    radial-gradient(80vmax 70vmax at 5% 100%, color-mix(in srgb, var(--brand-1) 48%, transparent), transparent 65%), var(--stage-base);
 }
 html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: var(--font); color: var(--ink); }
 [data-param]:empty { display: none; }

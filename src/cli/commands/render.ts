@@ -8,6 +8,7 @@ import { execFile } from 'node:child_process';
 import { ensureGallery } from '../../library/launch.ts';
 import { previewMetaFile, publishVideo } from '../../library/library.ts';
 import { previewAnchor, videoAnchor } from '../../library/page.ts';
+import { tourLook } from '../../brands/look.ts';
 import { auditTiming, formatTiming } from '../../check/timing.ts';
 import { EVENTS_FILE, type CaptureEvent } from '../../capture/events.ts';
 import { renderOverlays } from '../../overlays/render.ts';
@@ -39,7 +40,7 @@ export async function render(tourFile: string, from: string | undefined, preview
     await renderOverlays({
       overlays: timeline.overlays, tourDir: paths.dir, outDir,
       canvas: deviceProfile(tour.device).output, output: deviceProfile(tour.device, quality).output, fps: FPS[quality],
-      look: { accent: tour.accent, theme: tour.theme, lang: tour.language },
+      look: tourLook(tour),
       onFrame: (overlay, frame, total) => process.stderr.write(`\r  overlay ${overlay}: ${frame}/${total}   `),
     });
     if (timeline.overlays.length) process.stderr.write('\n');

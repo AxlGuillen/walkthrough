@@ -121,3 +121,17 @@ segments:
   });
 });
 
+describe('brands', () => {
+  const tour = (extra: string) => parseTour(`title: B\nurl: https://example.com\n${extra}\nsegments:\n  - hold: 1\n`);
+
+  it('fills in the brand\'s accent, theme and texture unless the tour sets them', () => {
+    expect(tour('brand: dymmsa')).toMatchObject({ brand: 'dymmsa', accent: '#DC2626', theme: 'dark', texture: 'lines' });
+    expect(tour('brand: dymmsa\naccent: "#00AA88"\ntexture: dots')).toMatchObject({ accent: '#00AA88', texture: 'dots' });
+    expect(tour('')).toMatchObject({ accent: '#FF3B5C', texture: 'plain' });
+  });
+
+  it('names a brand that does not exist', () => {
+    expect(() => tour('brand: acme')).toThrow(/brand "acme" not found/);
+  });
+});
+

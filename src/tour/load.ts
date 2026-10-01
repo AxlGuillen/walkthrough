@@ -1,5 +1,6 @@
 import { parse } from 'yaml';
 import { z } from 'zod';
+import { BrandError, BRANDS_DIR, loadBrand } from '../brands/brand.ts';
 import { resourceFor } from '../resources/registry.ts';
 import { tourSchema, type Tour } from './schema.ts';
 
@@ -7,16 +8,29 @@ export class TourError extends Error {
   override name = 'TourError';
 }
 
-export function parseTour(source: string): Tour {
+export function parseTour(source: string, brandsDir = BRANDS_DIR): Tour {
   let raw: unknown;
   try {
     raw = parse(source);
   } catch (error) {
     throw new TourError(`invalid YAML: ${(error as Error).message}`);
   }
-  const result = tourSchema.safeParse(raw);
+  const result = tourSchema.safeParse(withBrand(raw, brandsDir));
   if (!result.success) throw new TourError(z.prettifyError(result.error));
   return withResources(result.data);
+}
+
+// A brand fills in what the tour leaves unsaid: its accent, theme and texture.
+function withBrand(raw: unknown, brandsDir: string): unknown {
+  if (!raw || typeof raw !== 'object' || typeof (raw as { brand?: unknown }).brand !== 'string') return raw;
+  const tour = raw as Record<string, unknown>;
+  try {
+    const brand = loadBrand(tour.brand as string, brandsDir);
+    return { accent: brand.accent, theme: brand.theme, texture: brand.texture, ...tour };
+  } catch (error) {
+    if (error instanceof BrandError) throw new TourError(error.message);
+    throw error;
+  }
 }
 
 // A resource template's data is checked against its own schema here, so a bad chart fails

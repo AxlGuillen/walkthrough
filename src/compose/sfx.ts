@@ -92,7 +92,7 @@ export function soundEvents(
     }
   }
   // One pop as each overlay appears, flows included: a flow is an aid, and a sound per step crowded the voice.
-  overlays.forEach((overlay, i) => events.push({ sound: 'pop', time: overlay.start, variant: i % POPS.length }));
+  overlays.forEach((overlay, i) => { if (!overlay.silent) events.push({ sound: 'pop', time: overlay.start, variant: i % POPS.length }); });
   return events.filter(e => !mute.includes(e.sound)).sort((a, b) => a.time - b.time);
 }
 

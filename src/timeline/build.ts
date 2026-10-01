@@ -53,9 +53,12 @@ export interface TimedOverlay {
   beats: Record<string, number>;
   data?: unknown;
   flow?: TimedFlow;
+  // No pop when it appears: the watermark is there all along, not an event.
+  silent?: boolean;
 }
 
 export const FLOW_TEMPLATE = 'flow.html';
+export const WATERMARK_TEMPLATE = 'watermark.html';
 // Room for the flow to fade in before its first step, and for the last one to be read.
 const FLOW_FIRST_STEP = 0.4;
 const FLOW_LAST_READ = 0.8;
@@ -196,6 +199,15 @@ export function buildTimeline(
     timeline.segments.push({ index, start, end, speechStart });
     timeline.duration = end;
   });
+
+  if (tour.watermark) {
+    if (!tour.brand) throw new TimelineError('watermark: true needs a brand');
+    // Over the tour, but not over its opening and closing segments when it has them.
+    const segments = timeline.segments;
+    const from = segments.length > 2 ? segments[0]!.end : 0;
+    const to = segments.length > 2 ? segments.at(-1)!.start : timeline.duration;
+    if (to > from) timeline.overlays.push({ src: WATERMARK_TEMPLATE, params: {}, start: from, end: to, fade: 0.6, segment: -1, beats: {}, silent: true });
+  }
 
   return timeline;
 }

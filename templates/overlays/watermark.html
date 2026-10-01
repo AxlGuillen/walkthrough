@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!-- The tour brand's mark in a corner while the app is on screen (`watermark: true`). The
+     timeline adds it on its own; it takes the brand's squarest image. -->
+<link rel="stylesheet" href="base.css">
+<style>
+  img { position: absolute; right: 3vmin; bottom: 3vmin; width: 9vmin; height: 9vmin; object-fit: contain; opacity: 0.85;
+    filter: drop-shadow(0 0.4vmin 1.2vmin rgba(0, 0, 0, 0.35)); }
+  img.wide { width: 18vmin; height: 7vmin; object-position: right bottom; }
+  @media (orientation: portrait) { img { bottom: 12vh; } }
+</style>
+</head>
+<body>
+<img alt="">
+<script src="params.js"></script>
+<script>
+  const img = document.querySelector('img');
+  img.src = param('brandMark') || param('brandLogo');
+  if (param('markShape') === 'wide') img.classList.add('wide');
+  img.alt = param('brand');
+</script>
+</body>
+</html>

@@ -14,6 +14,13 @@ if (lightAccent && params.get('theme') === 'light') document.documentElement.sty
 window.param = (name, fallback = '') => params.get(name) ?? fallback;
 window.asset = name => new URL(name, params.get('base') ?? location.href).href;
 document.documentElement.dataset.theme = params.get('theme') ?? 'dark';
+document.documentElement.dataset.texture = params.get('texture') ?? 'plain';
+const [brand1, brand2] = (params.get('colors') ?? '').split(',');
+if (brand1) {
+  document.documentElement.style.setProperty('--brand-1', brand1);
+  document.documentElement.style.setProperty('--stage-tint', `color-mix(in srgb, ${brand1} 34%, #0b0a10)`);
+}
+if (brand2) document.documentElement.style.setProperty('--brand-2', brand2);
 
 // What a template animates with. beats are seconds on the overlay's own clock, each on a word
 // of the narration; data is the overlay's structured input. An animation is registered paused

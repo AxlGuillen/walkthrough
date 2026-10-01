@@ -18,11 +18,19 @@
       index.textContent = params.get('index').padStart(2, '0');
       if (params.get('total')) index.insertAdjacentHTML('beforeend', `<span class="of">/ ${params.get('total').padStart(2, '0')}</span>`);
     }
+    // The brand style's centerpiece: the tour's own logo, else its brand's squarest image
+    // (ringed when square, on a line of its own when wide), else a monogram.
     const mark = $('.mark');
+    const ownLogo = params.get('logo');
+    const brandMark = params.get('brandMark');
     if (mark) {
-      const logo = params.get('logo');
-      mark.insertAdjacentHTML('afterbegin', logo ? `<img alt="" src="${asset(logo)}">` : `<span class="monogram">${($('.title')?.textContent.trim()[0] ?? '·').toUpperCase()}</span>`);
+      const image = ownLogo ? asset(ownLogo) : brandMark;
+      if (!ownLogo && brandMark && params.get('markShape') === 'wide') mark.classList.add('wide');
+      mark.insertAdjacentHTML('afterbegin', image ? `<img alt="" src="${image}">` : `<span class="monogram">${($('.title')?.textContent.trim()[0] ?? '·').toUpperCase()}</span>`);
     }
+    // In the other styles the brand's widest logo sits above the eyebrow.
+    const brandLogo = params.get('brandLogo');
+    if (brandLogo && style !== 'brand') $('.block')?.insertAdjacentHTML('afterbegin', `<img class="brandline" alt="${params.get('brand') ?? ''}" src="${brandLogo}">`);
     const title = $('.title');
     return {
       style, title,
@@ -32,7 +40,7 @@
       words: has($('.subtitle')) ? kit.split($('.subtitle'), 'words') : [],
       url: has($('.url')) ? $('.url') : null,
       indexChars: has(index) ? kit.split(index, 'chars', { mask: true }) : [],
-      mark: $('.mark'), ring: $('.mark circle'), veil: $('.veil'), scrim: $('.scrim'),
+      mark: $('.mark'), ring: $('.mark:not(.wide) circle'), brandline: $('.brandline'), veil: $('.veil'), scrim: $('.scrim'),
       block: [...document.querySelectorAll('.block > *')].filter(el => getComputedStyle(el).display !== 'none'),
     };
   }
@@ -53,6 +61,7 @@
   // The shared entrance: eyebrow, the title rising letter by letter out of its mask, the
   // accent rule, the subtitle word by word and a closing's url.
   function enter(tl, el, at) {
+    if (el.brandline) tl.fromTo(el.brandline, { opacity: 0, y: '0.6vmin' }, { opacity: 1, y: 0, duration: 0.6 }, Math.max(0, at.title - 0.35));
     if (el.eyebrow) tl.fromTo(el.eyebrow, { opacity: 0, letterSpacing: '0.9em' }, { opacity: 1, letterSpacing: '0.35em', duration: 0.9 }, Math.max(0, at.title - 0.15));
     if (el.indexChars.length) tl.fromTo(el.indexChars, { yPercent: 110 }, { yPercent: 0, duration: 0.8, ease: 'power4.out', stagger: 0.06 }, at.title - 0.1);
     if (el.chars.length) tl.fromTo(el.chars, { yPercent: 115, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.8, ease: 'power4.out', stagger: time.stagger }, at.title);

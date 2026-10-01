@@ -19,7 +19,12 @@
 .url { padding: 1.3vmin 2.8vmin; border-radius: 99vmin; background: var(--accent); color: var(--on-accent); font-size: 2.8vmin; font-weight: 700; }
 .mark { display: none; position: relative; width: 22vmin; height: 22vmin; place-items: center; }
 .style-brand .mark { display: grid; }
-.mark img { max-width: 13vmin; max-height: 13vmin; object-fit: contain; }
+/* Sized, not capped: an SVG never grows past its own width and height otherwise. */
+.mark img { width: 13vmin; height: 13vmin; object-fit: contain; }
+.mark.wide { width: auto; height: auto; }
+.mark.wide img { width: 44vmin; height: 16vmin; }
+.mark.wide svg { display: none; }
+.brandline { display: block; height: 6.5vmin; width: 34vmin; object-fit: contain; object-position: left center; margin-bottom: 1vmin; }
 .monogram { width: 13vmin; height: 13vmin; border-radius: 3.4vmin; background: var(--accent); color: var(--on-accent);
   display: grid; place-items: center; font-size: 7vmin; font-weight: 800; }
 .mark svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }

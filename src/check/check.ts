@@ -2,6 +2,7 @@ import type { Page } from 'playwright-core';
 import { deviceProfile } from '../capture/devices.ts';
 import { looksLikeLogin, openContext } from '../capture/session.ts';
 import { dismissDialogs, installSetup } from '../capture/setup.ts';
+import { captureDevice } from '../frame/layout.ts';
 import { dataDependent, suggest } from '../inspect/selectors.ts';
 import { snapshotPage } from '../inspect/snapshot.ts';
 import { layoutFlow } from '../flow/layout.ts';
@@ -58,7 +59,7 @@ export function checkResources(timeline: Timeline, canvas: Size, lang: string): 
 
 export async function checkTour(root: string, tour: Tour, timeline: Timeline): Promise<CheckItem[]> {
   const context = await openContext(root, {
-    headless: true, device: { ...deviceProfile(tour.device), deviceScaleFactor: 1 },
+    headless: true, device: { ...deviceProfile(captureDevice(tour.device, tour.frame)), deviceScaleFactor: 1 },
     ...(tour.session ? { session: tour.session } : {}),
   });
   const items: CheckItem[] = [];

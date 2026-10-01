@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { TEXTURES } from '../brands/brand.ts';
 import { SOUNDS } from '../compose/sounds.ts';
 import { emojiName } from '../emoji/emoji.ts';
+import { FRAMES } from '../frame/layout.ts';
 import { HIGHLIGHT_STYLES, MARK_COLORS } from '../effects/marks.ts';
 
 const selector = z.string().trim().min(1);
@@ -218,6 +219,8 @@ export const tourSchema = z.strictObject({
   watermark: z.boolean().default(false),
   // Fluent Emoji in their vector Color style, or the 3D one.
   emojiStyle: z.enum(['color', '3d']).default('color'),
+  // The recording inside a browser window, a laptop or a phone, over the tour's stage.
+  frame: z.enum(FRAMES).default('none'),
   // How this tour's highlights are drawn unless one says otherwise.
   highlightStyle: z.enum(HIGHLIGHT_STYLES).default('ring'),
   // Gets the app past its own onboarding: storage is written before every page of the

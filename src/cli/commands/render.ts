@@ -12,6 +12,7 @@ import { tourLook } from '../../brands/look.ts';
 import { auditTiming, formatTiming } from '../../check/timing.ts';
 import { EVENTS_FILE, type CaptureEvent } from '../../capture/events.ts';
 import { renderOverlays } from '../../overlays/render.ts';
+import { renderFrame } from '../../frame/render.ts';
 import { ROOT, STORAGE } from '../context.ts';
 import { voice } from './voice.ts';
 
@@ -44,6 +45,10 @@ export async function render(tourFile: string, from: string | undefined, preview
       onFrame: (overlay, frame, total) => process.stderr.write(`\r  overlay ${overlay}: ${frame}/${total}   `),
     });
     if (timeline.overlays.length) process.stderr.write('\n');
+    if (tour.frame !== 'none') {
+      await renderFrame({ frame: tour.frame, device: tour.device, url: tour.url, tourDir: paths.dir, outDir,
+        canvas: deviceProfile(tour.device).output, output: deviceProfile(tour.device, quality).output, look: tourLook(tour) });
+    }
   }
 
   const composed = await composeTour(tour, timeline, outDir, paths.dir, { quality, ...(preview ? { voiceDir: '../voice' } : {}) });

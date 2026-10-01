@@ -20,6 +20,16 @@ describe('videoGraph', () => {
     ]);
   });
 
+  it('scales the capture into a frame\'s screen, under the frame, before the overlays', () => {
+    const graph = videoGraph([{ input: 2, start: 0, end: 1, fade: 0 }], undefined, { input: 3, screen: { x: 100, y: 40, width: 800, height: 450 }, output: { width: 1920, height: 1080 } });
+    expect(graph.split(';').slice(0, 3)).toEqual([
+      '[0:v]scale=800:450:flags=lanczos,setsar=1,pad=1920:1080:100:40:color=black[screen]',
+      '[screen][3:v]overlay=0:0[framed]',
+      '[2:v]format=rgba,setpts=PTS-STARTPTS+0.000/TB[o0]',
+    ]);
+    expect(graph).toContain('[framed][o0]overlay');
+  });
+
   it('never lets the fades overlap on a short overlay', () => {
     expect(videoGraph([{ input: 1, start: 0, end: 0.4, fade: 1 }])).toContain('fade=t=out:st=0.200:d=0.200');
   });

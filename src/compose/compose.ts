@@ -5,6 +5,8 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { deviceProfile, type Quality } from '../capture/devices.ts';
 import type { Timeline } from '../timeline/build.ts';
+import type { Rect, Size } from '../timeline/camera.ts';
+import { FRAME_FILE, outputLayout } from '../frame/render.ts';
 import { overlayFile } from '../overlays/render.ts';
 import type { Tour } from '../tour/schema.ts';
 import { audioGraph, type Loudness } from './audio.ts';
@@ -23,16 +25,19 @@ export interface ComposeInputs {
   sfx?: SoundEvent[];
   sfxVolume?: number;
   subtitles?: string;
+  // The device still and where the recording goes inside it.
+  frame?: { file: string; screen: Rect; output: Size };
   duration: number;
   output: string;
   draft?: boolean;
 }
 
-function graphs({ capture, clips, music, overlays = [], sfx = [], sfxVolume = 1, subtitles, duration }: ComposeInputs, loudness?: Loudness) {
+function graphs({ capture, clips, music, overlays = [], sfx = [], sfxVolume = 1, subtitles, frame, duration }: ComposeInputs, loudness?: Loudness) {
   const inputs = ['-i', capture, ...clips.flatMap(clip => ['-i', clip.file])];
   if (music) inputs.push('-stream_loop', '-1', '-i', music.file);
   const firstOverlay = 1 + clips.length + (music ? 1 : 0);
   inputs.push(...overlays.flatMap(overlay => ['-i', overlay.file]));
+  if (frame) inputs.push('-i', frame.file);
 
   const audio = audioGraph({
     clips: clips.map((clip, i) => ({ input: i + 1, start: clip.start })),
@@ -42,7 +47,8 @@ function graphs({ capture, clips, music, overlays = [], sfx = [], sfxVolume = 1,
     ...(loudness ? { loudness } : {}),
     ...(music ? { music: { input: clips.length + 1, volume: music.volume } } : {}),
   });
-  const video = videoGraph(overlays.map((overlay, i) => ({ ...overlay, input: firstOverlay + i })), subtitles);
+  const video = videoGraph(overlays.map((overlay, i) => ({ ...overlay, input: firstOverlay + i })), subtitles,
+    frame ? { input: firstOverlay + overlays.length, screen: frame.screen, output: frame.output } : undefined);
   return { inputs, audio, video };
 }
 
@@ -97,6 +103,13 @@ export async function composeTour(
   const missing = overlays.find(overlay => !existsSync(path.join(outDir, overlay.file)));
   if (missing) throw new Error(`${missing.file} is missing; render without --from=compose first`);
 
+  let frame: ComposeInputs['frame'];
+  if (tour.frame !== 'none') {
+    if (!existsSync(path.join(outDir, FRAME_FILE))) throw new Error(`${FRAME_FILE} is missing; render without --from=compose first`);
+    const output = deviceProfile(tour.device, quality).output;
+    frame = { file: FRAME_FILE, screen: outputLayout({ frame: tour.frame, device: tour.device, canvas: deviceProfile(tour.device).output, output }).screen, output };
+  }
+
   const output = 'video.mp4';
   const inputs: ComposeInputs = {
     capture: 'capture.mp4', clips, overlays, duration: timeline.duration, output, draft: quality === 'preview',
@@ -104,6 +117,7 @@ export async function composeTour(
     sfxVolume: tour.sfx.volume,
     ...(subtitles ? { subtitles } : {}),
     ...(music ? { music } : {}),
+    ...(frame ? { frame } : {}),
   };
   // A stuck filter graph ignores SIGTERM and would spin forever; kill it hard instead.
   const timeout = Math.round(Math.max(120, timeline.duration * 10) * 1000);

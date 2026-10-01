@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!-- The device frame, drawn once as a still: the tour's stage and a browser, laptop or phone,
+     with the screen left transparent for ffmpeg to put the recording behind it. Node lays it
+     out (src/frame/layout.ts) and passes it as `layout`; `host` labels a browser's address. -->
+<link rel="stylesheet" href="base.css">
+<style>
+  body { background: transparent; }
+  #all { position: absolute; inset: 0; background: var(--stage); }
+  .abs { position: absolute; box-sizing: border-box; }
+  .shadow { box-shadow: 0 3vmin 8vmin rgb(0 0 0 / 0.45), 0 0.6vmin 1.6vmin rgb(0 0 0 / 0.3); }
+
+  .browser { background: #1b1d23; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08); }
+  .bar { display: flex; align-items: center; gap: 0.18em; padding: 0 0.9em; }
+  .light-dot { width: 0.62em; height: 0.62em; border-radius: 50%; margin-right: 0.2em; }
+  .address { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 46%; height: 62%; border-radius: 99em;
+    background: rgb(255 255 255 / 0.07); color: rgb(255 255 255 / 0.62); display: grid; place-items: center;
+    font: 600 0.62em var(--font); letter-spacing: 0.01em; white-space: nowrap; }
+  .address::before { content: ''; position: absolute; left: 1em; top: 50%; width: 0.62em; height: 0.62em; translate: 0 -50%;
+    border: 0.12em solid currentColor; border-radius: 0.15em; box-sizing: border-box; opacity: 0.7; }
+
+  .lid { background: #0c0d10; box-shadow: inset 0 0 0 0.25vmin #2c2e35, inset 0 0 0 0.5vmin #0c0d10, inset 0 0 0 0.6vmin rgb(255 255 255 / 0.06); }
+  .camera { position: absolute; width: 0.5vmin; height: 0.5vmin; border-radius: 50%; background: #23252c; translate: -50% -50%; }
+  .deck { background: linear-gradient(#d9dce2, #a9adb6 55%, #7d818b); border-radius: 0.2vmin 0.2vmin 2.4vmin 2.4vmin / 0.2vmin 0.2vmin 1.2vmin 1.2vmin; }
+  .notch { position: absolute; left: 50%; top: 0; translate: -50% 0; width: 14%; height: 34%; border-radius: 0 0 1.2vmin 1.2vmin; background: linear-gradient(#9a9ea7, #b9bcc4); }
+
+  .phone { background: #0b0b0e; box-shadow: inset 0 0 0 0.35vmin #3b3d44, inset 0 0 0 0.6vmin #16171b, inset 0 0 0 0.75vmin rgb(255 255 255 / 0.05); }
+  .status { background: #000; display: flex; align-items: center; justify-content: space-between; padding: 0 1.9em; color: #fff; font: 700 1em var(--font); }
+  .battery { width: 1.5em; height: 0.72em; border-radius: 0.22em; border: 0.1em solid rgb(255 255 255 / 0.5); box-sizing: border-box; padding: 0.08em; }
+  .battery::after { content: ''; display: block; width: 80%; height: 100%; border-radius: 0.1em; background: #fff; }
+  .island { background: #000; border-radius: 99em; box-shadow: inset 0 0 0 1px #15161a; }
+</style>
+</head>
+<body>
+<div id="all"></div>
+<script src="params.js"></script>
+<script>
+  const query = new URLSearchParams(location.search);
+  const layout = JSON.parse(query.get('layout') ?? 'null');
+  const all = document.getElementById('all');
+  const px = n => `${n}px`;
+  const box = (className, rect, radius) => {
+    const el = document.createElement('div');
+    el.className = `abs ${className}`;
+    Object.assign(el.style, { left: px(rect.x), top: px(rect.y), width: px(rect.width), height: px(rect.height) });
+    if (radius !== undefined) el.style.borderRadius = typeof radius === 'number' ? px(radius) : radius;
+    all.append(el);
+    return el;
+  };
+  const { body, screen } = layout;
+
+  if (layout.kind === 'browser') {
+    const r = layout.bodyRadius;
+    box('browser shadow', body, r);
+    const bar = box('bar', layout.bar);
+    bar.style.fontSize = px(layout.bar.height * 0.62);
+    for (const color of ['#ff5f57', '#febc2e', '#28c840']) bar.append(Object.assign(document.createElement('i'), { className: 'light-dot', style: `background:${color}` }));
+    const address = document.createElement('div');
+    address.className = 'address';
+    address.textContent = query.get('host') ?? '';
+    bar.append(address);
+  } else if (layout.kind === 'laptop') {
+    const deck = box('deck shadow', layout.deck);
+    const notch = document.createElement('div');
+    notch.className = 'notch';
+    deck.append(notch);
+    box('lid shadow', body, `${px(layout.bodyRadius)} ${px(layout.bodyRadius)} ${px(layout.bodyRadius * 0.25)} ${px(layout.bodyRadius * 0.25)}`);
+    const camera = document.createElement('div');
+    camera.className = 'camera';
+    Object.assign(camera.style, { left: px(body.x + body.width / 2), top: px(body.y + (screen.y - body.y) / 2) });
+    all.append(camera);
+  } else {
+    box('phone shadow', body, layout.bodyRadius);
+    const top = layout.screenRadius;
+    const status = box('status', layout.status, `${px(top)} ${px(top)} 0 0`);
+    status.style.fontSize = px(layout.status.height * 0.3);
+    status.append(Object.assign(document.createElement('span'), { textContent: '9:41' }), Object.assign(document.createElement('i'), { className: 'battery' }));
+    box('island', layout.island, layout.island.height / 2);
+  }
+
+  // The hole the recording shows through, cut from the stage and the device alike.
+  const r = layout.screenRadius, t = layout.screenTopRadius;
+  const w = innerWidth, h = innerHeight;
+  const { x, y, width: sw, height: sh } = screen;
+  const hole = `M${x + t} ${y} H${x + sw - t} A${t} ${t} 0 0 1 ${x + sw} ${y + t} V${y + sh - r} A${r} ${r} 0 0 1 ${x + sw - r} ${y + sh}`
+    + ` H${x + r} A${r} ${r} 0 0 1 ${x} ${y + sh - r} V${y + t} A${t} ${t} 0 0 1 ${x + t} ${y} Z`;
+  const mask = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><path fill-rule="evenodd" fill="#fff" d="M0 0 H${w} V${h} H0 Z ${hole}"/></svg>`;
+  all.style.mask = `url("data:image/svg+xml,${encodeURIComponent(mask)}") 0 0 / 100% 100% no-repeat`;
+</script>
+</body>
+</html>

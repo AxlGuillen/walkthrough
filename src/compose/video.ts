@@ -1,3 +1,5 @@
+import type { Rect, Size } from '../timeline/camera.ts';
+
 export interface OverlayInput {
   input: number;
   start: number;
@@ -5,10 +7,23 @@ export interface OverlayInput {
   fade: number;
 }
 
+// The recording scaled into a device's screen, under the still that draws the device.
+export interface FrameInput {
+  input: number;
+  screen: Rect;
+  output: Size;
+}
+
 // Overlays stack in tour order above the capture; subtitles go last so they stay readable.
-export function videoGraph(overlays: readonly OverlayInput[], subtitles?: string): string {
+export function videoGraph(overlays: readonly OverlayInput[], subtitles?: string, frame?: FrameInput): string {
   const parts: string[] = [];
   let base = '[0:v]';
+  if (frame) {
+    const { screen, output } = frame;
+    parts.push(`[0:v]scale=${screen.width}:${screen.height}:flags=lanczos,setsar=1,pad=${output.width}:${output.height}:${screen.x}:${screen.y}:color=black[screen]`);
+    parts.push(`[screen][${frame.input}:v]overlay=0:0[framed]`);
+    base = '[framed]';
+  }
 
   overlays.forEach(({ input, start, end, fade }, i) => {
     const length = end - start;

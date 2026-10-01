@@ -1,0 +1,18 @@
+title: Marco de dispositivo
+url: https://sunsetshores.urresort.com/accommodations/
+accent: "#C8633A"
+texture: mesh
+# La grabación dentro de un dispositivo (docs/recursos.md, «Marco»). Cambia `frame` a browser
+# o laptop, o `device` a mobile, para ver los demás. Sin voz; aquí nada hace clic.
+frame: phone
+segments:
+  - hold: 3
+    do:
+      - goto: /accommodations/
+      - highlight: { on: 'h1', at: 0.6, style: marker }
+  - hold: 3.5
+    do:
+      - highlight: { on: 'a:has-text("Check availability") >> nth=0', at: 0.4, style: box }
+    overlays:
+      - src: sticker.html
+        params: { emoji: sparkles, text: En el teléfono, position: top-right }

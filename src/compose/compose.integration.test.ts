@@ -68,6 +68,15 @@ segments:
     expect(Number(probe('video.mp4', 'format=duration'))).toBeCloseTo(3, 1);
   }, 60_000);
 
+  it('puts the capture inside a frame at the video\'s size', async () => {
+    const tour = parseTour('title: x\nurl: https://example.com\nframe: phone\nsfx: false\nsegments:\n  - hold: 1\n');
+    await expect(composeTour(tour, buildTimeline(tour, []), dir, dir)).rejects.toThrow(/frame.png is missing/);
+    ffmpeg('-f', 'lavfi', '-i', 'color=c=black@0.0:s=1920x1080,format=rgba', '-frames:v', '1', 'frame.png');
+    await composeTour(tour, buildTimeline(tour, []), dir, dir);
+    expect(probe('video.mp4', 'stream=width,height').split('\n')[0]).toBe('1920,1080');
+    await rm(path.join(dir, 'frame.png'));
+  }, 60_000);
+
   it('fails clearly when the music track is missing', async () => {
     const tour = parseTour('title: x\nurl: https://example.com\nmusic: { track: nope.mp3 }\nsegments:\n  - hold: 1\n');
     await expect(composeTour(tour, buildTimeline(tour, []), dir, dir)).rejects.toThrow(/music track not found/);

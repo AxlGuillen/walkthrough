@@ -8,6 +8,7 @@ import type { Tour } from '../tour/schema.ts';
 import { continueTyping, fadeHiddenMarks, perform, retrackMarks } from './actions.ts';
 import { installClock } from './clock.ts';
 import { prepareTargets } from './prep.ts';
+import { captureDevice } from '../frame/layout.ts';
 import { deviceProfile, FPS, type Quality } from './devices.ts';
 import { EVENTS_FILE } from './events.ts';
 import { startEncoder } from './encoder.ts';
@@ -34,7 +35,7 @@ export interface CaptureOptions {
 export async function captureTour({
   root, tour, timeline, file, quality = 'final', fps = FPS[quality], headless = true, onFrame,
 }: CaptureOptions): Promise<{ frames: number }> {
-  const device = deviceProfile(tour.device, quality);
+  const device = deviceProfile(captureDevice(tour.device, tour.frame), quality);
   const context = await openContext(root, { headless, device, ...(tour.session ? { session: tour.session } : {}) });
   const encoder = startEncoder({ fps, output: device.output, file, draft: quality === 'preview' });
   const total = frameCount(timeline.duration, fps);

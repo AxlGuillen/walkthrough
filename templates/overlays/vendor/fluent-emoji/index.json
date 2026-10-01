@@ -1,0 +1,670 @@
+{
+ "admission-tickets": {
+  "glyph": "🎟️",
+  "name": "admission tickets",
+  "keywords": [
+   "admission",
+   "admission tickets",
+   "ticket"
+  ]
+ },
+ "bar-chart": {
+  "glyph": "📊",
+  "name": "bar chart",
+  "keywords": [
+   "bar",
+   "chart",
+   "graph"
+  ]
+ },
+ "beach-with-umbrella": {
+  "glyph": "🏖️",
+  "name": "beach with umbrella",
+  "keywords": [
+   "beach",
+   "beach with umbrella",
+   "umbrella"
+  ]
+ },
+ "bell": {
+  "glyph": "🔔",
+  "name": "bell",
+  "keywords": [
+   "bell"
+  ]
+ },
+ "bookmark": {
+  "glyph": "🔖",
+  "name": "bookmark",
+  "keywords": [
+   "bookmark",
+   "mark"
+  ]
+ },
+ "bottle-with-popping-cork": {
+  "glyph": "🍾",
+  "name": "bottle with popping cork",
+  "keywords": [
+   "bar",
+   "bottle",
+   "bottle with popping cork",
+   "cork",
+   "drink",
+   "popping"
+  ]
+ },
+ "brain": {
+  "glyph": "🧠",
+  "name": "brain",
+  "keywords": [
+   "brain",
+   "intelligent"
+  ]
+ },
+ "bullseye": {
+  "glyph": "🎯",
+  "name": "bullseye",
+  "keywords": [
+   "bullseye",
+   "dart",
+   "direct hit",
+   "game",
+   "hit",
+   "target"
+  ]
+ },
+ "bust-in-silhouette": {
+  "glyph": "👤",
+  "name": "bust in silhouette",
+  "keywords": [
+   "bust",
+   "bust in silhouette",
+   "silhouette"
+  ]
+ },
+ "busts-in-silhouette": {
+  "glyph": "👥",
+  "name": "busts in silhouette",
+  "keywords": [
+   "bust",
+   "busts in silhouette",
+   "silhouette"
+  ]
+ },
+ "calendar": {
+  "glyph": "📅",
+  "name": "calendar",
+  "keywords": [
+   "calendar",
+   "date"
+  ]
+ },
+ "chart-decreasing": {
+  "glyph": "📉",
+  "name": "chart decreasing",
+  "keywords": [
+   "chart",
+   "chart decreasing",
+   "down",
+   "graph",
+   "trend"
+  ]
+ },
+ "chart-increasing": {
+  "glyph": "📈",
+  "name": "chart increasing",
+  "keywords": [
+   "chart",
+   "chart increasing",
+   "graph",
+   "growth",
+   "trend",
+   "upward"
+  ]
+ },
+ "check-mark-button": {
+  "glyph": "✅",
+  "name": "check mark button",
+  "keywords": [
+   "✓",
+   "button",
+   "check",
+   "mark"
+  ]
+ },
+ "clapping-hands": {
+  "glyph": "👏",
+  "name": "clapping hands",
+  "keywords": [
+   "clap",
+   "clapping hands",
+   "hand"
+  ]
+ },
+ "clipboard": {
+  "glyph": "📋",
+  "name": "clipboard",
+  "keywords": [
+   "clipboard"
+  ]
+ },
+ "cocktail-glass": {
+  "glyph": "🍸",
+  "name": "cocktail glass",
+  "keywords": [
+   "bar",
+   "cocktail",
+   "drink",
+   "glass"
+  ]
+ },
+ "credit-card": {
+  "glyph": "💳",
+  "name": "credit card",
+  "keywords": [
+   "card",
+   "credit",
+   "money"
+  ]
+ },
+ "cross-mark": {
+  "glyph": "❌",
+  "name": "cross mark",
+  "keywords": [
+   "×",
+   "cancel",
+   "cross",
+   "mark",
+   "multiplication",
+   "multiply",
+   "x"
+  ]
+ },
+ "delivery-truck": {
+  "glyph": "🚚",
+  "name": "delivery truck",
+  "keywords": [
+   "delivery",
+   "truck"
+  ]
+ },
+ "desktop-computer": {
+  "glyph": "🖥️",
+  "name": "desktop computer",
+  "keywords": [
+   "computer",
+   "desktop"
+  ]
+ },
+ "dollar-banknote": {
+  "glyph": "💵",
+  "name": "dollar banknote",
+  "keywords": [
+   "banknote",
+   "bill",
+   "currency",
+   "dollar",
+   "money",
+   "note"
+  ]
+ },
+ "envelope": {
+  "glyph": "✉️",
+  "name": "envelope",
+  "keywords": [
+   "email",
+   "envelope",
+   "letter"
+  ]
+ },
+ "eyes": {
+  "glyph": "👀",
+  "name": "eyes",
+  "keywords": [
+   "eye",
+   "eyes",
+   "face"
+  ]
+ },
+ "fire": {
+  "glyph": "🔥",
+  "name": "fire",
+  "keywords": [
+   "fire",
+   "flame",
+   "tool"
+  ]
+ },
+ "fork-and-knife-with-plate": {
+  "glyph": "🍽️",
+  "name": "fork and knife with plate",
+  "keywords": [
+   "cooking",
+   "fork",
+   "fork and knife with plate",
+   "knife",
+   "plate"
+  ]
+ },
+ "gear": {
+  "glyph": "⚙️",
+  "name": "gear",
+  "keywords": [
+   "cog",
+   "cogwheel",
+   "gear",
+   "tool"
+  ]
+ },
+ "globe-with-meridians": {
+  "glyph": "🌐",
+  "name": "globe with meridians",
+  "keywords": [
+   "earth",
+   "globe",
+   "globe with meridians",
+   "meridians",
+   "world"
+  ]
+ },
+ "glowing-star": {
+  "glyph": "🌟",
+  "name": "glowing star",
+  "keywords": [
+   "glittery",
+   "glow",
+   "glowing star",
+   "shining",
+   "sparkle",
+   "star"
+  ]
+ },
+ "green-circle": {
+  "glyph": "🟢",
+  "name": "green circle",
+  "keywords": [
+   "circle",
+   "green"
+  ]
+ },
+ "hammer-and-wrench": {
+  "glyph": "🛠️",
+  "name": "hammer and wrench",
+  "keywords": [
+   "hammer",
+   "hammer and wrench",
+   "spanner",
+   "tool",
+   "wrench"
+  ]
+ },
+ "handshake": {
+  "glyph": "🤝",
+  "name": "handshake",
+  "keywords": [
+   "agreement",
+   "hand",
+   "handshake",
+   "meeting",
+   "shake"
+  ]
+ },
+ "high-voltage": {
+  "glyph": "⚡",
+  "name": "high voltage",
+  "keywords": [
+   "danger",
+   "electric",
+   "high voltage",
+   "lightning",
+   "voltage",
+   "zap"
+  ]
+ },
+ "hotel": {
+  "glyph": "🏨",
+  "name": "hotel",
+  "keywords": [
+   "building",
+   "hotel"
+  ]
+ },
+ "hourglass-done": {
+  "glyph": "⌛",
+  "name": "hourglass done",
+  "keywords": [
+   "hourglass done",
+   "sand",
+   "timer"
+  ]
+ },
+ "house": {
+  "glyph": "🏠",
+  "name": "house",
+  "keywords": [
+   "home",
+   "house"
+  ]
+ },
+ "hundred-points": {
+  "glyph": "💯",
+  "name": "hundred points",
+  "keywords": [
+   "100",
+   "full",
+   "hundred",
+   "hundred points",
+   "score"
+  ]
+ },
+ "key": {
+  "glyph": "🔑",
+  "name": "key",
+  "keywords": [
+   "key",
+   "lock",
+   "password"
+  ]
+ },
+ "laptop": {
+  "glyph": "💻",
+  "name": "laptop",
+  "keywords": [
+   "computer",
+   "laptop",
+   "pc",
+   "personal"
+  ]
+ },
+ "light-bulb": {
+  "glyph": "💡",
+  "name": "light bulb",
+  "keywords": [
+   "bulb",
+   "comic",
+   "electric",
+   "idea",
+   "light"
+  ]
+ },
+ "link": {
+  "glyph": "🔗",
+  "name": "link",
+  "keywords": [
+   "link"
+  ]
+ },
+ "locked": {
+  "glyph": "🔒",
+  "name": "locked",
+  "keywords": [
+   "closed",
+   "locked"
+  ]
+ },
+ "magnifying-glass-tilted-left": {
+  "glyph": "🔍",
+  "name": "magnifying glass tilted left",
+  "keywords": [
+   "glass",
+   "magnifying",
+   "magnifying glass tilted left",
+   "search",
+   "tool"
+  ]
+ },
+ "memo": {
+  "glyph": "📝",
+  "name": "memo",
+  "keywords": [
+   "memo",
+   "pencil"
+  ]
+ },
+ "microphone": {
+  "glyph": "🎤",
+  "name": "microphone",
+  "keywords": [
+   "karaoke",
+   "mic",
+   "microphone"
+  ]
+ },
+ "mobile-phone": {
+  "glyph": "📱",
+  "name": "mobile phone",
+  "keywords": [
+   "cell",
+   "mobile",
+   "phone",
+   "telephone"
+  ]
+ },
+ "money-bag": {
+  "glyph": "💰",
+  "name": "money bag",
+  "keywords": [
+   "bag",
+   "dollar",
+   "money",
+   "moneybag"
+  ]
+ },
+ "musical-notes": {
+  "glyph": "🎶",
+  "name": "musical notes",
+  "keywords": [
+   "music",
+   "musical notes",
+   "note",
+   "notes"
+  ]
+ },
+ "office-building": {
+  "glyph": "🏢",
+  "name": "office building",
+  "keywords": [
+   "building",
+   "office building"
+  ]
+ },
+ "package": {
+  "glyph": "📦",
+  "name": "package",
+  "keywords": [
+   "box",
+   "package",
+   "parcel"
+  ]
+ },
+ "party-popper": {
+  "glyph": "🎉",
+  "name": "party popper",
+  "keywords": [
+   "celebration",
+   "party",
+   "popper",
+   "tada"
+  ]
+ },
+ "pushpin": {
+  "glyph": "📌",
+  "name": "pushpin",
+  "keywords": [
+   "pin",
+   "pushpin"
+  ]
+ },
+ "raising-hands": {
+  "glyph": "🙌",
+  "name": "raising hands",
+  "keywords": [
+   "celebration",
+   "gesture",
+   "hand",
+   "hooray",
+   "raised",
+   "raising hands"
+  ]
+ },
+ "receipt": {
+  "glyph": "🧾",
+  "name": "receipt",
+  "keywords": [
+   "accounting",
+   "bookkeeping",
+   "evidence",
+   "proof",
+   "receipt"
+  ]
+ },
+ "red-circle": {
+  "glyph": "🔴",
+  "name": "red circle",
+  "keywords": [
+   "circle",
+   "geometric",
+   "red"
+  ]
+ },
+ "red-heart": {
+  "glyph": "❤️",
+  "name": "red heart",
+  "keywords": [
+   "heart",
+   "red heart"
+  ]
+ },
+ "robot": {
+  "glyph": "🤖",
+  "name": "robot",
+  "keywords": [
+   "face",
+   "monster",
+   "robot"
+  ]
+ },
+ "rocket": {
+  "glyph": "🚀",
+  "name": "rocket",
+  "keywords": [
+   "rocket",
+   "space"
+  ]
+ },
+ "shield": {
+  "glyph": "🛡️",
+  "name": "shield",
+  "keywords": [
+   "shield",
+   "weapon"
+  ]
+ },
+ "shopping-cart": {
+  "glyph": "🛒",
+  "name": "shopping cart",
+  "keywords": [
+   "cart",
+   "shopping",
+   "trolley"
+  ]
+ },
+ "sparkles": {
+  "glyph": "✨",
+  "name": "sparkles",
+  "keywords": [
+   "*",
+   "sparkle",
+   "sparkles",
+   "star"
+  ]
+ },
+ "speech-balloon": {
+  "glyph": "💬",
+  "name": "speech balloon",
+  "keywords": [
+   "balloon",
+   "bubble",
+   "comic",
+   "dialog",
+   "speech"
+  ]
+ },
+ "spiral-calendar": {
+  "glyph": "🗓️",
+  "name": "spiral calendar",
+  "keywords": [
+   "calendar",
+   "pad",
+   "spiral"
+  ]
+ },
+ "star": {
+  "glyph": "⭐",
+  "name": "star",
+  "keywords": [
+   "star"
+  ]
+ },
+ "stopwatch": {
+  "glyph": "⏱️",
+  "name": "stopwatch",
+  "keywords": [
+   "clock",
+   "stopwatch"
+  ]
+ },
+ "thumbs-up": {
+  "glyph": "👍",
+  "name": "thumbs up",
+  "keywords": [
+   "+1",
+   "hand",
+   "thumb",
+   "thumbs up",
+   "up"
+  ]
+ },
+ "ticket": {
+  "glyph": "🎫",
+  "name": "ticket",
+  "keywords": [
+   "admission",
+   "ticket"
+  ]
+ },
+ "trophy": {
+  "glyph": "🏆",
+  "name": "trophy",
+  "keywords": [
+   "prize",
+   "trophy"
+  ]
+ },
+ "unlocked": {
+  "glyph": "🔓",
+  "name": "unlocked",
+  "keywords": [
+   "lock",
+   "open",
+   "unlock",
+   "unlocked"
+  ]
+ },
+ "warning": {
+  "glyph": "⚠️",
+  "name": "warning",
+  "keywords": [
+   "warning"
+  ]
+ },
+ "waving-hand": {
+  "glyph": "👋",
+  "name": "waving hand",
+  "keywords": [
+   "hand",
+   "wave",
+   "waving"
+  ]
+ }
+}

@@ -16,6 +16,8 @@ Piezas animadas que se declaran en el YAML con sus datos y sus palabras clave, y
 | Enseñar código, un comando o un cambio | `code.html` con `view: editor`, `terminal` o `diff` |
 | Señalar algo que ya está en la pantalla | No es un recurso: `highlight` o `label` |
 | Un texto corto encima de la app | `lower-third.html`; un atajo de teclado, `shortcut.html`; dos capturas lado a lado, `compare.html` |
+| Subrayar un momento («¡Listo!») | `sticker.html`, un emoji con un texto breve |
+| Que el video se vea del proyecto | `brand:` y `texture:` en el tour (ver «Marcas» y «Texturas») |
 
 Un recurso dice algo que la app no muestra por sí sola. Uno por frase, y no más de uno o dos seguidos antes de volver a la app.
 
@@ -157,3 +159,65 @@ Otros campos: `language` (el editor y el diff), `file` o `title` (la barra de la
 - **Código real o marcado como ejemplo**, sin claves ni datos de clientes.
 
 Ejemplos de las tres vistas en `tours/examples/codigo.yaml`.
+
+## Marcas
+
+Cada proyecto con identidad propia tiene su carpeta en `assets/brands/<marca>/`: `brand.yaml`, sus logos y `FUENTE.md` (de dónde salió y dónde se puede usar).
+
+```yaml
+title: Entrega semana 40
+brand: dymmsa        # acento, tema y textura de la marca; el tour puede cambiar cualquiera
+watermark: true      # el isotipo en una esquina durante el recorrido
+```
+
+| Marca | Acento | Textura | Uso |
+|---|---|---|---|
+| `4xl` | Lima #D9F24A | `grain` | Tus videos y tu portafolio |
+| `urvenue` | Morado #9646D8 (degradado a azul) | `brand` | Solo videos internos o de productos de UrVenue |
+| `dymmsa` | Rojo #DC2626 | `lines` | Solo videos para DYMMSA |
+
+Con `brand`, las aperturas y el cierre muestran el logo sobre el eyebrow (en `style: brand`, al centro y en grande), el fondo oscuro toma el color de la marca y la marca de agua aparece entre la apertura y el cierre. Los capítulos no repiten el logo.
+
+**Agregar una marca:** su carpeta con `brand.yaml` (`name`, `accent`, `colors` (dos), `theme`, `texture`, `logo` y/o `mark`; cada imagen puede ser una sola o `{ dark, light }`), los archivos, preferentemente SVG o PNG/WebP con fondo transparente y sin márgenes, y `FUENTE.md`. Logos de terceros solo con su permiso y en su contexto.
+
+## Texturas
+
+`texture:` en el tour (o la de su marca) da textura a todo fondo propio: aperturas, capítulos, cierres, flujos, gráficas y código a pantalla completa. Se dibujan con CSS, sin imágenes.
+
+| `texture` | Cómo se ve |
+|---|---|
+| `plain` (por defecto) | El degradado del tema |
+| `grain` | Grano fino, como papel |
+| `dots` | Una retícula de puntos |
+| `lines` | Líneas diagonales finas |
+| `mesh` | Dos manchas suaves del color de acento |
+| `brand` | Dos manchas con los dos colores de la marca |
+
+Una textura por video. `grain` y `dots` son las más discretas; `mesh` y `brand`, las más vistosas, para aperturas de marca.
+
+## Emojis
+
+Fluent Emoji de Microsoft (MIT), una selección de 71 en `templates/overlays/vendor/fluent-emoji/`; la lista con su glifo está en `index.json`. Se escriben por nombre (`rocket`, `check-mark-button`, `party-popper`…); un nombre que no existe falla al cargar el tour y sugiere los parecidos. `emojiStyle: 3d` en el tour usa la versión 3D; por defecto, la Color (vectorial).
+
+Dónde van:
+
+| Dónde | Cómo |
+|---|---|
+| Un paso de un flujo | `{ text: Se entrega, emoji: rocket, at: … }`, en lugar del número |
+| Una cifra o una comparación | `emoji:` en el `data` del `stat` o el `compare` |
+| Apertura, capítulo, cierre | `params: { emoji: bar-chart }`, sobre el logo y el eyebrow |
+| Subrayar un momento | `sticker.html` con `params: { emoji, text, position }` y `beats: { in: … }` |
+
+```yaml
+overlays:
+  - src: sticker.html
+    params: { emoji: party-popper, text: ¡Listo!, position: top-right }
+    beats: { in: listo }
+```
+
+### Cómo usarlos
+
+- **Pocos y con sentido:** uno por recurso, que diga lo mismo que el texto (📈 en «subió», 🔒 en «seguro»). Nada de emojis de adorno.
+- **Un sticker por momento importante,** no uno por frase. Dura lo que su frase y sale solo.
+- **Mismo estilo en todo el video:** Color o 3D, no los dos.
+- **Agregar uno:** sigue `templates/overlays/vendor/fluent-emoji/AVISO.md`.

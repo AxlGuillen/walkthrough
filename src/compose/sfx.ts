@@ -78,6 +78,8 @@ export function soundEvents(
         break;
       case 'ring':
       case 'label':
+        // A spotlight dims the screen without drawing anything: no pen sound.
+        if (event.kind === 'ring' && event.style === 'spotlight') break;
         events.push({ sound: 'draw', time: event.time, variant: 0 });
         break;
       case 'zoom':

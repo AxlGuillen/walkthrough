@@ -8,9 +8,10 @@ const MARKER_FONT = "'Marker Felt', 'Chalkboard SE', 'Comic Sans MS', sans-serif
 
 export function renderScene({ cursor, strokes, bubbles = [] }: Scene, accent: string): string {
   const f = (n: number) => Number(n.toFixed(3));
-  const paths = strokes.map(({ d, progress, opacity }) =>
-    `<path d="${d}" pathLength="1" fill="none" stroke="${accent}" stroke-width="3.5" stroke-linecap="round" `
-    + `stroke-linejoin="round" stroke-dasharray="1 1" stroke-dashoffset="${f(1 - progress)}" opacity="${f(opacity)}"/>`);
+  const paths = strokes.map(({ d, progress, opacity, color = accent, width = 3.5, fill, evenodd }) => (fill
+    ? `<path d="${d}" fill="${color}"${evenodd ? ' fill-rule="evenodd"' : ''} opacity="${f(opacity)}"/>`
+    : `<path d="${d}" pathLength="1" fill="none" stroke="${color}" stroke-width="${f(width)}" stroke-linecap="round" `
+      + `stroke-linejoin="round" stroke-dasharray="1 1" stroke-dashoffset="${f(1 - progress)}" opacity="${f(opacity)}"/>`));
   for (const { rect, lines, opacity, scale } of bubbles) {
     const cx = f(rect.x + rect.width / 2);
     const cy = f(rect.y + rect.height / 2);

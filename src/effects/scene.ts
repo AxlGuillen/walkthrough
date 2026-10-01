@@ -1,6 +1,7 @@
 import type { Rect, Size } from '../timeline/camera.ts';
 import { arrowPaths, layoutLabel, type LabelSide } from './label.ts';
-import { random, sketchCircle, sketchRect, type Point } from './sketch.ts';
+import { markPieces, type HighlightStyle, type MarkSide } from './marks.ts';
+import { random, sketchCircle, type Point } from './sketch.ts';
 
 export const TIMING = {
   travelMin: 0.35,
@@ -20,7 +21,6 @@ export const TIMING = {
 };
 
 const CIRCLE_RADIUS = 24;
-const RING_PADDING = 8;
 
 export interface CursorMove {
   start: number;
@@ -62,6 +62,12 @@ export interface Ring {
   // The element's own corner radius, so the ring's corners run parallel to it.
   radius?: number;
   track?: string;
+  // How it is drawn and in which color (already resolved); a ring in the accent by default.
+  style?: HighlightStyle;
+  color?: string;
+  // Its lines of text relative to rect, for a marker or an underline.
+  lines?: Rect[];
+  side?: MarkSide;
 }
 
 export interface Label {
@@ -95,6 +101,11 @@ export interface Stroke {
   d: string;
   progress: number;
   opacity: number;
+  // From a highlight style; without them a stroke is the accent at 3.5px.
+  color?: string;
+  width?: number;
+  fill?: boolean;
+  evenodd?: boolean;
 }
 
 export interface Scene {
@@ -138,7 +149,21 @@ export function sceneAt(time: number, plan: EffectsPlan): Scene {
   }
   for (const ring of plan.rings) {
     const phase = strokePhase(time, ring.time, TIMING.ringDraw, ring.hold);
-    if (phase) strokes.push({ d: ringPath(ring, plan.viewport), ...phase });
+    if (!phase) continue;
+    const pieces = markPieces({
+      rect: ring.rect, style: ring.style ?? 'ring', color: ring.color ?? '', seed: ring.seed,
+      ...(ring.radius === undefined ? {} : { radius: ring.radius }), ...(ring.lines ? { lines: ring.lines } : {}), ...(ring.side ? { side: ring.side } : {}),
+    }, plan.viewport);
+    for (const piece of pieces) {
+      const [from, to] = piece.span ?? [0, 1];
+      const progress = Math.min(1, Math.max(0, (phase.progress - from) / (to - from)));
+      // A fill fades in as the stroke would draw; a stroke keeps its own opacity on top.
+      strokes.push({
+        d: piece.d, progress: piece.kind === 'fill' ? 1 : progress, opacity: phase.opacity * (piece.opacity ?? 1) * (piece.kind === 'fill' ? phase.progress : 1),
+        ...(ring.color ? { color: piece.color } : {}), width: piece.width,
+        ...(piece.kind === 'fill' ? { fill: true, color: piece.color } : {}), ...(piece.evenodd ? { evenodd: true } : {}),
+      });
+    }
   }
   const bubbles: Bubble[] = [];
   for (const label of plan.labels) {
@@ -213,19 +238,9 @@ export function strokePhase(time: number, start: number, draw: number, hold: num
   return { progress: easeOutCubic(Math.min(1, elapsed / draw)), opacity };
 }
 
-const RING_EDGE = 4;
-const RING_CORNER = 10;
-
 // Concentric with the element, and pulled inside the frame when the element touches its edge.
 export function ringPath(ring: Ring, viewport: Size): string {
-  const padded = pad(ring.rect, RING_PADDING);
-  const x = Math.max(RING_EDGE, padded.x);
-  const y = Math.max(RING_EDGE, padded.y);
-  const right = Math.min(viewport.width - RING_EDGE, padded.x + padded.width);
-  const bottom = Math.min(viewport.height - RING_EDGE, padded.y + padded.height);
-  const rect = right - x > 0 && bottom - y > 0 ? { x, y, width: right - x, height: bottom - y } : padded;
-  const corner = ring.radius === undefined ? RING_CORNER : ring.radius + RING_PADDING;
-  return sketchRect(rect, ring.seed, corner);
+  return markPieces({ rect: ring.rect, style: 'ring', color: '', seed: ring.seed, ...(ring.radius === undefined ? {} : { radius: ring.radius }) }, viewport)[0]!.d;
 }
 
 function pad(rect: Rect, by: number): Rect {

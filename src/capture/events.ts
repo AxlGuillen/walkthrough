@@ -3,7 +3,7 @@
 export type CaptureEvent =
   | { kind: 'click'; time: number }
   | { kind: 'type'; time: number; chars: number }
-  | { kind: 'ring'; time: number }
+  | { kind: 'ring'; time: number; style?: string }
   | { kind: 'label'; time: number }
   | { kind: 'zoom'; time: number; direction: 'in' | 'out' }
   // distance in CSS pixels, for the timing audit; older captures lack it.

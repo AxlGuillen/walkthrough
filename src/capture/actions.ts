@@ -1,3 +1,4 @@
+import { markColor, type MarkColor } from '../effects/marks.ts';
 import { clickVisible, endLabelAt, endRingAt, labelVisible, ringVisible, TIMING } from '../effects/scene.ts';
 import type { TimedAction } from '../timeline/build.ts';
 import { fullFrame } from '../timeline/camera.ts';
@@ -76,11 +77,14 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       const box = await visibleBox(page.locator(action.on).first(), `highlight target "${action.on}"`);
       const radius = await page.locator(action.on).first()
         .evaluate(el => parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0).catch(() => undefined);
+      const style = action.style ?? tour.highlightStyle;
+      const lines = style === 'marker' || style === 'underline' ? await textLineBoxes(page, action.on) : [];
       effects.rings.push({
         time: stage.time, rect: box, hold: action.duration ?? TIMING.ringHold, seed, track: action.on,
-        ...(radius === undefined ? {} : { radius }),
+        style, color: markColor(action.color as MarkColor | undefined, style, tour.accent),
+        ...(radius === undefined ? {} : { radius }), ...(lines.length ? { lines } : {}), ...(action.side ? { side: action.side } : {}),
       });
-      log.push({ kind: 'ring', time: stage.time });
+      log.push({ kind: 'ring', time: stage.time, style });
       return;
     }
     case 'label': {
@@ -93,6 +97,23 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
       return;
     }
   }
+}
+
+// The element's rendered lines of text, relative to its box: client rects of its text, merged
+// per line. Empty for an element without text (an icon, an image).
+async function textLineBoxes(page: Stage['page'], selector: string): Promise<{ x: number; y: number; width: number; height: number }[]> {
+  return page.locator(selector).first().evaluate(el => {
+    const box = el.getBoundingClientRect();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const lines: { x: number; y: number; right: number; bottom: number }[] = [];
+    for (const r of [...range.getClientRects()].filter(r => r.width > 1 && r.height > 1)) {
+      const line = lines.find(l => Math.abs((l.y + l.bottom) / 2 - (r.top + r.bottom) / 2) < r.height / 2);
+      if (line) Object.assign(line, { x: Math.min(line.x, r.left), y: Math.min(line.y, r.top), right: Math.max(line.right, r.right), bottom: Math.max(line.bottom, r.bottom) });
+      else lines.push({ x: r.left, y: r.top, right: r.right, bottom: r.bottom });
+    }
+    return lines.map(l => ({ x: l.x - box.x, y: l.y - box.y, width: l.right - l.x, height: l.bottom - l.y }));
+  }).catch(() => []);
 }
 
 // The page as the viewer last saw it, without the effects layer: the marks carry on live

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { TEXTURES } from '../brands/brand.ts';
 import { SOUNDS } from '../compose/sounds.ts';
 import { emojiName } from '../emoji/emoji.ts';
+import { HIGHLIGHT_STYLES, MARK_COLORS } from '../effects/marks.ts';
 
 const selector = z.string().trim().min(1);
 
@@ -54,10 +55,15 @@ const zoom = z.strictObject({
   ]),
 }).transform(({ zoom }) => ({ kind: 'zoom' as const, ...zoom }));
 
+// A mark's color: the accent, a named one that reads over any app, or #RRGGBB.
+const markColor = z.union([z.enum(['accent', ...Object.keys(MARK_COLORS)] as [string, ...string[]]), z.string().regex(/^#[0-9a-fA-F]{6}$/)]);
+
+// style falls back to the tour's highlightStyle.
 const highlight = z.strictObject({
   highlight: z.union([
-    selector.transform(on => ({ on, duration: undefined, at: undefined })),
-    z.strictObject({ on: selector, duration: z.number().positive().optional(), ...timed }),
+    selector.transform(on => ({ on, duration: undefined, style: undefined, color: undefined, side: undefined, at: undefined })),
+    // side: where an arrow comes from.
+    z.strictObject({ on: selector, duration: z.number().positive().optional(), style: z.enum(HIGHLIGHT_STYLES).optional(), color: markColor.optional(), side: z.enum(['top', 'left', 'bottom', 'right']).optional(), ...timed }),
   ]),
 }).transform(({ highlight }) => ({ kind: 'highlight' as const, ...highlight }));
 
@@ -212,6 +218,8 @@ export const tourSchema = z.strictObject({
   watermark: z.boolean().default(false),
   // Fluent Emoji in their vector Color style, or the 3D one.
   emojiStyle: z.enum(['color', '3d']).default('color'),
+  // How this tour's highlights are drawn unless one says otherwise.
+  highlightStyle: z.enum(HIGHLIGHT_STYLES).default('ring'),
   // Gets the app past its own onboarding: storage is written before every page of the
   // tour's origin loads, and dismiss selectors are clicked after each navigation.
   setup: z.strictObject({

@@ -1,0 +1,31 @@
+title: Formas de resaltar
+url: https://sunsetshores.urresort.com/accommodations/
+accent: "#C8633A"
+# Los ocho estilos de `highlight` sobre una página pública (docs/recursos.md, «Resaltar»), sin
+# voz: cada uno en su segmento. Aquí nada hace clic.
+segments:
+  - hold: 2.6
+    do:
+      - goto: /accommodations/
+      - highlight: { on: 'h1', at: 0.3, style: ring }
+  - hold: 2.6
+    do:
+      - highlight: { on: 'h1', at: 0.2, style: circle }
+  - hold: 2.6
+    do:
+      - highlight: { on: 'h1', at: 0.2, style: underline }
+  - hold: 2.6
+    do:
+      - highlight: { on: 'h1', at: 0.2, style: marker }
+  - hold: 2.6
+    do:
+      - highlight: { on: 'a:has-text("Check availability") >> nth=0', at: 0.2, style: box, color: green }
+  - hold: 2.6
+    do:
+      - highlight: { on: 'a:has-text("Check availability") >> nth=0', at: 0.2, style: brackets }
+  - hold: 2.6
+    do:
+      - highlight: { on: 'a:has-text("Check availability") >> nth=0', at: 0.2, style: spotlight }
+  - hold: 2.6
+    do:
+      - highlight: { on: 'a:has-text("Check availability") >> nth=0', at: 0.2, style: arrow, color: yellow }

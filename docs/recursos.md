@@ -14,7 +14,10 @@ Piezas animadas que se declaran en el YAML con sus datos y sus palabras clave, y
 | Una cifra que impresione | `chart.html` con `type: stat` |
 | El cambio entre dos cifras («de 45 a 3 min») | `chart.html` con `type: compare` |
 | Enseñar código, un comando o un cambio | `code.html` con `view: editor`, `terminal` o `diff` |
-| Señalar algo que ya está en la pantalla | No es un recurso: `highlight` o `label` |
+| Comparar opciones, planes o un antes y después punto por punto | `table.html` |
+| Un plan, una historia o el avance de un proyecto por hitos | `roadmap.html` |
+| Señalar algo que ya está en la pantalla | No es un recurso: `highlight` (con su `style`, ver «Resaltar») o `label` |
+| Que la app se vea dentro de un navegador, una laptop o un teléfono | `frame:` en el tour (ver «Marco de dispositivo») |
 | Un texto corto encima de la app | `lower-third.html`; un atajo de teclado, `shortcut.html`; dos capturas lado a lado, `compare.html` |
 | Subrayar un momento («¡Listo!») | `sticker.html`, un emoji con un texto breve |
 | Que el video se vea del proyecto | `brand:` y `texture:` en el tour (ver «Marcas» y «Texturas») |
@@ -36,7 +39,7 @@ Un recurso dice algo que la app no muestra por sí sola. Uno por frase, y no má
   ```
 
   Al cambiar una plantilla o agregar un recurso, agrega su ejemplo al catálogo y revisa las hojas antes del commit. Una prueba de `verify` comprueba que cada entrada sea válida y quepa en 16:9 y 9:16.
-- **Ejemplos narrados**, con voz y un sitio de fondo: `tours/examples/aperturas.yaml`, `graficas.yaml`, `codigo.yaml` y `flujos.yaml`.
+- **Ejemplos narrados**, con voz y un sitio de fondo: `tours/examples/aperturas.yaml`, `graficas.yaml`, `codigo.yaml` y `flujos.yaml`. Sin voz, sobre un sitio: `resaltar.yaml` (los ocho estilos de resaltar) y `marco.yaml` (el marco de dispositivo).
 - **La skill `recursos`** del repo guía cómo elegirlos, escribirlos y revisarlos.
 
 ## Aperturas, capítulos y cierres
@@ -159,6 +162,93 @@ Otros campos: `language` (el editor y el diff), `file` o `title` (la barra de la
 - **Código real o marcado como ejemplo**, sin claves ni datos de clientes.
 
 Ejemplos de las tres vistas en `tours/examples/codigo.yaml`.
+
+## Tablas
+
+`table.html` compara opciones en una tabla: columnas, filas y, en cada celda, `yes` (✓), `no` (✕), `partial` (una raya) o un texto corto. Las marcas se dibujan como trazos cuando entra su fila. También valen `true` y `false`, y los números se muestran tal cual.
+
+```yaml
+- say: Con Excel no hay video ni se actualiza solo. Con walkthrough sí, y cada demo toma diez minutos.
+  overlays:
+    - src: table.html
+      data:
+        title: Antes y ahora
+        columns: [Excel, Walkthrough]
+        highlight: Walkthrough
+        rows:
+          - { label: Video narrado, values: [no, yes], emoji: microphone, at: video }
+          - { label: Se actualiza solo, values: [no, yes], at: actualiza }
+          - { label: Tiempo por demo, values: [3 h, 10 min], at: diez }
+```
+
+- **`highlight`** destaca una columna (la del producto, el plan recomendado) con una banda del color de acento. Tiene que ser una de `columns`.
+- **Hasta 6 columnas y 8 filas** en 16:9, y 3 columnas en 9:16; `check` avisa si una columna, una fila o una celda no caben. Etiquetas cortas: una fila de hasta ~24 letras y una celda de una o dos palabras.
+- **`at` en la palabra que nombra cada fila.** Las que no lo tienen entran solas detrás de la anterior.
+- `emoji` por fila y `mode: card` (un panel sobre la mitad derecha en 16:9 y la inferior en 9:16), como en las gráficas.
+
+## Líneas de tiempo
+
+`roadmap.html` pone hitos en una línea que se dibuja de uno al siguiente, al ritmo de la voz: horizontal en 16:9 y vertical en 9:16. Cada hito lleva `title` y, si hace falta, `date`, `detail`, `emoji` y `status`:
+
+| `status` | Cómo se ve |
+|---|---|
+| `done` (por defecto) | Un nodo lleno del color de acento |
+| `now` | Lleno, con un pulso y la etiqueta «Hoy» («Now» en inglés) |
+| `next` | Un nodo hueco, con el texto atenuado y la línea que llega a él más tenue |
+
+```yaml
+- say: Empezamos en enero con el primer tour, en marzo llegó la voz, y hoy estamos en los recursos animados.
+  overlays:
+    - src: roadmap.html
+      data:
+        title: Hacia la versión 2
+        milestones:
+          - { date: Ene, title: Primer tour, emoji: rocket, at: enero }
+          - { date: Mar, title: Voz y subtítulos, emoji: microphone, at: marzo }
+          - { date: Jun, title: Recursos animados, emoji: sparkles, status: now, at: hoy }
+          - { date: Sep, title: Marcos y tablas, emoji: laptop, status: next }
+```
+
+- **De 2 a 7 hitos**, uno `now` como mucho. Títulos de hasta ~3 palabras y `detail` de una frase corta; `check` avisa si un título pasa de dos líneas o un detalle de tres.
+- **`at` en la palabra que nombra cada hito.** La línea llega a él justo en ese momento.
+- `mode: card` deja la app arriba (16:9) o encima del panel (9:16).
+
+## Resaltar
+
+`highlight` señala un elemento de la app con uno de ocho estilos. `highlightStyle:` en el tour pone el de todo el video y cada `highlight` puede cambiarlo:
+
+| `style` | Para |
+|---|---|
+| `ring` (por defecto) | Un recuadro a mano alzada, para casi todo |
+| `circle` | Un óvalo a pluma, para un dato o un ícono |
+| `underline` | Un subrayado bajo cada línea del texto |
+| `marker` | Un resaltador translúcido sobre cada línea, amarillo por defecto |
+| `box` | Un rectángulo limpio, de líneas rectas |
+| `brackets` | Cuatro esquinas, para un bloque grande |
+| `spotlight` | Oscurece todo lo demás, para lo más importante |
+| `arrow` | Una flecha que llega desde el lado con espacio; `side: top \| left \| bottom \| right` la fuerza |
+
+```yaml
+- highlight: { on: 'h1', at: mejor, style: marker }
+- highlight: { on: 'a:has-text("Check availability")', at: disponibilidad, style: box, color: green }
+```
+
+`color` es `accent` (por defecto, salvo en `marker`), `yellow`, `green`, `red`, `blue`, `white` o un `#hex`. Varía el estilo según lo que se señala, no por variar: un video usa dos o tres. `spotlight` no hace sonido; los demás, el de dibujar.
+
+## Marco de dispositivo
+
+`frame:` en el tour mete la grabación en un dispositivo, sobre el fondo del tour (su tema, textura y marca):
+
+| `frame` | Graba la app como | Para |
+|---|---|---|
+| `none` (por defecto) | El formato del video | La app a pantalla completa |
+| `browser` | Escritorio | Una ventana con la barra y el dominio del tour |
+| `laptop` | Escritorio | Un portafolio o una presentación |
+| `phone` | Teléfono (emulado) | Un sitio móvil, también en un video 16:9 |
+
+`device` sigue decidiendo el formato del video, así que `device: desktop` con `frame: phone` da un teléfono al centro de un video 16:9, y `device: mobile` con `frame: laptop`, una laptop en un video vertical. Las marcas, el cursor y el zoom quedan dentro de la pantalla; los overlays y los subtítulos, encima de todo el cuadro.
+
+La pantalla ocupa menos que el video, así que la app se ve más chica: con `frame`, acércate (`zoom`) a lo que se nombra. Una laptop o un navegador en un video vertical son para mostrar el sitio, no para leerlo.
 
 ## Marcas
 

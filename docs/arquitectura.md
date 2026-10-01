@@ -151,9 +151,10 @@ Cursor, circulito de clic y anillo de resaltado.
 - **El cursor sale antes** para llegar al objetivo justo cuando corre la acción; la trayectoria y el tiempo están en «Movimiento y scroll». Si el objetivo aparece tarde, el viaje se acorta.
 - **Se apunta al texto del elemento**, no a su centro geométrico. El centro de una fila de ancho completo puede quedar lejos de lo que se lee, e incluso fuera de la cámara. Playwright hace el clic o el hover en ese mismo punto.
 - **Trazos a mano:** círculo con 1,1 vueltas y rectángulo redondeado con ruido suave y sembrado por acción (siempre igual en cada render). Se dibujan con `pathLength` + `stroke-dashoffset`.
+- **Estilos de resaltado** (`src/effects/marks.ts`, puro): `markPieces` vuelve un estilo (`ring`, `circle`, `underline`, `marker`, `box`, `brackets`, `spotlight`, `arrow`) en piezas: trazos que se revelan a lo largo, cada uno en su tramo del tiempo de dibujo (la punta de una flecha después del asta), o un relleno `evenodd` que aparece con opacidad (el oscurecido de `spotlight`). `underline` y `marker` siguen cada línea del texto: la captura mide los rectángulos de un `Range` sobre el elemento y los junta por línea. La flecha llega del primer lado con espacio (izquierda, abajo, derecha, arriba) o del que pida `side`.
 - **Mobile:** sin cursor; solo el circulito en cada toque.
 - **Tecleo visible:** `type` escribe a 14 caracteres por segundo, repartidos entre cuadros.
-- **Color:** `accent` del tour (`#FF3B5C` por defecto).
+- **Color:** `accent` del tour (`#FF3B5C` por defecto); un resaltado puede llevar uno propio (`markColor`), y `marker` es amarillo por defecto.
 
 ⚠️ La capa usa `innerHTML`: una app con Trusted Types estrictos la bloquearía.
 
@@ -204,6 +205,8 @@ overlays:
   | `compare.html` | `before`, `after` (imágenes del tour), `beforeLabel`, `afterLabel` |
   | `code.html` | Código en editor, terminal o diff, con resaltado de sintaxis propio (`src/code/`), líneas señaladas en su palabra y acercamiento; guía en `docs/recursos.md` |
   | `chart.html` | Gráficas (`bar`, `line`, `donut`, `stat`, `compare`) con `data`; ver «Recursos con datos» abajo y `docs/recursos.md` |
+  | `table.html` | Tabla de comparación (`src/table/`): filas en su palabra, ✓ y ✕ dibujados, una columna destacada |
+  | `roadmap.html` | Línea de tiempo (`src/roadmap/`): hitos `done`, `now` y `next`, horizontal en 16:9 y vertical en 9:16 |
   | `opening.html`, `chapter-card.html`, `closing.html` | Aperturas, capítulos y cierres en tres estilos (`kinetic`, `over-app`, `brand`), con `beats`; comparten `titles.css` y las coreografías de `titles.js`. Guía en `docs/recursos.md` |
 - **Render aparte** (`src/overlays/render.ts`): cada overlay se abre en su propia página, al tamaño de salida, con `deviceScaleFactor: 1` y fondo transparente (`omitBackground`). Se guarda como `overlays/NN.mov` con PNG por cuadro, sin pérdida y con alfa.
 - **Reloj propio que empieza en cero.** La página se carga con el reloj congelado, no vía `settle()`, así que sus animaciones de entrada arrancan justo cuando el overlay aparece en el video. Antes del primer cuadro se espera a las fuentes, imágenes y videos, por evento, porque los timers están congelados.
@@ -226,7 +229,7 @@ overlays:
 - **Kit de movimiento** (`templates/overlays/kit.js`): curvas y duraciones de la familia, `kit.timeline()`, `kit.split()` (letras o palabras, nunca líneas, para no depender de que carguen las fuentes), `kit.count()` (números en `es-MX` o `en-US` según el tour) y `kit.draw()`.
 - **Duración y acento como texto:** la plantilla recibe `?duration=` (sus segundos en pantalla, para calcular una salida desde el final) y `--accent-ink`, el acento para texto y líneas finas: con un acento claro en tema claro pasa a tinta, porque el lima no se lee sobre blanco.
 - **Tema** (`theme: dark | light` en el tour): llega como `?theme=` junto con el acento y el idioma (`lang`). `base.css` define los tokens (`--stage`, `--panel`, `--surface`, `--line`, `--stroke`, `--scrim`) y las plantillas, flujos incluidos, solo usan tokens.
-- **Recursos con datos** (`src/resources/registry.ts`): una plantilla que toma `data` (`chart.html`, `code.html`) declara su esquema, los beats de sus partes, su escena y sus avisos. `check` calcula la escena como el render y reporta lo que no se leería (etiquetas cortadas, código que no cabe o que sigue escribiéndose cuando el overlay se va). Al cargar el tour se valida `data` y cada `at` de dentro se vuelve un beat (`p0`, `p1`… en una serie; `value`, `before`, `after`); los beats escritos a mano ganan. Al renderizar, Node calcula la escena con los beats ya en segundos y la pasa como `?scene=`. Las gráficas (`src/charts/`) reparten los puntos sin palabra entre sus vecinos con el mismo `spreadTimes` de los flujos, con su propio ritmo mínimo.
+- **Recursos con datos** (`src/resources/registry.ts`): una plantilla que toma `data` (`chart.html`, `code.html`, `table.html`, `roadmap.html`) declara su esquema, los beats de sus partes, su escena y sus avisos. `check` calcula la escena como el render y reporta lo que no se leería (etiquetas cortadas, código que no cabe o que sigue escribiéndose cuando el overlay se va). Al cargar el tour se valida `data` y cada `at` de dentro se vuelve un beat (`p0`, `p1`… en una serie; `value`, `before`, `after`); los beats escritos a mano ganan. Al renderizar, Node calcula la escena con los beats ya en segundos y la pasa como `?scene=`. Las gráficas (`src/charts/`) reparten los puntos sin palabra entre sus vecinos con el mismo `spreadTimes` de los flujos, con su propio ritmo mínimo.
 - **Marcas** (`src/brands/`, `assets/brands/<marca>/brand.yaml`): al cargar el tour, la marca llena el acento, el tema y la textura que el tour no fija. `tourLook` pasa a cada overlay el nombre, los dos colores (`--brand-1`, `--brand-2`, y el tinte del fondo oscuro, `--stage-tint`) y sus imágenes como URL: la más ancha (`brandLogo`, sobre el eyebrow) y la más cuadrada (`brandMark` con `markShape`, al centro de `style: brand` y en la marca de agua). `watermark: true` hace que la timeline agregue `watermark.html` entre el primer y el último segmento, sin sonido (`silent`).
 - **Texturas** (`texture`): `data-texture` en `<html>` cambia `--stage` por capas de CSS sobre `--stage-base` (grano en un SVG `feTurbulence` en línea, puntos, líneas, mallas de color). Todo fondo propio usa `--stage`.
 - **Emojis** (`src/emoji/emoji.ts`, `templates/overlays/vendor/fluent-emoji/`): `emojiName` valida un nombre contra `index.json` y sugiere parecidos; `params.emoji` se valida al cargar. En la página, `walkthrough.emoji(nombre)` da la URL en el estilo del tour (`emojiStyle`).
@@ -285,6 +288,8 @@ Una sola pasada de ffmpeg, ejecutada desde la carpeta de trabajo del tour con ru
 - **Loudness en dos pasadas.** Primero se mide solo el audio (`loudnorm` con `print_format=json`) y luego se monta aplicando esa medición con `linear=true`: una sola ganancia hasta −16 LUFS que respeta la proporción entre voz, música y efectos. En una pasada, `loudnorm` actúa como control automático de ganancia y levanta los pasajes quietos: bajar la música no se notaba.
 - **Efectos desde lo que pasó:** la captura escribe `events.json` (clics, tecleo, anillos, etiquetas, zooms, scrolls y navegaciones), y el montaje saca de ahí los sonidos. Así también suenan los scrolls automáticos, que la timeline no conoce. Una captura sin ese archivo se aproxima desde la timeline.
 - **Tiempo máximo.** El montaje tiene un límite de 10 veces la duración (mínimo 2 minutos) y se mata con SIGKILL: un grafo atorado ignora SIGTERM.
+- **Marco de dispositivo** (`frame: browser | laptop | phone`, `src/frame/`): `captureDevice` decide cómo se graba la app (un teléfono emulado o un escritorio), independiente del formato del video, que sigue siendo `device`. `frameLayout` (puro) calcula el cuerpo del dispositivo y su pantalla, con el aspecto de la grabación y en pixeles pares. `frame.html` se renderiza una vez como `frame.png` (fondo del tour y dispositivo, con la pantalla transparente gracias a una máscara SVG `evenodd`) y el montaje escala la captura a la pantalla (`scale`, `setsar=1`, `pad`) y pone el marco encima, antes de los overlays.
+- **Silencio:** un tour sin voz, música ni efectos mide −inf y `loudnorm` lo rechaza, así que el audio pasa sin normalizar.
 - **Repetir solo el montaje:** `render --from=compose` reutiliza `capture.mp4`. Sirve para cambiar subtítulos, música o color sin recapturar.
 
 ## Voz
@@ -383,6 +388,8 @@ src/
   capture/      playwright, session, clock, page-runtime/
   overlays/     transparent rendering
   flow/         pure: flow layout and cues
+  charts/ code/ table/ roadmap/   pure: data resources (schema, layout)
+  frame/        device frames: pure layout and the still
   compose/      ffmpeg args, subtitles (ASS), music
 tests/fixtures/ local page for integration tests
 tours/<project>/<tour>.yaml + overlays/ + assets/

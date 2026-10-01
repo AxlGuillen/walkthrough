@@ -264,35 +264,36 @@ Escrita el 1/oct/2026. Los recursos de la fase 7 se ven todos iguales: el mismo 
 
 Las variantes nuevas (marcas, texturas, emojis) se agregan a `tours/examples/catalogo.yaml`; `docs/recursos.md` y la skill `recursos` explican cuándo usarlas.
 
-## Fase 9 — Resaltar con variedad, tablas, líneas de tiempo y marcos
+## Fase 9 — Resaltar con variedad, tablas, líneas de tiempo y marcos ✅ (1/oct/2026)
 
 Escrita el 1/oct/2026. Todo se resalta igual (el rectángulo a mano en el acento) y faltan recursos para comparar opciones, contar una historia en el tiempo y presentar la app como producto.
 
-### 9.1 Formas de resaltar
+### 9.1 Formas de resaltar ✅
 
 - **`highlight: { on, style, color }`** con `style`: `ring` (el de hoy), `circle` (óvalo a mano), `underline` (subrayado a mano), `marker` (resaltador detrás del texto), `box` (recuadro limpio), `brackets` (esquinas), `spotlight` (oscurece el resto) y `arrow` (una flecha que llega desde donde haya espacio).
 - **`color`:** el acento por defecto, o `yellow`, `green`, `red`, `blue`, `white` o un `#RRGGBB`. El resaltador es amarillo por defecto.
 - **`highlightStyle` en el tour:** el estilo por defecto de sus `highlight`, para que cada video tenga su carácter.
 - Todo en la capa de efectos, calculado en Node, siguiendo al elemento y retirándose si lo tapan, como las marcas de hoy.
 
-### 9.2 Tabla de comparación
+### 9.2 Tabla de comparación ✅
 
 - **`table.html`** con `data`: columnas, filas y celdas (`yes`, `no`, `partial` o un texto). Una columna se puede destacar (la del producto).
 - Las filas aparecen en su palabra; las marcas ✓ y ✕ se dibujan al llenarse. Hasta 6 columnas en 16:9 y 3 en 9:16, validado por `check`.
 
-### 9.3 Línea de tiempo
+### 9.3 Línea de tiempo ✅
 
 - **`roadmap.html`** con hitos (`date`, `title`, `detail`, `emoji`, `status`: `done`, `now`, `next`). La línea se dibuja de hito en hito al ritmo de la voz y el actual se marca.
 - Horizontal en 16:9 y vertical en 9:16; hasta 7 hitos.
 
-### 9.4 Marco de dispositivo
+### 9.4 Marco de dispositivo ✅
 
 - **`frame: laptop | browser | phone`** en el tour: la grabación va dentro del dispositivo, sobre el fondo de la marca y su textura. El cursor, las marcas y el zoom quedan dentro de la pantalla; los overlays, sobre todo el cuadro.
 - Las medidas del marco y de su pantalla se calculan en Node; el marco se dibuja una vez como imagen y ffmpeg compone la captura dentro.
+- Al implementarlo: el marco también decide cómo se graba la app (`phone` como teléfono, `browser` y `laptop` como escritorio), así que un sitio móvil cabe en un video 16:9 y una laptop en uno vertical. El teléfono lleva una barra de estado propia, para que la cámara no tape el encabezado de la app.
 
-### 9.5 Catálogo y guía
+### 9.5 Catálogo y guía ✅
 
-Ejemplos en `tours/examples/catalogo.yaml` (los estilos de resaltar en un tour con app), `docs/recursos.md` y la skill `recursos`.
+Ejemplos en `tours/examples/catalogo.yaml` (tablas y líneas de tiempo), `resaltar.yaml` (los ocho estilos sobre un sitio) y `marco.yaml`; la guía en `docs/recursos.md` y la skill `recursos`.
 
 ## Estimación
 

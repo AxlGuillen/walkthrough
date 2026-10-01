@@ -9,6 +9,8 @@ import { chartSchema } from '../charts/schema.ts';
 import { codeScene } from '../code/layout.ts';
 import { codeSchema } from '../code/schema.ts';
 import { flowScene } from '../flow/scene.ts';
+import { tableScene } from '../table/layout.ts';
+import { tableSchema } from '../table/schema.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
 import { overlayFile, overlayUrl, renderOverlays, TEMPLATES_DIR } from './render.ts';
@@ -286,6 +288,30 @@ describe('code template', () => {
       expect(Number(await page.locator('.band').evaluate(el => getComputedStyle(el).opacity))).toBe(1);
       expect(await page.locator('.bar .note').innerText()).toBe('Pasa todo');
       expect(await page.locator('.row.command .function').innerText()).toBe('bun');
+    } finally {
+      await context.close();
+    }
+  }, 60_000);
+});
+
+describe('table template', () => {
+  it('shows each row on its beat and draws its marks', async () => {
+    const table = tableSchema.parse({ columns: ['Antes', 'Ahora'], highlight: 'Ahora', rows: [{ label: 'En línea', values: [false, true] }, { label: 'Tiempo', values: ['45 min', '3 min'], at: 2 }] });
+    const scene = tableScene(table, canvas, 'es', { r1: 2 });
+    const context = await browser.newContext({ viewport: canvas });
+    try {
+      const page = await context.newPage();
+      await page.goto(overlayUrl(path.join(TEMPLATES_DIR, 'table.html'), tourDir, { duration: '4', scene: JSON.stringify(scene) }));
+      const shown = (t: number) => page.evaluate(time => {
+        window.__walkthroughSeek?.(time);
+        return [...document.querySelectorAll('.label')].map(el => Number(getComputedStyle(el).opacity));
+      }, t);
+      expect(await shown(0.2)).toEqual([0, 0]);
+      expect(await shown(1.6)).toEqual([1, 0]);
+      expect(await shown(3.5)).toEqual([1, 1]);
+      expect(await page.locator('.mark').count()).toBe(3);
+      expect(await page.locator('.cell').allInnerTexts()).toEqual(['45 min', '3 min']);
+      expect(await page.locator('.column.lead').innerText()).toBe('Ahora');
     } finally {
       await context.close();
     }

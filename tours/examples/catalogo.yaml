@@ -112,6 +112,31 @@ segments:
           highlight:
             - { lines: 3, at: 1.5, note: "1,200 px/s como máximo" }
 
+  # Tablas
+  - hold: 5
+    overlays:
+      - src: table.html
+        data:
+          title: Antes y ahora
+          columns: [Excel, Walkthrough]
+          highlight: Walkthrough
+          rows:
+            - { label: Video narrado, values: [no, yes], emoji: microphone }
+            - { label: Se actualiza solo, values: [no, yes], emoji: gear }
+            - { label: Sigue la marca, values: [partial, yes], emoji: sparkles }
+            - { label: Tiempo por demo, values: [3 h, 10 min], emoji: stopwatch }
+  - hold: 4.5
+    overlays:
+      - src: table.html
+        data:
+          mode: card
+          columns: [Básico, Pro, Equipo]
+          highlight: Pro
+          rows:
+            - { label: Tours, values: [3, ∞, ∞] }
+            - { label: Marca propia, values: [no, yes, yes] }
+            - { label: Precio, values: [$0, $12, $24] }
+
   # Flujos
   - hold: 5
     flow:

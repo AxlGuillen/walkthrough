@@ -4,6 +4,8 @@ import { chartBeats, chartScene, type ChartScene } from '../charts/layout.ts';
 import { chartSchema } from '../charts/schema.ts';
 import { codeBeats, codeScene, type CodeScene } from '../code/layout.ts';
 import { codeSchema } from '../code/schema.ts';
+import { tableBeats, tableScene, type TableScene } from '../table/layout.ts';
+import { tableSchema } from '../table/schema.ts';
 import type { Size } from '../timeline/camera.ts';
 import type { Anchor } from '../tour/schema.ts';
 
@@ -23,6 +25,10 @@ const RESOURCES: Record<string, Resource<never>> = {
   'chart.html': {
     schema: chartSchema, beats: chartBeats, scene: chartScene,
     warnings: (...args: Parameters<typeof chartScene>) => (chartScene(...args) as ChartScene).truncated.map(text => `label "${text}" does not fit and is cut`),
+  } as unknown as Resource<never>,
+  'table.html': {
+    schema: tableSchema, beats: tableBeats, scene: tableScene,
+    warnings: (...args: Parameters<typeof tableScene>) => (tableScene(...args) as TableScene).warnings,
   } as unknown as Resource<never>,
   'code.html': {
     schema: codeSchema, beats: codeBeats, scene: codeScene,

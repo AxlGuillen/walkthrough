@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!-- Comparison table: columns, rows of yes / no / partial or short text, and a column to stand
+     out. Node validates `data` and lays out the scene (src/table/), which this page paints.
+     Beats: r0, r1… for each row (from each `at`; Node spreads the rest). -->
+<link rel="stylesheet" href="base.css">
+<style>
+  :root { --yes: #22C55E; --no: #EF4444; --partial: #F59E0B; }
+  body.full { background: var(--stage); }
+  .abs { position: absolute; box-sizing: border-box; }
+  .t { position: absolute; white-space: nowrap; line-height: 1; translate: -50% -50%; }
+  .title { translate: none; font-weight: 800; letter-spacing: -0.02em; }
+  .table { border-radius: 1.4vmin; background: var(--panel); box-shadow: 0 2.4vmin 6vmin var(--shadow), inset 0 0 0 1px var(--line); }
+  .head { border-bottom: 1px solid var(--line); }
+  .column { font-weight: 700; color: var(--muted); }
+  .column.lead { color: var(--accent-ink); }
+  .band { border-radius: 1.4vmin; background: color-mix(in srgb, var(--accent) 12%, transparent); box-shadow: inset 0 0 0 0.3vmin var(--accent); }
+  .row { border-top: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+  .label { translate: 0 -50%; font-weight: 600; color: var(--ink); }
+  .cell { font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cell.lead { color: var(--accent-ink); }
+  svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+  .mark { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .mark.yes { stroke: var(--yes); } .mark.no { stroke: var(--no); opacity: 0.75; } .mark.partial { stroke: var(--partial); }
+  .emoji { position: absolute; translate: -50% -50%; object-fit: contain; }
+</style>
+</head>
+<body>
+<script src="params.js"></script>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="vendor/gsap/SplitText.min.js"></script>
+<script src="vendor/gsap/DrawSVGPlugin.min.js"></script>
+<script src="kit.js"></script>
+<script>
+  const scene = JSON.parse(new URLSearchParams(location.search).get('scene') ?? 'null');
+  const NS = 'http://www.w3.org/2000/svg';
+  const px = n => `${n}px`;
+  const tl = kit.timeline();
+  document.body.classList.add(scene.mode);
+
+  const box = (className, rect) => {
+    const el = document.createElement('div');
+    el.className = `abs ${className}`;
+    Object.assign(el.style, { left: px(rect.x), top: px(rect.y), width: px(rect.width), height: px(rect.height) });
+    document.body.append(el);
+    return el;
+  };
+  const text = ({ text: content, x, y, size }, className) => {
+    const el = document.createElement('div');
+    el.className = `t ${className}`;
+    Object.assign(el.style, { left: px(x), top: px(y), fontSize: px(size) });
+    el.textContent = content;
+    document.body.append(el);
+    return el;
+  };
+  const svg = document.createElementNS(NS, 'svg');
+
+  if (scene.panel) tl.fromTo(box('panel', scene.panel), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5 }, 0);
+  if (scene.title) tl.fromTo(text(scene.title, 'title'), { opacity: 0, y: '0.4em' }, { opacity: 1, y: 0 }, 0.1);
+  const frame = box('table', scene.frame);
+  tl.fromTo(frame, { opacity: 0, y: 24, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.5 }, 0.15);
+  if (scene.band) tl.fromTo(box('band', scene.band), { opacity: 0, scaleY: 0.92 }, { opacity: 1, scaleY: 1, duration: 0.5 }, 0.35);
+  box('head', scene.header.rect);
+  const columns = scene.header.labels.map((label, c) => text(label, `column${c === scene.highlight ? ' lead' : ''}`));
+  tl.fromTo(columns, { opacity: 0, y: 10 }, { opacity: 1, y: 0, stagger: 0.06, duration: 0.4 }, 0.3);
+  document.body.append(svg);
+
+  // ✓, ✕ and a half mark, each drawn as one or two pen strokes around the cell's center.
+  const r = scene.font.mark / 2;
+  const marks = {
+    yes: (x, y) => [`M${x - r} ${y + r * 0.05} L${x - r * 0.25} ${y + r * 0.75} L${x + r} ${y - r * 0.7}`],
+    no: (x, y) => [`M${x - r * 0.7} ${y - r * 0.7} L${x + r * 0.7} ${y + r * 0.7}`, `M${x + r * 0.7} ${y - r * 0.7} L${x - r * 0.7} ${y + r * 0.7}`],
+    partial: (x, y) => [`M${x - r * 0.75} ${y} L${x + r * 0.75} ${y}`],
+  };
+  scene.rows.forEach((row, i) => {
+    const t = row.time;
+    if (i > 0) tl.fromTo(box('row', row.rect), { opacity: 0 }, { opacity: 1, duration: 0.3 }, t);
+    const label = text(row.label, 'label');
+    tl.fromTo(label, { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.45 }, t);
+    if (row.emoji) {
+      const img = document.createElement('img');
+      img.className = 'emoji';
+      img.alt = '';
+      img.src = walkthrough.emoji(row.emoji.name);
+      Object.assign(img.style, { left: px(row.emoji.x), top: px(row.emoji.y), width: px(row.emoji.size), height: px(row.emoji.size) });
+      document.body.append(img);
+      tl.fromTo(img, { opacity: 0, scale: 0.4 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2.2)' }, t);
+    }
+    row.cells.forEach((cell, c) => {
+      const start = t + 0.15 + c * 0.08;
+      if (cell.kind === 'text') {
+        const el = text({ text: cell.text, x: cell.x, y: cell.y, size: scene.font.cell }, `cell${c === scene.highlight ? ' lead' : ''}`);
+        tl.fromTo(el, { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.4, ease: kit.ease.pop }, start);
+        return;
+      }
+      const strokes = marks[cell.kind](cell.x, cell.y).map(d => {
+        const path = document.createElementNS(NS, 'path');
+        path.setAttribute('d', d);
+        path.setAttribute('class', `mark ${cell.kind}`);
+        path.setAttribute('stroke-width', String(Math.max(3, scene.font.mark * 0.13)));
+        svg.append(path);
+        return path;
+      });
+      strokes.forEach((path, k) => tl.add(kit.draw(path, { duration: 0.3 }), start + k * 0.15));
+    });
+  });
+</script>
+</body>
+</html>

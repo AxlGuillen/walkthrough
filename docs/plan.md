@@ -15,6 +15,7 @@ Escrito el 28/sep/2026, después de la primera versión completa (tour de uws-ta
 7. **Fase 6 — Flujos.** Diagramas de pasos que aparecen al ritmo de la voz, con directrices para usarlos en cualquier video (añadida el 29/sep/2026).
 8. **Fase 7 — Biblioteca de recursos animados.** Aperturas, gráficas y código como piezas reutilizables que se declaran en el YAML y van al ritmo de la voz (añadida el 30/sep/2026).
 9. **Fase 8 — Marca, texturas y emojis.** Logos y colores por proyecto, fondos con textura y emojis cuidados dentro de los recursos (añadida el 1/oct/2026).
+10. **Fase 9 — Resaltar con variedad, tablas, líneas de tiempo y marcos.** Más formas de señalar lo que importa en la app y tres recursos nuevos (añadida el 1/oct/2026).
 
 Cada fase termina con pruebas en verde, documentación al día y commits que compilan por separado.
 
@@ -263,6 +264,36 @@ Escrita el 1/oct/2026. Los recursos de la fase 7 se ven todos iguales: el mismo 
 
 Las variantes nuevas (marcas, texturas, emojis) se agregan a `tours/examples/catalogo.yaml`; `docs/recursos.md` y la skill `recursos` explican cuándo usarlas.
 
+## Fase 9 — Resaltar con variedad, tablas, líneas de tiempo y marcos
+
+Escrita el 1/oct/2026. Todo se resalta igual (el rectángulo a mano en el acento) y faltan recursos para comparar opciones, contar una historia en el tiempo y presentar la app como producto.
+
+### 9.1 Formas de resaltar
+
+- **`highlight: { on, style, color }`** con `style`: `ring` (el de hoy), `circle` (óvalo a mano), `underline` (subrayado a mano), `marker` (resaltador detrás del texto), `box` (recuadro limpio), `brackets` (esquinas), `spotlight` (oscurece el resto) y `arrow` (una flecha que llega desde donde haya espacio).
+- **`color`:** el acento por defecto, o `yellow`, `green`, `red`, `blue`, `white` o un `#RRGGBB`. El resaltador es amarillo por defecto.
+- **`highlightStyle` en el tour:** el estilo por defecto de sus `highlight`, para que cada video tenga su carácter.
+- Todo en la capa de efectos, calculado en Node, siguiendo al elemento y retirándose si lo tapan, como las marcas de hoy.
+
+### 9.2 Tabla de comparación
+
+- **`table.html`** con `data`: columnas, filas y celdas (`yes`, `no`, `partial` o un texto). Una columna se puede destacar (la del producto).
+- Las filas aparecen en su palabra; las marcas ✓ y ✕ se dibujan al llenarse. Hasta 6 columnas en 16:9 y 3 en 9:16, validado por `check`.
+
+### 9.3 Línea de tiempo
+
+- **`roadmap.html`** con hitos (`date`, `title`, `detail`, `emoji`, `status`: `done`, `now`, `next`). La línea se dibuja de hito en hito al ritmo de la voz y el actual se marca.
+- Horizontal en 16:9 y vertical en 9:16; hasta 7 hitos.
+
+### 9.4 Marco de dispositivo
+
+- **`frame: laptop | browser | phone`** en el tour: la grabación va dentro del dispositivo, sobre el fondo de la marca y su textura. El cursor, las marcas y el zoom quedan dentro de la pantalla; los overlays, sobre todo el cuadro.
+- Las medidas del marco y de su pantalla se calculan en Node; el marco se dibuja una vez como imagen y ffmpeg compone la captura dentro.
+
+### 9.5 Catálogo y guía
+
+Ejemplos en `tours/examples/catalogo.yaml` (los estilos de resaltar en un tour con app), `docs/recursos.md` y la skill `recursos`.
+
 ## Estimación
 
 | Fase | Tamaño |
@@ -276,3 +307,4 @@ Las variantes nuevas (marcas, texturas, emojis) se agregan a `tours/examples/cat
 | 6 | Mediana (6.1 es lo más grande) |
 | 7 | Grande: 7.1 mediana, cada recurso de 7.2 a 7.4 mediano |
 | 8 | Mediana |
+| 9 | Mediana-grande (9.4 toca el montaje) |

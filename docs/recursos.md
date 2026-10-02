@@ -16,6 +16,8 @@ Piezas animadas que se declaran en el YAML con sus datos y sus palabras clave, y
 | Enseñar código, un comando o un cambio | `code.html` con `view: editor`, `terminal` o `diff` |
 | Comparar opciones, planes o un antes y después punto por punto | `table.html` |
 | Un plan, una historia o el avance de un proyecto por hitos | `roadmap.html` |
+| Una lista de pendientes que se escribe y se va tachando | `board.html` (pizarrón) |
+| Ideas, temas o pendientes sueltos, sin orden | `corkboard.html` (notas en un corcho) |
 | Señalar algo que ya está en la pantalla | No es un recurso: `highlight` (con su `style`, ver «Resaltar») o `label` |
 | Que la app se vea dentro de un navegador, una laptop o un teléfono | `frame:` en el tour (ver «Marco de dispositivo») |
 | Darle profundidad al recorrido, ver la app desde un ángulo | `shot:` en el segmento (ver «Planos») |
@@ -214,6 +216,61 @@ Ejemplos de las tres vistas en `tours/examples/codigo.yaml`.
 - **De 2 a 7 hitos**, uno `now` como mucho. Títulos de hasta ~3 palabras y `detail` de una frase corta; `check` avisa si un título pasa de dos líneas o un detalle de tres.
 - **`at` en la palabra que nombra cada hito.** La línea llega a él justo en ese momento.
 - `mode: card` deja la app arriba (16:9) o encima del panel (9:16).
+
+## Pizarrón
+
+`board.html` es una lista en un pizarrón colgado en la pared: cada renglón se escribe a mano en su palabra (`at`), con un cuadrito antes, y se tacha y se palomea en otra (`done`). Es una escena con profundidad (ver «Escenas con profundidad»).
+
+```yaml
+- say: Esta semana había tres pendientes. La nómina ya quedó, el perfil también, y el filtro de vencidas sigue en revisión.
+  overlays:
+    - src: board.html
+      data:
+        title: Pendientes de la semana
+        items:
+          - { text: Nómina por corte, at: tres, done: quedó }
+          - { text: Mi perfil, at: perfil, done: también }
+          - { text: Filtro Vencida, at: filtro }
+```
+
+| `style` | Cómo se ve |
+|---|---|
+| `chalk` (por defecto) | Pizarrón verde con marco de madera, escrito con gis que se rompe un poco |
+| `white` | Pizarrón blanco con marco de aluminio, escrito con plumón azul y tachado en rojo |
+
+- **De 1 a 7 renglones, cortos:** unas 3 o 4 palabras. Un título largo se encoge hasta caber; `check` avisa si queda muy chico o si un renglón no cabe.
+- **La mano escribe a unas 16 letras por segundo.** Deja aire entre un renglón y el siguiente: `check` avisa si uno empieza mientras el otro sigue escribiéndose, si algo se tacha antes de escribirse o si el pizarrón se va antes de terminar.
+- **Tachar es lo importante:** dilo con la voz («ya quedó»), y deja sin `done` lo que sigue pendiente.
+
+## Corcho
+
+`corkboard.html` clava notas de papel en un corcho, cada una en su palabra (`at`): caen desde cerca de la cámara con una sombra larga, se asientan y les entra la chinche. Cada nota lleva `text` y, si hace falta, `detail`, `emoji` y `color` (`yellow`, `pink`, `blue`, `green`, `white`; sin color se alternan).
+
+```yaml
+- say: Para la próxima entrega hay cuatro ideas. Planos de cámara, transiciones, un pizarrón y notas como estas.
+  overlays:
+    - src: corkboard.html
+      data:
+        title: Ideas para la próxima entrega
+        notes:
+          - { text: Planos de cámara, emoji: sparkles, at: Planos }
+          - { text: Transiciones, detail: push · flip · fly, at: transiciones }
+          - { text: Un pizarrón que se tacha, at: pizarrón }
+          - { text: Notas en un corcho, emoji: pushpin, at: notas }
+```
+
+- **De 1 a 6 notas,** de pocas palabras. `check` avisa si una no cabe en su papel.
+- **Para cosas sin orden.** Si tienen orden o fecha, es una línea de tiempo; si se van cumpliendo, un pizarrón.
+
+## Escenas con profundidad
+
+El pizarrón y el corcho no son tarjetas planas: cuelgan en una pared con el fondo del tour, con marco, luz desde arriba, sombra proyectada y piezas a distintas distancias (la repisa del pizarrón, las notas y sus chinches). La cámara entra desde un ángulo más abierto y deriva despacio mientras están en pantalla, así lo cercano se mueve más que lo lejano.
+
+- **Una por sección, como interludio.** Tapan la app, como una gráfica a pantalla completa.
+- **Cuestan render:** unas dos o tres veces lo de una tabla por segundo en pantalla.
+- **Letras de macOS** (Chalkduster, Marker Felt, Noteworthy): no hay archivos que bajar, pero el render necesita una Mac.
+
+Ejemplos de los tres en `tours/examples/catalogo.yaml`.
 
 ## Resaltar
 

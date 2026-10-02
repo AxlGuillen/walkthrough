@@ -31,7 +31,8 @@ describe('the resource catalog', () => {
     for (const expected of ['opening · kinetic', 'opening · over-app', 'opening · brand', 'chapter-card · kinetic', 'closing · kinetic',
       'chart · bar', 'chart · line', 'chart · donut', 'chart · stat', 'chart · compare', 'chart · bar (card)',
       'code · editor', 'code · terminal', 'code · diff',
-      'flow · linear', 'flow · decision', 'flow · cycle', 'flow · lanes', 'flow · compare', 'flow · linear (card)', 'sticker']) {
+      'flow · linear', 'flow · decision', 'flow · cycle', 'flow · lanes', 'flow · compare', 'flow · linear (card)', 'sticker',
+      'board · chalk', 'board · white', 'corkboard']) {
       expect(labels).toContain(expected);
     }
   });

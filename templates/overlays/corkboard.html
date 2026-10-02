@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!-- Notes pinned to a corkboard in a room, each landing on its word. Node validates `data` and
+     lays out the scene (src/corkboard/), which this page paints. Beats: n0, n1… for each note. -->
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="scene.css">
+<style>
+  .frame { border-radius: 1.2vmin; }
+  .cork {
+    border-radius: 0.5vmin; overflow: hidden;
+    background:
+      radial-gradient(60% 50% at 35% 30%, rgba(255, 225, 175, 0.18), transparent 70%),
+      linear-gradient(160deg, #c99a62, #b07c45 55%, #9a6936);
+    box-shadow: inset 0 0 5vmin rgba(60, 30, 5, 0.5);
+  }
+  .cork .grain { position: absolute; inset: 0; opacity: 0.75; mix-blend-mode: multiply; background-size: 90px 90px; }
+  .label {
+    position: absolute; translate: -50% -50%; padding: 0.5em 1.2em; white-space: nowrap; line-height: 1;
+    font-family: "Marker Felt", "Noteworthy", cursive; font-weight: 700; color: #1d1d1d;
+    background: linear-gradient(180deg, #fffdf6, #f1ece0); box-shadow: 0 0.6vmin 1.2vmin rgba(0, 0, 0, 0.35);
+  }
+  .note {
+    position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: stretch;
+    gap: 0.25em; text-align: center; color: #262421;
+    font-family: "Noteworthy", "Marker Felt", cursive; font-weight: 700; line-height: 1.15;
+  }
+  .note .paper { position: absolute; inset: 0; z-index: -1; border-radius: 0.3vmin; }
+  .note .text { overflow-wrap: anywhere; }
+  .note .detail { font-weight: 400; opacity: 0.75; overflow-wrap: anywhere; }
+  .note .emoji { object-fit: contain; align-self: center; }
+  .shade { position: absolute; border-radius: 0.6vmin; background: rgba(0, 0, 0, 0.55); filter: blur(1.4vmin); }
+  .pin {
+    position: absolute; translate: -50% -50%; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff8a8a, #d42d2d 45%, #7d1010 100%);
+    box-shadow: 0.25vmin 0.5vmin 0.6vmin rgba(0, 0, 0, 0.5);
+  }
+</style>
+</head>
+<body class="scene">
+<div class="room"><div class="rig"><div class="cam"></div></div></div>
+<div class="light"></div>
+<script src="params.js"></script>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="kit.js"></script>
+<script>
+  const scene = JSON.parse(new URLSearchParams(location.search).get('scene') ?? 'null');
+  const px = n => `${n}px`;
+  const { u, board } = scene;
+  const tl = kit.timeline();
+  const cam = document.querySelector('.cam');
+  const PAPER = { yellow: ['#fff3a3', '#f8df63'], pink: ['#ffd1e0', '#f7a8c2'], blue: ['#cfe8ff', '#9fcdf5'], green: ['#d4f5c8', '#a9e597'], white: ['#ffffff', '#ece9e1'] };
+
+  const piece = (className, rect, z = 0) => {
+    const el = document.createElement('div');
+    el.className = `piece ${className}`;
+    Object.assign(el.style, { left: px(rect.x), top: px(rect.y), width: px(rect.width), height: px(rect.height), transform: `translateZ(${z}px)` });
+    cam.append(el);
+    return el;
+  };
+  const grow = (rect, by) => ({ x: rect.x - by, y: rect.y - by, width: rect.width + 2 * by, height: rect.height + 2 * by });
+
+  piece('cast', { x: board.x + 2 * u, y: board.y + 3 * u, width: board.width, height: board.height + 2 * u }, -3 * u);
+  piece('frame wood', grow(board, 1.8 * u));
+  const cork = piece('cork', board, 0.4 * u);
+  const grain = document.createElement('div');
+  grain.className = 'grain';
+  cork.append(grain);
+  kit.drift(tl, document.querySelector('.rig'), cam);
+
+  if (scene.title) {
+    const label = document.createElement('div');
+    label.className = 'label';
+    label.textContent = scene.title.text;
+    Object.assign(label.style, { left: px(scene.title.x), top: px(scene.title.y), fontSize: px(scene.title.size * 0.8), transform: `translateZ(${u}px) rotate(-1.2deg)` });
+    cam.append(label);
+    tl.fromTo(label, { opacity: 0, scale: 1.15 }, { opacity: 1, scale: 1, duration: 0.5 }, 0.45);
+  }
+
+  // Each note drops from nearer the camera with a wide, soft shadow, and lands close to the
+  // cork with a short, dark one; the pin goes in last.
+  for (const note of scene.notes) {
+    const { rect, tilt, time } = note;
+    const shade = piece('shade', rect, 0.6 * u);
+    const el = piece('note', rect, 1.2 * u);
+    el.style.fontSize = px(scene.font.text);
+    // In pixels: a percentage would be of the whole canvas, not of the note.
+    el.style.padding = `${px(rect.height * 0.14)} ${px(rect.width * 0.09)} ${px(rect.height * 0.08)}`;
+    const [light, deep] = PAPER[note.color];
+    const paper = document.createElement('div');
+    paper.className = 'paper';
+    paper.style.background = `linear-gradient(155deg, ${light} 0%, ${light} 55%, ${deep} 100%)`;
+    el.append(paper);
+    if (note.emoji) {
+      const img = document.createElement('img');
+      img.className = 'emoji';
+      img.alt = '';
+      img.src = walkthrough.emoji(note.emoji);
+      Object.assign(img.style, { width: px(scene.font.text * 1.6), height: px(scene.font.text * 1.6) });
+      el.append(img);
+    }
+    const text = document.createElement('div');
+    text.className = 'text';
+    text.textContent = note.text;
+    el.append(text);
+    if (note.detail) {
+      const detail = document.createElement('div');
+      detail.className = 'detail';
+      detail.style.fontSize = px(scene.font.detail);
+      detail.textContent = note.detail;
+      el.append(detail);
+    }
+    const pin = document.createElement('div');
+    pin.className = 'pin';
+    const size = Math.max(14, 2.4 * u);
+    Object.assign(pin.style, { left: px(rect.x + rect.width / 2), top: px(rect.y + rect.height * 0.08), width: px(size), height: px(size) });
+    cam.append(pin);
+
+    tl.fromTo(el, { opacity: 0, z: 14 * u, y: -3 * u, rotation: tilt * 2.2 }, { opacity: 1, z: 1.2 * u, y: 0, rotation: tilt, duration: 0.6, ease: 'power3.out' }, time);
+    tl.fromTo(shade, { opacity: 0, x: 4 * u, y: 6 * u, scale: 1.08, rotation: tilt * 2.2 }, { opacity: 0.55, x: 0.5 * u, y: 0.9 * u, scale: 1, rotation: tilt, duration: 0.6, ease: 'power3.out' }, time);
+    tl.fromTo(pin, { opacity: 0, scale: 2.2, z: 6 * u }, { opacity: 1, scale: 1, z: 1.6 * u, duration: 0.3, ease: kit.ease.pop }, time + 0.45);
+  }
+</script>
+</body>
+</html>

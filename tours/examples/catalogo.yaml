@@ -160,6 +160,38 @@ segments:
             - { date: Semana 3, title: Pruebas, status: next }
             - { date: Semana 4, title: Entrega, status: next }
 
+  # Escenas con profundidad
+  - hold: 7
+    overlays:
+      - src: board.html
+        data:
+          title: Pendientes de la semana
+          items:
+            - { text: Nómina por corte, at: 1, done: 4.4 }
+            - { text: Mi perfil y avatares, at: 2.2, done: 5.2 }
+            - { text: Filtro Vencida, at: 3.4 }
+  - hold: 6
+    overlays:
+      - src: board.html
+        data:
+          style: white
+          title: Sprint 12
+          items:
+            - { text: Diseño de la cámara, at: 1, done: 4 }
+            - { text: Transiciones, at: 2.2 }
+            - { text: Escenas con fondo, at: 3.2 }
+  - hold: 4.5
+    overlays:
+      - src: corkboard.html
+        data:
+          title: Ideas para la próxima entrega
+          notes:
+            - { text: Planos de cámara, emoji: sparkles }
+            - { text: Transiciones, detail: push · flip · fly }
+            - { text: Un pizarrón que se tacha }
+            - { text: Notas en un corcho, emoji: pushpin }
+            - { text: El marco como capa }
+
   # Flujos
   - hold: 5
     flow:

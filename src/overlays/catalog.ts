@@ -28,7 +28,7 @@ export interface Shot {
 export function describeOverlay(overlay: TimedOverlay): string {
   if (overlay.flow) return `flow · ${overlay.flow.shape}${overlay.flow.mode === 'card' ? ' (card)' : ''}`;
   const data = overlay.data as Record<string, unknown> | undefined;
-  const variant = data?.type ?? data?.view ?? overlay.params.style;
+  const variant = data?.type ?? data?.view ?? data?.style ?? overlay.params.style;
   const card = data?.mode === 'card' ? ' (card)' : '';
   return `${overlay.src.replace(/\.html$/, '')}${variant ? ` · ${String(variant)}` : ''}${card}`;
 }

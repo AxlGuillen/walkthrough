@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<!-- A to-do list on a board in a room: each item is written on its word and crossed out on
+     its `done`. Node validates `data` and lays out the scene (src/board/), which this page
+     paints. Beats: i0, i1… when each item is written; d0, d1… when it is crossed out. -->
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="scene.css">
+<style>
+  .surface { border-radius: 0.6vmin; overflow: hidden; }
+  .frame { border-radius: 1.2vmin; }
+  .writing { position: absolute; white-space: nowrap; line-height: 1; translate: 0 -50%; }
+  .writing .ink { position: relative; display: inline-block; padding: 0.2em 0.1em; }
+  .writing svg, .box { position: absolute; overflow: visible; pointer-events: none; }
+  .writing svg { inset: 0; width: 100%; height: 100%; }
+  .stroke { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* chalk: a green slate, smudged, written in chalk that breaks up a little. */
+  .chalk .surface {
+    background-color: #24392f;
+    background-image:
+      radial-gradient(40% 30% at 30% 35%, rgba(255, 255, 255, 0.06), transparent 70%),
+      radial-gradient(35% 25% at 72% 62%, rgba(255, 255, 255, 0.05), transparent 70%);
+    box-shadow: inset 0 0 6vmin rgba(0, 0, 0, 0.45);
+  }
+  .chalk .writing { font-family: "Chalkduster", "Chalkboard SE", cursive; color: #f2efe4; filter: url(#chalk); }
+  .chalk .title { color: #f7e8a6; }
+  .chalk .stroke { stroke: #f2efe4; filter: url(#chalk); }
+  .chalk .stroke.mark { stroke: color-mix(in srgb, var(--accent) 55%, #fff6c8); }
+
+  /* white: a whiteboard with a glare, written in marker. */
+  .white .surface {
+    background: linear-gradient(115deg, #fbfbf8 0%, #f1f2ee 45%, #ffffff 52%, #eef0ec 60%, #f6f6f3 100%);
+    box-shadow: inset 0 0 3vmin rgba(0, 0, 0, 0.12);
+  }
+  .white .frame { background: linear-gradient(180deg, #e3e6e8, #a9afb5 55%, #8b9298); box-shadow: inset 0 0.3vmin 0 rgba(255, 255, 255, 0.7); }
+  .white .writing { font-family: "Marker Felt", "Noteworthy", cursive; font-weight: 700; color: #1d3f8f; }
+  .white .title { color: #111; }
+  .white .stroke { stroke: #1d3f8f; }
+  .white .stroke.mark { stroke: #d42d2d; }
+
+  .tray-thing { position: absolute; border-radius: 0.4vmin; }
+</style>
+</head>
+<body class="scene">
+<svg width="0" height="0" style="position:absolute">
+  <filter id="chalk" x="-5%" y="-20%" width="110%" height="140%">
+    <feTurbulence type="fractalNoise" baseFrequency="1.2" numOctaves="2" seed="7" result="noise"/>
+    <feColorMatrix in="noise" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -1.6 1.45" result="holes"/>
+    <feComposite in="SourceGraphic" in2="holes" operator="in" result="broken"/>
+    <feDisplacementMap in="broken" in2="noise" scale="2.2"/>
+  </filter>
+</svg>
+<div class="room"><div class="rig"><div class="cam"></div></div></div>
+<div class="light"></div>
+<script src="params.js"></script>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="vendor/gsap/DrawSVGPlugin.min.js"></script>
+<script src="kit.js"></script>
+<script>
+  const scene = JSON.parse(new URLSearchParams(location.search).get('scene') ?? 'null');
+  const NS = 'http://www.w3.org/2000/svg';
+  const px = n => `${n}px`;
+  const { u, board, tray } = scene;
+  const tl = kit.timeline();
+  const cam = document.querySelector('.cam');
+  document.body.classList.add(scene.style);
+
+  const piece = (className, rect, z = 0) => {
+    const el = document.createElement('div');
+    el.className = `piece ${className}`;
+    Object.assign(el.style, { left: px(rect.x), top: px(rect.y), width: px(rect.width), height: px(rect.height), transform: `translateZ(${z}px)` });
+    cam.append(el);
+    return el;
+  };
+  const grow = (rect, by) => ({ x: rect.x - by, y: rect.y - by, width: rect.width + 2 * by, height: rect.height + 2 * by });
+
+  // The wall shadow, the frame, the writing surface, and the ledge nearer the camera.
+  piece('cast', { x: board.x + 2 * u, y: board.y + 3 * u, width: board.width, height: board.height + 3 * u }, -3 * u);
+  piece(`frame ${scene.style === 'chalk' ? 'wood' : ''}`, grow(board, 1.8 * u));
+  const surface = piece('surface', board, 0.4 * u);
+  const grain = document.createElement('div');
+  grain.className = 'grain';
+  Object.assign(grain.style, { position: 'absolute', inset: '0', opacity: scene.style === 'chalk' ? '0.35' : '0.12', mixBlendMode: 'overlay' });
+  surface.append(grain);
+  piece(`frame ${scene.style === 'chalk' ? 'wood' : ''}`, tray, 3 * u);
+  const things = scene.style === 'chalk'
+    ? [{ x: 0.18, w: 7, h: 1.2, c: '#f4f1e8' }, { x: 0.24, w: 5, h: 1.2, c: '#f3d36b' }, { x: 0.72, w: 10, h: 2.2, c: '#3b3b3f' }]
+    : [{ x: 0.2, w: 9, h: 1.6, c: '#1d3f8f' }, { x: 0.27, w: 9, h: 1.6, c: '#d42d2d' }, { x: 0.7, w: 11, h: 2.4, c: '#2b2b2b' }];
+  for (const t of things) {
+    const el = piece('tray-thing', { x: tray.x + tray.width * t.x, y: tray.y - t.h * u * 0.5, width: t.w * u, height: t.h * u }, 3.6 * u);
+    el.style.background = `linear-gradient(180deg, color-mix(in srgb, ${t.c} 70%, #fff), ${t.c})`;
+    el.style.boxShadow = '0 0.5vmin 0.8vmin rgba(0,0,0,0.45)';
+  }
+  kit.drift(tl, document.querySelector('.rig'), cam);
+
+  // Writing that appears left to right at a hand's pace, with a strike that stretches with it.
+  const writing = ({ text, x, y, size }, className = '') => {
+    const el = document.createElement('div');
+    el.className = `writing ${className}`;
+    Object.assign(el.style, { left: px(x), top: px(y), fontSize: px(size), transform: `translateZ(${0.5 * u}px)` });
+    const ink = document.createElement('span');
+    ink.className = 'ink';
+    ink.textContent = text;
+    el.append(ink);
+    cam.append(el);
+    return { el, ink };
+  };
+  const write = (ink, at, duration) =>
+    tl.fromTo(ink, { clipPath: 'inset(-20% 100% -20% 0)' }, { clipPath: 'inset(-20% 0% -20% 0)', duration, ease: 'none' }, at);
+  const path = (parent, d, className, width) => {
+    const svg = parent.querySelector('svg') ?? parent.appendChild(document.createElementNS(NS, 'svg'));
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', d);
+    p.setAttribute('class', `stroke ${className}`);
+    p.setAttribute('stroke-width', String(width));
+    p.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.append(p);
+    return p;
+  };
+
+  if (scene.title) {
+    const { ink } = writing(scene.title, 'title');
+    write(ink, 0.5, Math.min(1.6, Math.max(0.5, scene.title.text.length / 16)));
+  }
+
+  const stroke = Math.max(3, scene.font * 0.09);
+  for (const item of scene.items) {
+    const { el, ink } = writing({ text: item.text, x: item.x, y: item.y, size: scene.font });
+    write(ink, item.time + 0.2, item.write);
+
+    // A hand-drawn box before the text, and later its check.
+    const s = item.box.size;
+    const box = document.createElementNS(NS, 'svg');
+    box.setAttribute('class', 'box');
+    Object.assign(box.style, { left: px(item.box.x - s / 2), top: px(item.y - s / 2), width: px(s), height: px(s), transform: `translateZ(${0.5 * u}px)` });
+    cam.append(box);
+    const square = path(box, `M${s * 0.04} ${s * 0.06} L${s * 0.97} ${s * 0.02} L${s * 0.95} ${s * 0.96} L${s * 0.03} ${s * 0.94} Z`, '', stroke);
+    tl.add(kit.draw(square, { duration: 0.35 }), item.time);
+
+    if (item.done === undefined) continue;
+    // The strike runs across the written text: its svg spans the ink, stretched to it.
+    const strike = path(ink, 'M -3 56 C 20 50, 45 60, 70 52 S 95 55, 103 49', '', stroke);
+    ink.querySelector('svg').setAttribute('viewBox', '0 0 100 100');
+    ink.querySelector('svg').setAttribute('preserveAspectRatio', 'none');
+    tl.add(kit.draw(strike, { duration: 0.45, ease: 'power1.inOut' }), item.done);
+    tl.to(ink, { opacity: 0.55, duration: 0.4 }, item.done + 0.3);
+    const check = path(box, `M${s * 0.12} ${s * 0.5} L${s * 0.42} ${s * 0.85} L${s * 1.05} ${-s * 0.15}`, 'mark', stroke * 1.2);
+    tl.add(kit.draw(check, { duration: 0.3 }), item.done + 0.15);
+  }
+</script>
+</body>
+</html>

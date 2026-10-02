@@ -35,5 +35,12 @@
   // An SVG stroke that draws itself.
   const draw = (target, vars = {}) => gsap.fromTo(target, { drawSVG: '0%' }, { drawSVG: '100%', duration: time.draw, ease: ease.inOut, ...vars });
 
-  window.kit = { gsap, ease, time, lang, locale, timeline, split, count, draw, beat: (name, fallback) => walkthrough.beat(name, fallback) };
+  // A depth scene's camera: it settles in from a wider angle, then drifts slowly for as long as
+  // the overlay is on, so nearer pieces move more than farther ones.
+  const drift = (tl, rig, cam, { from = { rotationY: -14, rotationX: 6, z: -160 }, rest = { rotationY: -10, rotationX: 4 }, to = { rotationY: -4, rotationX: 2 } } = {}) => {
+    tl.fromTo(rig, { ...from, opacity: 0 }, { rotationY: 0, rotationX: 0, z: 0, opacity: 1, duration: 0.9, ease: ease.out }, 0);
+    tl.fromTo(cam, rest, { ...to, duration: Math.max(1, walkthrough.duration), ease: 'sine.inOut' }, 0);
+  };
+
+  window.kit = { gsap, ease, time, lang, locale, timeline, split, count, draw, drift, beat: (name, fallback) => walkthrough.beat(name, fallback) };
 })();

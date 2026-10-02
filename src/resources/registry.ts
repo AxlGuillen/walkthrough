@@ -1,9 +1,13 @@
 import path from 'node:path';
 import type { ZodType } from 'zod';
+import { boardBeats, boardScene, type BoardScene } from '../board/layout.ts';
+import { boardSchema } from '../board/schema.ts';
 import { chartBeats, chartScene, type ChartScene } from '../charts/layout.ts';
 import { chartSchema } from '../charts/schema.ts';
 import { codeBeats, codeScene, type CodeScene } from '../code/layout.ts';
 import { codeSchema } from '../code/schema.ts';
+import { corkboardBeats, corkboardScene, type CorkScene } from '../corkboard/layout.ts';
+import { corkboardSchema } from '../corkboard/schema.ts';
 import { roadmapBeats, roadmapScene, type RoadmapScene } from '../roadmap/layout.ts';
 import { roadmapSchema } from '../roadmap/schema.ts';
 import { tableBeats, tableScene, type TableScene } from '../table/layout.ts';
@@ -35,6 +39,14 @@ const RESOURCES: Record<string, Resource<never>> = {
   'table.html': {
     schema: tableSchema, beats: tableBeats, scene: tableScene,
     warnings: (...args: Parameters<typeof tableScene>) => (tableScene(...args) as TableScene).warnings,
+  } as unknown as Resource<never>,
+  'board.html': {
+    schema: boardSchema, beats: boardBeats, scene: boardScene,
+    warnings: (...args: Parameters<typeof boardScene>) => (boardScene(...args) as BoardScene).warnings,
+  } as unknown as Resource<never>,
+  'corkboard.html': {
+    schema: corkboardSchema, beats: corkboardBeats, scene: corkboardScene,
+    warnings: (...args: Parameters<typeof corkboardScene>) => (corkboardScene(...args) as CorkScene).warnings,
   } as unknown as Resource<never>,
   'code.html': {
     schema: codeSchema, beats: codeBeats, scene: codeScene,

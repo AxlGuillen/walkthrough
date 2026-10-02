@@ -1,0 +1,148 @@
+title: Entrega semana 40
+url: https://dymmsa-web.vercel.app
+session: dymmsa
+device: desktop
+language: es
+brand: dymmsa
+watermark: true
+setup:
+  storage:
+    # The app's own privacy toggle (ADR-005): amounts and NSS stay masked in a client video.
+    dymmsa-discrete-mode: '{"state":{"isDiscreteMode":true},"version":0}'
+
+# Read-only: it navigates, opens menus and filters, and never saves, closes a period or uploads.
+segments:
+  - say: Esta es la entrega semanal de DYMMSA, con lo que se agregó del veinticinco de septiembre al primero de octubre.
+    do:
+      - goto: /dashboard
+    overlays:
+      - src: opening.html
+        params: { style: brand, eyebrow: Entrega semanal, title: Semana 40, subtitle: 25 sep – 1 oct }
+        beats: { mark: entrega, title: DYMMSA, subtitle: veinticinco }
+
+  # Mi perfil
+  - say: Empezamos con Mi perfil, la página propia de cada persona.
+    overlays:
+      - src: chapter-card.html
+        params: { style: brand, eyebrow: Novedad, index: 1, total: 4, title: Mi perfil }
+        beats: { title: perfil }
+
+  - say: Para entrar, da clic en tu nombre, al pie del menú lateral.
+    do:
+      - highlight: { on: '[data-tour=nav-prefs] a[href="/dashboard/profile"]', at: nombre }
+
+  - say: Ahí subes tu foto, que se recorta sola en cuadro, y cambias tu nombre.
+    do:
+      - click: { on: '[data-tour=nav-prefs] a[href="/dashboard/profile"]', wait: '[data-tour=profile-photo]', at: 0.2 }
+      - highlight: { on: '[data-tour=profile-photo] [aria-label="Axl"]', at: recorta, style: circle }
+
+  - say: Tu Número de Seguridad Social también se captura aquí, y solo lo ven tú y los administradores.
+    do:
+      - highlight: { on: '#me-nss', at: captura, style: box }
+
+  - say: Y tu foto, o tus iniciales si aún no subes una, aparece en toda la app, empezando por el menú.
+    do:
+      - highlight: { on: '[data-tour=nav-prefs] a[href="/dashboard/profile"]', at: menú }
+
+  # Horas
+  - say: Seguimos con Horas, donde cada quien ve sus checadas de la semana.
+    do:
+      - click: { on: 'a[href="/dashboard/hours"]', wait: '[data-tour=hrs-week-chart]', at: 1.6 }
+    overlays:
+      - src: chapter-card.html
+        params: { style: brand, eyebrow: Novedad, index: 2, total: 4, title: Horas }
+        beats: { title: Horas }
+
+  - say: Como administrador, eliges a la persona que quieres revisar, con su foto en el selector.
+    do:
+      - click: { on: '[data-tour=hrs-employee]', at: eliges }
+      - click: { on: '[role=option]:has-text("Santiago")', at: selector }
+
+  - say: Y en la semana pasada se ve lo nuevo. Cada día se pinta en verde si cumplió su jornada, y en rojo si no.
+    do:
+      - click: { on: 'button[aria-label="Semana anterior"]', wait: '[data-tour=hrs-week-chart]:has-text("25:15")', at: pasada }
+      - highlight: { on: '[data-tour=hrs-week-chart]', at: verde, style: brackets }
+
+  - say: En Equipo, el administrador marca los días feriados o las salidas autorizadas.
+    do:
+      - click: { on: 'a[href="/dashboard/hours/team"]', wait: '[data-tour=team-excused]', at: 0.3 }
+      - highlight: { on: '[data-tour=team-excused]', at: feriados, style: box }
+
+  - say: Antes, un día feriado contaba como falta. Ahora se justifica, el objetivo de la semana se ajusta solo, y cada día se lee de un vistazo.
+    overlays:
+      - src: table.html
+        data:
+          title: Horas, antes y ahora
+          mode: card
+          columns: [Antes, Ahora]
+          highlight: Ahora
+          rows:
+            - { label: Día feriado, values: [Falta, Justificado], at: feriado }
+            - { label: Objetivo semanal, values: [Fijo, Ajustado], at: objetivo }
+            - { label: ¿Cumplió el día?, values: [Sumar, Verde o rojo], at: vistazo }
+
+  - say: Y junto al nombre del dueño, ahora aparece una corona.
+    do:
+      - highlight: { on: 'svg[aria-label="Dueño del negocio"]', at: corona, style: arrow }
+
+  # Finanzas
+  - say: Pasamos a Finanzas, con dos cambios.
+    do:
+      - click: { on: 'a[href="/dashboard/finance"]', wait: '[data-tour=fin-income] [data-slot=card-title]:text-is("Por cobrar")', at: 0.4 }
+    overlays:
+      - src: chapter-card.html
+        params: { style: brand, eyebrow: Novedad, index: 3, total: 4, title: Finanzas }
+        beats: { title: Finanzas }
+
+  - say: Por cobrar ahora cuadra con Odoo. El total incluye lo vencido, y la tarjeta dice cuánto de eso ya venció.
+    do:
+      - highlight: { on: '[data-tour=fin-income] [data-slot=card]:has([data-slot=card-title]:text-is("Por cobrar"))', at: cuadra, style: spotlight, duration: 4 }
+
+  - say: En Facturas por pagar hay un filtro nuevo, Vencida, que deja solo las pendientes cuya fecha ya pasó.
+    hold: 1.5
+    do:
+      - click: { on: '[data-tour=nav-finanzas] a[href="/dashboard/finance/payables"]', wait: '[data-tour=pay-filters]', at: 0.2 }
+      - click: { on: '[data-tour=pay-filters] [role=combobox]:has-text("Todos los estados")', at: filtro }
+      - highlight: { on: '[role=option]:has-text("Vencida")', at: Vencida, style: marker }
+      - click: { on: '[role=option]:has-text("Vencida")', at: pasó }
+
+  # Nómina
+  - say: Y lo más grande de la semana, Nómina, solo para administradores.
+    do:
+      - click: { on: 'a[href="/dashboard/payroll"]', wait: 'button:has-text("Traer de Horas")', at: 0.4 }
+    overlays:
+      - src: chapter-card.html
+        params: { style: brand, eyebrow: Novedad, index: 4, total: 4, title: Nómina }
+        beats: { title: Nómina }
+
+  - say: Cada corte va de sábado a viernes, el mismo periodo con el que se paga.
+    do:
+      - highlight: { on: 'p:has-text("del sábado anterior al propio viernes")', at: sábado, style: underline }
+
+  - say: Los empleados se dan de alta aquí, y los de oficina se ligan a su perfil para traer sus horas.
+    do:
+      - highlight: { on: 'button:has-text("Empleados")', at: alta }
+
+  - say: Traer de Horas llena el corte como borrador. El administrador lo revisa, confirma los borradores, y cierra el corte, que ya no se puede modificar.
+    flow:
+      title: Cómo se arma un corte
+      steps:
+        - { text: Traer de Horas, at: Traer }
+        - { text: Borrador, detail: No suma hasta confirmarse, at: borrador }
+        - { text: Confirmar, at: confirma }
+        - { text: Corte cerrado, detail: Ya no se puede modificar, emoji: locked, at: cierra }
+
+  - say: El sábado cuenta doble y el domingo triple, y todo se lleva en horas, nunca en montos.
+
+  # Cierre
+  - say: Todo esto también lo encuentras en Novedades, dentro de la app.
+    do:
+      - click: { on: 'a[href="/dashboard/changelog"]', wait: '.docs-page-bg h2 >> nth=0', at: 0.3 }
+      - highlight: { on: '.docs-page-bg h2 >> nth=0', at: Novedades }
+
+  - say: Eso es todo por esta semana. Nos vemos en la próxima entrega.
+    hold: 5
+    overlays:
+      - src: closing.html
+        params: { style: brand, title: Gracias, subtitle: Entrega semanal · Semana 40, url: dymmsa-web.vercel.app }
+        beats: { title: todo, url: próxima }

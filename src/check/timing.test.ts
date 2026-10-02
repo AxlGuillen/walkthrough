@@ -32,6 +32,13 @@ describe('auditTiming', () => {
     ]);
   });
 
+  it('gives a change the stage draws its longer length', () => {
+    const events = [{ kind: 'navigate' as const, time: 4 }, { kind: 'ring' as const, time: 4.6 }];
+    const goto = { time: 4, segment: 0, action: { kind: 'goto' as const, url: '/b', at: undefined } };
+    expect(auditTiming(events, { overlays: [], actions: [goto] })).toEqual([]);
+    expect(auditTiming(events, { overlays: [], actions: [{ ...goto, transition: 'push' }] })).toHaveLength(1);
+  });
+
   it('flags a mark a full-screen flow covers before it can be read, not one under a card', () => {
     const notes = auditTiming([{ kind: 'ring', time: 10 }, { kind: 'ring', time: 20 }], { overlays: [flow(10.8), flow(20.5, 'card')] });
     expect(notes.map(n => n.time)).toEqual([10]);

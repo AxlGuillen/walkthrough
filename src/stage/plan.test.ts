@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { TimedAction, TimedShot } from '../timeline/build.ts';
 import type { Shot } from '../tour/schema.ts';
-import { CAMERA, FLAT, pose, poseAt, stagePlan } from './plan.ts';
+import { CAMERA, CHANGE_LENGTH, changeAt, changeLayers, FLAT, pose, poseAt, stagePlan } from './plan.ts';
 
 const shot = (time: number, to: Shot['to'], extra: Partial<Shot> = {}): TimedShot =>
   ({ time, segment: 0, shot: { kind: 'shot', to, angle: undefined, duration: undefined, at: undefined, ...extra } });
@@ -20,7 +20,7 @@ describe('pose', () => {
 
 describe('stagePlan', () => {
   it('stays flat and renders nothing without shots', () => {
-    expect(plan([], [mark(3)])).toEqual({ moves: [], spans: [], notes: [] });
+    expect(plan([], [mark(3)])).toEqual({ moves: [], changes: [], spans: [], notes: [] });
   });
 
   it('eases into a shot over its duration and holds it to the end', () => {
@@ -73,5 +73,52 @@ describe('stagePlan', () => {
     const { moves, spans } = plan([shot(1, 'wide'), shot(4, 'flat')]);
     expect(moves.at(-1)!.to).toEqual(FLAT);
     expect(spans).toEqual([{ start: 1, end: 4 + CAMERA.move }]);
+  });
+});
+
+const navigation = (time: number, transition?: 'push' | 'flip' | 'fly'): TimedAction =>
+  ({ time, segment: 0, action: { kind: 'goto', url: '/next', at: undefined }, ...(transition ? { transition } : {}) });
+
+describe('changes of screen', () => {
+  it('renders each staged change for its length, and leaves dissolves to the page', () => {
+    const { changes, spans } = plan([], [navigation(3, 'push'), navigation(6)]);
+    expect(changes).toEqual([{ time: 3, kind: 'push' }]);
+    expect(spans).toEqual([{ start: 3, end: 3 + CHANGE_LENGTH }]);
+  });
+
+  it('merges a change into the camera stretch it falls in', () => {
+    const { spans } = plan([shot(1, 'wide')], [navigation(4, 'fly')], 10);
+    expect(spans).toEqual([{ start: 1, end: 10 }]);
+  });
+
+  it('knows how far along a change is, and nothing outside it', () => {
+    const changes = [{ time: 3, kind: 'flip' as const }];
+    expect(changeAt(changes, 2.9)).toBeNull();
+    expect(changeAt(changes, 3.4)!.progress).toBeCloseTo(0.4 / CHANGE_LENGTH);
+    expect(changeAt(changes, 3 + CHANGE_LENGTH)).toBeNull();
+  });
+
+  it('starts on the old screen and ends on the new one, square and full size', () => {
+    for (const kind of ['push', 'flip', 'fly'] as const) {
+      const start = changeLayers(kind, 0);
+      const end = changeLayers(kind, 1);
+      expect(start.old).toMatchObject({ x: 0, scale: 1, opacity: 1 });
+      expect(start.next.opacity === 0 || Math.abs(start.next.x) >= 1).toBe(true);
+      expect(end.next).toMatchObject({ x: 0, scale: 1, opacity: 1, depth: 0 });
+      expect(Math.abs(end.next.rotateY)).toBe(0);
+    }
+  });
+
+  it('pushes the old screen out to the left as the new one comes from the right', () => {
+    const { old, next } = changeLayers('push', 0.5);
+    expect(old.x).toBeLessThan(0);
+    expect(next.x).toBeGreaterThan(0);
+    expect(old.scale).toBeLessThan(1);
+  });
+
+  it('turns a flip on the old face first and the new face last', () => {
+    expect(changeLayers('flip', 0.3).old.opacity).toBe(1);
+    expect(changeLayers('flip', 0.3).next.opacity).toBe(0);
+    expect(changeLayers('flip', 0.7).next.opacity).toBe(1);
   });
 });

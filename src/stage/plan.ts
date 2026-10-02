@@ -1,5 +1,5 @@
 import type { Timeline } from '../timeline/build.ts';
-import type { Shot } from '../tour/schema.ts';
+import type { Shot, Transition } from '../tour/schema.ts';
 
 // Where the recording sits on the stage. scale is of the full canvas; rotations in degrees
 // (rotateY > 0 brings the left edge closer); x and y shift it, as a share of the canvas;
@@ -21,12 +21,30 @@ export interface Move {
   to: Pose;
 }
 
+// A change of screen the stage draws: the old screen, held at its last frame, gives way to the new one.
+export interface Change {
+  time: number;
+  kind: Exclude<Transition, 'dissolve'>;
+}
+
 export interface StagePlan {
   moves: Move[];
-  // Stretches where the camera is off the flat: only these get rendered on the stage.
+  changes: Change[];
+  // Stretches where the camera is off the flat or a screen is changing: only these get rendered.
   spans: { start: number; end: number }[];
   notes: { time: number; note: string }[];
 }
+
+// How one screen sits inside the camera's pose while it changes: x as a share of the width.
+export interface Layer {
+  x: number;
+  scale: number;
+  rotateY: number;
+  opacity: number;
+  depth: number;
+}
+
+export const CHANGE_LENGTH = 0.8;
 
 export const FLAT: Pose = { scale: 1, rotateX: 0, rotateY: 0, x: 0, y: 0, depth: 0 };
 
@@ -117,18 +135,68 @@ export function stagePlan(timeline: Pick<Timeline, 'shots' | 'actions' | 'durati
     push(straighten, Math.max(straighten, flatBy), FLAT);
   });
 
-  return { moves, spans: spansOf(moves, timeline.duration), notes };
+  const changes = timeline.actions.flatMap(({ time, transition }) => (transition ? [{ time, kind: transition }] : []));
+  const offFlat = moves.flatMap((move, i) => (isFlat(move.from) && isFlat(move.to) ? []
+    : [{ start: move.start, end: isFlat(move.to) ? move.end : (moves[i + 1]?.start ?? timeline.duration) }]));
+  const changing = changes.map(({ time }) => ({ start: time, end: Math.min(time + CHANGE_LENGTH, timeline.duration) }));
+  return { moves, changes, spans: merge([...offFlat, ...changing]), notes };
 }
 
-// Merges the moves that leave, travel off or return to the flat into continuous stretches.
-function spansOf(moves: readonly Move[], duration: number): StagePlan['spans'] {
+// Overlapping or touching stretches become one, in time order.
+function merge(intervals: StagePlan['spans']): StagePlan['spans'] {
   const spans: StagePlan['spans'] = [];
-  moves.forEach((move, i) => {
-    if (isFlat(move.from) && isFlat(move.to)) return;
-    const end = isFlat(move.to) ? move.end : (moves[i + 1]?.start ?? duration);
+  for (const { start, end } of [...intervals].sort((a, b) => a.start - b.start)) {
     const last = spans.at(-1);
-    if (last && move.start <= last.end + 1e-6) last.end = Math.max(last.end, end);
-    else spans.push({ start: move.start, end });
-  });
+    if (last && start <= last.end + 1e-6) last.end = Math.max(last.end, end);
+    else spans.push({ start, end });
+  }
   return spans;
+}
+
+export function changeAt(changes: readonly Change[], time: number): { change: Change; progress: number } | null {
+  const change = changes.findLast(c => time >= c.time - 1e-9 && time < c.time + CHANGE_LENGTH);
+  return change ? { change, progress: (time - change.time) / CHANGE_LENGTH } : null;
+}
+
+const STILL: Layer = { x: 0, scale: 1, rotateY: 0, opacity: 1, depth: 0 };
+const clamp = (k: number) => Math.min(1, Math.max(0, k));
+
+// Where the old and the new screen sit at a point of the change (0..1). Both shrink a little
+// mid-way so the stage shows around them and the move reads as depth, not a wipe.
+export function changeLayers(kind: Change['kind'], progress: number): { old: Layer; next: Layer } {
+  const { old, next } = layers(kind, ease(clamp(progress)));
+  return { old: tidy(old), next: tidy(next) };
+}
+
+// No -0 or 1e-17 left over at the ends: they would only make a still frame differ.
+const tidy = (layer: Layer): Layer =>
+  Object.fromEntries(Object.entries(layer).map(([key, value]) => [key, Math.abs(value) < 1e-9 ? 0 : value])) as unknown as Layer;
+
+function layers(kind: Change['kind'], k: number): { old: Layer; next: Layer } {
+  const dip = k <= 0 || k >= 1 ? 0 : Math.sin(Math.PI * k);
+  switch (kind) {
+    case 'push': {
+      const scale = 1 - 0.12 * dip;
+      return {
+        old: { ...STILL, x: -1.04 * k, scale, depth: dip },
+        next: { ...STILL, x: 1.04 * (1 - k), scale, depth: dip },
+      };
+    }
+    case 'flip': {
+      // The card turns half-way on the old face and lands on the new one.
+      const scale = 1 - 0.2 * dip;
+      return {
+        old: { ...STILL, scale, rotateY: -180 * k, opacity: k < 0.5 ? 1 : 0, depth: dip },
+        next: { ...STILL, scale, rotateY: 180 * (1 - k), opacity: k < 0.5 ? 0 : 1, depth: dip },
+      };
+    }
+    case 'fly': {
+      const gone = clamp(k / 0.7);
+      const come = clamp((k - 0.3) / 0.7);
+      return {
+        old: { ...STILL, scale: 1 - 0.35 * gone, opacity: 1 - gone, depth: gone },
+        next: { ...STILL, scale: 1.18 - 0.18 * come, opacity: come, depth: 1 - come },
+      };
+    }
+  }
 }

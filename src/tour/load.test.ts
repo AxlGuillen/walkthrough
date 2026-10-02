@@ -111,6 +111,12 @@ segments:
 `)).toThrow(/device frame/);
   });
 
+  it('rejects stage transitions with a device frame, but not the dissolve', () => {
+    const tour = (transition: string) => `title: Board\nurl: https://example.com\nframe: phone\ntransition: ${transition}\nsegments:\n  - say: Hola\n`;
+    expect(() => parseTour(tour('fly'))).toThrow(/device frame/);
+    expect(parseTour(tour('dissolve')).transition).toBe('dissolve');
+  });
+
   it('reports invalid YAML as a TourError', () => {
     expect(() => parseTour('title: [unclosed')).toThrow(/invalid YAML/);
   });

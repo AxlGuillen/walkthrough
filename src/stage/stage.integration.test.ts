@@ -8,7 +8,7 @@ import { composeTour } from '../compose/compose.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
 import { stagePlan } from './plan.ts';
-import { renderStage, spanFrames, stageFile } from './render.ts';
+import { renderStage, spanFrames, stageFile, stageFrame } from './render.ts';
 
 const output = { width: 1920, height: 1080 };
 let dir: string;
@@ -33,6 +33,37 @@ describe('stage', () => {
   it('starts and ends a span on whole frames', () => {
     expect(spanFrames({ start: 1.01, end: 2.5 }, 30)).toEqual({ first: 30, count: 45 });
   });
+
+  it('holds the old screen at the frame before the cut, and runs the new one live', () => {
+    const plan = { moves: [], changes: [{ time: 2.01, kind: 'push' as const }] };
+    expect(stageFrame(plan, 60, 30).change).toBeUndefined();
+    const frame = stageFrame(plan, 70, 30);
+    expect(frame.time).toBeCloseTo(70.5 / 30);
+    expect(frame.change!.oldTime).toBeCloseTo(60.5 / 30);
+  });
+
+  it('pushes the old screen out as the new one comes in, on a change the stage draws', async () => {
+    const tour = parseTour(`
+title: Fixture
+url: https://example.com
+transition: push
+segments:
+  - hold: 2
+  - hold: 2
+    do: [{ goto: /next }]
+`);
+    const timeline = buildTimeline(tour, []);
+    const plan = stagePlan(timeline);
+    expect(plan.spans).toEqual([{ start: 2, end: 2.8 }]);
+    await renderStage({ plan, capture: path.join(dir, 'capture.mp4'), tourDir: dir, outDir: dir, canvas: output, output, fps: 30 });
+    await composeTour(tour, timeline, dir, dir);
+
+    expect(isGreen(pixel(1.9, 20, 540))).toBe(true);
+    // Half-way: the old screen on the left, the new one on the right.
+    expect(isGreen(pixel(2.4, 300, 540))).toBe(true);
+    expect(isBlue(pixel(2.4, 1600, 540))).toBe(true);
+    expect(isBlue(pixel(3.2, 20, 540))).toBe(true);
+  }, 120_000);
 
   it('renders only the stretch off the flat and composes it in place of the capture, in sync', async () => {
     const tour = parseTour(`

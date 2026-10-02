@@ -1,6 +1,7 @@
 import { TRANSITION } from '../capture/schedule.ts';
 import type { CaptureEvent } from '../capture/events.ts';
 import { TIMING } from '../effects/scene.ts';
+import { CHANGE_LENGTH } from '../stage/plan.ts';
 import type { Timeline } from '../timeline/build.ts';
 
 export interface TimingNote {
@@ -25,11 +26,14 @@ function covers(overlay: Timeline['overlays'][number]): boolean {
   return overlay.flow ? overlay.flow.mode === 'full' : overlay.src === 'title-card.html';
 }
 
-export function auditTiming(events: readonly CaptureEvent[], timeline: Pick<Timeline, 'overlays'>): TimingNote[] {
+export function auditTiming(events: readonly CaptureEvent[], timeline: Pick<Timeline, 'overlays'> & Partial<Pick<Timeline, 'actions'>>): TimingNote[] {
   const notes: TimingNote[] = [];
   const scrolls = events.filter(e => e.kind === 'scroll');
   const navigations = events.filter(e => e.kind === 'navigate');
   const covering = timeline.overlays.filter(covers).map(o => o.start);
+  // A change the stage draws takes longer than the page's dissolve.
+  const staged = (timeline.actions ?? []).filter(a => a.transition).map(a => a.time);
+  const changeLength = (time: number) => (staged.some(t => Math.abs(t - time) < 0.1) ? CHANGE_LENGTH : TRANSITION);
 
   for (const scroll of scrolls) {
     if (scroll.distance === undefined || scroll.duration <= 0) continue;
@@ -52,8 +56,8 @@ export function auditTiming(events: readonly CaptureEvent[], timeline: Pick<Time
     if (moving) {
       notes.push({ time: mark.time, note: `${what} lands while the page is still scrolling (it stops at ${(moving.time + moving.duration).toFixed(2)}s); move it to a later word` });
     }
-    const fading = navigations.find(n => mark.time >= n.time && mark.time < n.time + TRANSITION);
-    if (fading) notes.push({ time: mark.time, note: `${what} lands during the dissolve into the new screen; move it to a later word` });
+    const fading = navigations.find(n => mark.time >= n.time && mark.time < n.time + changeLength(n.time));
+    if (fading) notes.push({ time: mark.time, note: `${what} lands during the change into the new screen; move it to a later word` });
     const hold = mark.kind === 'ring' ? TIMING.ringDraw + TIMING.ringHold : TIMING.labelHold;
     const cover = covering.find(start => start > mark.time && start < mark.time + Math.min(hold, PACE.readable));
     if (cover !== undefined) {

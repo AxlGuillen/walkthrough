@@ -98,6 +98,10 @@ export type Action = z.infer<typeof action>;
 
 export const SHOTS = ['flat', 'wide', 'left', 'right', 'top'] as const;
 
+// How one screen gives way to the next: dissolve happens in the page; the others on the stage.
+export const TRANSITIONS = ['dissolve', 'push', 'flip', 'fly'] as const;
+export type Transition = (typeof TRANSITIONS)[number];
+
 // A camera angle on the whole recording, drawn by the stage after capture; the page never
 // sees it. angle tilts left, right and top; duration is how long the move takes.
 const shot = z.strictObject({
@@ -209,6 +213,8 @@ const segment = z.strictObject({
   do: z.array(z.union([action, shot])).default([]),
   overlays: z.array(overlay).default([]),
   flow: flow.optional(),
+  // The changes of screen in this segment, over the tour's transition.
+  transition: z.enum(TRANSITIONS).optional(),
 }).refine(s => s.say !== undefined || s.hold !== undefined, {
   message: 'a segment without "say" needs "hold"',
 });
@@ -240,6 +246,8 @@ export const tourSchema = z.strictObject({
   frame: z.enum(FRAMES).default('none'),
   // How this tour's highlights are drawn unless one says otherwise.
   highlightStyle: z.enum(HIGHLIGHT_STYLES).default('ring'),
+  // How every change of screen (a goto after the start, a click that waits) gives way.
+  transition: z.enum(TRANSITIONS).default('dissolve'),
   // Gets the app past its own onboarding: storage is written before every page of the
   // tour's origin loads, and dismiss selectors are clicked after each navigation.
   setup: z.strictObject({
@@ -259,6 +267,10 @@ export const tourSchema = z.strictObject({
   // The stage tilts the bare recording; a device frame is composed after it, flat.
   if (tour.frame !== 'none' && tour.segments.some(s => s.do.some(step => step.kind === 'shot'))) {
     ctx.addIssue({ code: 'custom', message: 'shots do not work with a device frame yet; drop frame or the shots', path: ['frame'] });
+  }
+  const staged = tour.transition !== 'dissolve' || tour.segments.some(s => s.transition && s.transition !== 'dissolve');
+  if (tour.frame !== 'none' && staged) {
+    ctx.addIssue({ code: 'custom', message: 'stage transitions do not work with a device frame yet; use dissolve or drop frame', path: ['frame'] });
   }
 });
 export type Tour = z.infer<typeof tourSchema>;

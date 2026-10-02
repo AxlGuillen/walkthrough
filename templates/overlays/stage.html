@@ -7,32 +7,48 @@
 <style>
   html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: var(--stage); }
   #world { position: absolute; inset: 0; perspective: 115vmax; perspective-origin: 50% 45%; }
-  #plane { position: absolute; inset: 0; transform-origin: 50% 50%; }
-  #screen {
-    position: absolute; inset: 0; overflow: hidden; background: #fff;
+  #plane { position: absolute; inset: 0; transform-origin: 50% 50%; transform-style: preserve-3d; }
+  .screen {
+    position: absolute; inset: 0; overflow: hidden; background: #fff; transform-origin: 50% 50%;
+    backface-visibility: hidden;
     border-radius: calc(var(--depth, 0) * 0.8vmin);
     box-shadow: 0 calc(var(--depth, 0) * 3.6vmin) calc(var(--depth, 0) * 8vmin) rgba(0, 0, 0, calc(var(--depth, 0) * 0.55));
   }
+  #old { visibility: hidden; }
   video { display: block; width: 100%; height: 100%; }
 </style>
 </head>
 <body>
-<div id="world"><div id="plane"><div id="screen"><video muted playsinline preload="auto"></video></div></div></div>
+<div id="world"><div id="plane">
+  <div class="screen" id="old"><video muted playsinline preload="auto"></video></div>
+  <div class="screen" id="next"><video muted playsinline preload="auto"></video></div>
+</div></div>
 <script>
-  const video = document.querySelector('video');
-  video.src = param('src');
+  const [old, next] = ['old', 'next'].map(id => document.getElementById(id));
+  for (const screen of [old, next]) screen.querySelector('video').src = param('src');
 
-  // Node computes the pose of every frame; the page only places the recording and its frame.
-  window.__walkthroughStage = async (pose, time) => {
-    const plane = document.getElementById('plane');
-    plane.style.transform = `translate(${pose.x * 100}vw, ${pose.y * 100}vh) scale(${pose.scale}) `
+  const seek = async (video, time) => {
+    if (Math.abs(video.currentTime - time) < 1e-4) return;
+    const seeked = new Promise(resolve => video.addEventListener('seeked', resolve, { once: true }));
+    video.currentTime = time;
+    await seeked;
+  };
+  const place = (screen, layer, depth) => {
+    screen.style.transform = `translateX(${layer.x * 100}%) scale(${layer.scale}) rotateY(${layer.rotateY}deg)`;
+    screen.style.opacity = String(layer.opacity);
+    screen.style.setProperty('--depth', String(Math.max(depth, layer.depth)));
+  };
+  const STILL = { x: 0, scale: 1, rotateY: 0, opacity: 1, depth: 0 };
+
+  // Node computes every frame: the camera's pose, the capture's instant, and during a change
+  // of screen where the old screen (held at its last frame) and the new one sit.
+  window.__walkthroughStage = async (pose, time, change) => {
+    document.getElementById('plane').style.transform = `translate(${pose.x * 100}vw, ${pose.y * 100}vh) scale(${pose.scale}) `
       + `rotateY(${pose.rotateY}deg) rotateX(${pose.rotateX}deg)`;
-    document.documentElement.style.setProperty('--depth', String(pose.depth));
-    if (Math.abs(video.currentTime - time) > 1e-4) {
-      const seeked = new Promise(resolve => video.addEventListener('seeked', resolve, { once: true }));
-      video.currentTime = time;
-      await seeked;
-    }
+    place(next, change ? change.next : STILL, pose.depth);
+    old.style.visibility = change ? 'visible' : 'hidden';
+    if (change) place(old, change.old, pose.depth);
+    await Promise.all([seek(next.querySelector('video'), time), change ? seek(old.querySelector('video'), change.oldTime) : null]);
   };
 </script>
 </body>

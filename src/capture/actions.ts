@@ -10,14 +10,15 @@ import { aimAt, visibleBox, zoomRect } from './targets.ts';
 
 const ZOOM_DURATION = 0.8;
 
-export async function perform(stage: Stage, { time, action }: TimedAction, seed: number): Promise<void> {
+export async function perform(stage: Stage, { time, action, transition }: TimedAction, seed: number): Promise<void> {
   const { page, clock, tour, device, camera, effects, log } = stage;
   switch (action.kind) {
     case 'goto': {
       // The opening load is the start of the video, not a change of screen.
       const opening = stage.time === 0;
       if (!opening) log.push({ kind: 'navigate', time: stage.time });
-      const still = opening ? null : await snapshot(page);
+      // A stage transition cuts here and draws the change itself, after capture.
+      const still = opening || transition ? null : await snapshot(page);
       const requested = new URL(action.url, tour.url);
       await clock.settle(async () => {
         await page.goto(requested.href);
@@ -30,7 +31,7 @@ export async function perform(stage: Stage, { time, action }: TimedAction, seed:
     case 'click': {
       const before = new URL(page.url());
       // A click that waits for another screen dissolves into it, like a goto.
-      const still = action.wait ? await snapshot(page) : null;
+      const still = action.wait && !transition ? await snapshot(page) : null;
       await clickWithMark(stage, action.on, seed);
       if (action.wait) {
         log.push({ kind: 'navigate', time: stage.time });

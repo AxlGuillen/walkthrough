@@ -1,4 +1,4 @@
-import type { Action, Anchor, Flow, Shot, Tour } from '../tour/schema.ts';
+import type { Action, Anchor, Flow, Shot, Tour, Transition } from '../tour/schema.ts';
 import type { SpeechTiming, Word } from '../voice/types.ts';
 import { findPhrase } from './words.ts';
 
@@ -20,6 +20,13 @@ export interface TimedAction {
   time: number;
   segment: number;
   action: Action;
+  // A change of screen the stage draws, instead of the page's own dissolve.
+  transition?: Exclude<Transition, 'dissolve'>;
+}
+
+// A goto after the opening, or a click that waits for the next screen.
+export function navigates(action: Action, time: number): boolean {
+  return (action.kind === 'goto' && time > 0) || (action.kind === 'click' && action.wait !== undefined);
 }
 
 export interface TimedShot {
@@ -121,7 +128,11 @@ export function buildTimeline(
     const steps = segment.do.map(step => ({ time: resolve(step.at, start, step.kind), step })).sort((a, b) => a.time - b.time);
     for (const { time, step } of steps) {
       if (step.kind === 'shot') timeline.shots.push({ time, segment: index, shot: step });
-      else timeline.actions.push({ time, segment: index, action: step });
+      else {
+        const transition = segment.transition ?? tour.transition;
+        const staged = transition !== 'dissolve' && navigates(step, time);
+        timeline.actions.push({ time, segment: index, action: step, ...(staged ? { transition } : {}) });
+      }
     }
 
     for (const overlay of segment.overlays) {

@@ -70,6 +70,29 @@ segments:
     expect(shot.shots).toEqual([{ time: 1.7, segment: 0, shot: { kind: 'shot', to: 'left', angle: undefined, duration: undefined, at: 'tablero' } }]);
   });
 
+  it('marks the changes of screen the stage draws, by tour and by segment', () => {
+    const staged = buildTimeline(parseTour(`
+title: Board
+url: https://example.com
+transition: push
+segments:
+  - hold: 2
+    do:
+      - goto: /
+      - click: { on: '.a', at: 0.5 }
+      - click: { on: '.b', wait: '.c', at: 1 }
+  - hold: 2
+    transition: flip
+    do: [{ goto: /x }]
+  - hold: 2
+    transition: dissolve
+    do: [{ goto: /y }]
+`), [], options);
+    expect(staged.actions.map(a => [a.action.kind, a.transition])).toEqual([
+      ['goto', undefined], ['click', undefined], ['click', 'push'], ['goto', 'flip'], ['goto', undefined],
+    ]);
+  });
+
   it('defaults overlays to run until the end of their segment', () => {
     expect(timeline.overlays).toEqual([
       { src: 'overlays/new.html', params: {}, start: 4.5, end: 7, fade: 0.3, segment: 1, beats: {} },

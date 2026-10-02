@@ -1,0 +1,30 @@
+title: Transiciones
+url: https://sunsetshores.urresort.com/
+accent: "#C8633A"
+texture: mesh
+# Los cambios de pantalla (docs/recursos.md, «Transiciones»), sin voz, sobre una página
+# pública: la disolvencia de siempre y las tres del escenario. Aquí nada hace clic.
+segments:
+  - hold: 2.5
+    do:
+      - goto: /accommodations/
+  - hold: 2.5
+    do:
+      - goto: /dining/vera-restaurant/
+  - hold: 2.5
+    transition: push
+    do:
+      - goto: /pool/
+  - hold: 2.5
+    transition: flip
+    do:
+      - goto: /wellness/spa-at-paradise/
+  - hold: 2.5
+    transition: fly
+    do:
+      - goto: /nightlife/
+  - hold: 3
+    transition: push
+    do:
+      - shot: { to: wide, at: 0 }
+      - goto: { url: /guest-itinerary/, at: 1.5 }

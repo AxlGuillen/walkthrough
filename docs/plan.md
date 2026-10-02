@@ -323,6 +323,11 @@ Anotada el 2/oct/2026, después de la entrega de DYMMSA de la semana 40. Hoy la 
 ### Pasos
 
 1. **10.1 Prueba de escenario.** Diez segundos de una captura real (la de DYMMSA sirve) dentro de un escenario fijo inclinado, para medir cuánto se tarda el render y si el texto se sigue leyendo. Esto decide si se sigue con el resto.
+   **Resultado (2/oct/2026).** Diez segundos de la captura de DYMMSA (Mi semana) dentro de un escenario con la textura de la marca, de frente → 12° → 6° → de frente, con sombra y esquinas que crecen con la distancia:
+   - **Se lee.** A 6° el texto chico (fechas, ejes) se lee igual que de frente; a 12° también, pero ya se siente inclinado. 6°–8° es el rango cómodo y 12° el tope.
+   - **Cuesta 0,16 s por cuadro a 1080p**, el 70 % en la captura de pantalla: unos 10 minutos más para un video de 2 minutos. Como de frente el escenario no aporta nada, conviene renderizarlo solo en los tramos con cámara inclinada o en transición, y que ffmpeg una esos tramos con la captura.
+   - **La sincronía de `<video>` sirve tal cual,** con una condición: el reloj toma el primer cuadro en que ve el video como su segundo 0, así que el escenario cubre la captura desde el inicio o recibe el tramo ya recortado.
+   - **La captura en 1080p alcanza** para encogerla al 78 % e inclinarla sin perder nitidez.
 2. **10.2 Planos.** `shot:` en los segmentos (`flat`, `tilt-left`, `tilt-right`, `top`, `wide`) con su palabra (`at`), más la regla de enderezar antes de las marcas.
 3. **10.3 Transiciones del escenario.** `transition:` en el tour o el segmento (`dissolve`, la de hoy; `push`, `flip`, `fly`), colocadas en las navegaciones que ya conoce la timeline.
 4. **10.4 Escenas con profundidad.** Un kit de escena en `kit.js` (capas, luz, sombra) y recursos que lo usen: `board.html` (pizarrón con una lista que se escribe a gis y se va tachando con la voz), `corkboard.html` (notas clavadas), y los capítulos entrando al escenario.

@@ -21,6 +21,11 @@ Cómo escribir un tour que se vea tranquilo y con las marcas a tiempo. El motor 
 - **Tiempo para leerse.** Una marca necesita unos 1,5 s en pantalla. No la pongas justo antes de un clic que abre un menú encima, de una navegación o de un flujo a pantalla completa. Si pasa, la marca se retira sola y la auditoría avisa.
 - **Una marca por frase.** Dos marcas seguidas compiten por la mirada.
 
+## Planos (`shot`)
+
+- **En frases que miran la pantalla entera,** no en las que señalan algo. La cámara se endereza sola antes de cada marca o clic, así que un plano seguido de una marca en la misma frase apenas se ve (`check` avisa).
+- **Pocos:** uno o dos por sección. Reglas completas en `docs/recursos.md`, «Planos».
+
 ## Navegar
 
 - **Como un usuario.** Se navega con los menús y enlaces de la app (`click` con `wait`), no con `goto`, salvo que no haya un camino natural. Cada cambio de pantalla se disuelve, sea `goto` o clic.

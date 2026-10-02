@@ -33,6 +33,7 @@ voice ──────┘   (pure)      frames     ffmpeg
 | **timeline** | tour + resultado de voz | `timeline.json` | **Sí** |
 | **capture** | timeline + sesión | `capture.mp4` (solo video, a tamaño de salida) | No: navegador |
 | **overlays** | timeline + HTML de overlays | `overlays/` (cuadros con alfa) | No: navegador |
+| **stage** | timeline + `capture.mp4` | `stage/NN.mp4`, solo los tramos con la cámara fuera de frente | No: navegador; el plan es puro |
 | **compose** | todo lo anterior | `video.mp4` | No: ffmpeg; los argumentos se construyen con funciones puras |
 
 Cada etapa lee solo archivos de la anterior, así que se puede repetir por separado. Cambiar un overlay repite `overlays` y `compose`, sin volver a entrar a la app.
@@ -113,6 +114,19 @@ El zoom no toca la página:
 6. Entre destinos la cámara interpola con easing.
 
 El anillo de resaltado y el clic dibujado **sí** van en la página: se inyectan en el DOM y quedan dentro del recorte de forma natural.
+
+## Escenario y planos
+
+`shot:` mueve la cámara sobre la grabación entera, después de capturar; la página nunca se entera. Es otra cámara, aparte del zoom: el zoom recorta la app, el plano inclina o aleja la grabación dentro de un escenario con el fondo del tour.
+
+1. **La timeline los separa.** `shot` se escribe en `do` con su palabra, pero la timeline lo guarda en `timeline.shots` y no en `actions`, así que la captura no cambia.
+2. **El plan es puro** (`src/stage/plan.ts`). `pose()` da la pose de cada plano (`flat`, `wide`, `left`, `right`, `top`; `angle` entre 3° y 12°, 8° por defecto) y `stagePlan()` arma los movimientos con easing (1,2 s por defecto), los tramos fuera de frente y los avisos.
+3. **De frente para leer.** Antes de un `highlight`, `label`, `click` o `type`, la cámara se endereza sola (0,8 s) y queda de frente 0,2 s antes; ahí se queda hasta el siguiente plano. Si no le da tiempo, o si el plano duraría menos de 1 s antes de enderezarse, `check` y la auditoría del render lo avisan.
+4. **Solo se renderizan los tramos fuera de frente.** `stage.html` reproduce `capture.mp4` en un `<video>` que se busca a la mitad de cada cuadro (sin reloj virtual: la página no anima nada por su cuenta) y aplica la pose que Node calculó con un `transform` 3D. Cada tramo empieza y termina en cuadros enteros (`spanFrames`).
+5. **El montaje** pone cada tramo sobre la captura en su segundo, antes de los overlays. Al principio y al final de un tramo la pose es de frente, así que el corte no se nota.
+6. **Con `frame` todavía no:** el marco se compone plano encima de la captura, y el schema rechaza un tour con los dos.
+
+La prueba 10.1 (`docs/plan.md`) midió unos 0,16 s por cuadro a 1080p; por eso el escenario no se renderiza de frente.
 
 ## Movimiento y scroll
 
@@ -390,6 +404,7 @@ src/
   flow/         pure: flow layout and cues
   charts/ code/ table/ roadmap/   pure: data resources (schema, layout)
   frame/        device frames: pure layout and the still
+  stage/        pure camera plan for shots, and the stretches rendered on the stage
   compose/      ffmpeg args, subtitles (ASS), music
 tests/fixtures/ local page for integration tests
 tours/<project>/<tour>.yaml + overlays/ + assets/

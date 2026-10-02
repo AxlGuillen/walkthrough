@@ -18,6 +18,7 @@ Piezas animadas que se declaran en el YAML con sus datos y sus palabras clave, y
 | Un plan, una historia o el avance de un proyecto por hitos | `roadmap.html` |
 | Señalar algo que ya está en la pantalla | No es un recurso: `highlight` (con su `style`, ver «Resaltar») o `label` |
 | Que la app se vea dentro de un navegador, una laptop o un teléfono | `frame:` en el tour (ver «Marco de dispositivo») |
+| Darle profundidad al recorrido, ver la app desde un ángulo | `shot:` en el segmento (ver «Planos») |
 | Un texto corto encima de la app | `lower-third.html`; un atajo de teclado, `shortcut.html`; dos capturas lado a lado, `compare.html` |
 | Subrayar un momento («¡Listo!») | `sticker.html`, un emoji con un texto breve |
 | Que el video se vea del proyecto | `brand:` y `texture:` en el tour (ver «Marcas» y «Texturas») |
@@ -249,6 +250,38 @@ Ejemplos de las tres vistas en `tours/examples/codigo.yaml`.
 `device` sigue decidiendo el formato del video, así que `device: desktop` con `frame: phone` da un teléfono al centro de un video 16:9, y `device: mobile` con `frame: laptop`, una laptop en un video vertical. Las marcas, el cursor y el zoom quedan dentro de la pantalla; los overlays y los subtítulos, encima de todo el cuadro.
 
 La pantalla ocupa menos que el video, así que la app se ve más chica: con `frame`, acércate (`zoom`) a lo que se nombra. Una laptop o un navegador en un video vertical son para mostrar el sitio, no para leerlo.
+
+## Planos
+
+`shot:` mueve la cámara sobre toda la grabación: la encoge y la inclina dentro de un escenario con el fondo del tour (su tema, textura y marca), con sombra y esquinas redondeadas. Se escribe en `do`, con su palabra como cualquier acción:
+
+| `shot` | Cómo se ve |
+|---|---|
+| `flat` | De frente, a pantalla completa: la grabación tal cual |
+| `wide` | De frente, un poco más chica, con el escenario alrededor |
+| `left` / `right` | Girada: el lado izquierdo (o el derecho) queda más cerca |
+| `top` | Inclinada hacia atrás, como vista desde arriba |
+
+```yaml
+- say: Equipo reúne a todas las personas, con su rol, su jornada y su número del checador.
+  do:
+    - shot: { to: left, at: Equipo }
+- say: Y abajo, los días feriados del equipo.
+  do:
+    - highlight: { on: '[data-tour=team-excused]', at: feriados }   # ya de frente
+```
+
+`angle` (de 3° a 12°, 8° por defecto) inclina `left`, `right` y `top`; `duration` (1,2 s por defecto) es lo que tarda en llegar. Un plano dura hasta el siguiente.
+
+### Cómo escribirlos
+
+- **De frente para leer.** Antes de cada `highlight`, `label`, `click` o `type`, la cámara se endereza sola y se queda de frente hasta el siguiente plano. Un plano luce en una frase que habla de la pantalla en general; la marca llega después, ya de frente.
+- **Con aire.** Entre el plano y la primera marca, por lo menos 2,5 s: 1,2 para llegar, uno para verse y 0,8 para enderezarse. `check` avisa si no alcanza.
+- **6° a 8°.** Se lee igual que de frente; 12° ya se siente inclinado. Uno o dos planos por sección, no uno por frase.
+- **Sin `frame` por ahora:** el schema rechaza un tour con los dos.
+- **Cuesta render:** cada segundo fuera de frente es un pase más del navegador; de frente no cuesta nada.
+
+Ejemplo de los cinco en `tours/examples/planos.yaml`.
 
 ## Marcas
 

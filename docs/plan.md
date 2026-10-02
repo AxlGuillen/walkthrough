@@ -16,6 +16,7 @@ Escrito el 28/sep/2026, después de la primera versión completa (tour de uws-ta
 8. **Fase 7 — Biblioteca de recursos animados.** Aperturas, gráficas y código como piezas reutilizables que se declaran en el YAML y van al ritmo de la voz (añadida el 30/sep/2026).
 9. **Fase 8 — Marca, texturas y emojis.** Logos y colores por proyecto, fondos con textura y emojis cuidados dentro de los recursos (añadida el 1/oct/2026).
 10. **Fase 9 — Resaltar con variedad, tablas, líneas de tiempo y marcos.** Más formas de señalar lo que importa en la app y tres recursos nuevos (añadida el 1/oct/2026).
+11. **Fase 10 — Escenario 3D.** Propuesta, sin empezar: la grabación dentro de un escenario HTML con cámara en perspectiva, transiciones propias y escenas con profundidad (añadida el 2/oct/2026).
 
 Cada fase termina con pruebas en verde, documentación al día y commits que compilan por separado.
 
@@ -295,6 +296,43 @@ Escrita el 1/oct/2026. Todo se resalta igual (el rectángulo a mano en el acento
 
 Ejemplos en `tours/examples/catalogo.yaml` (tablas y líneas de tiempo), `resaltar.yaml` (los ocho estilos sobre un sitio) y `marco.yaml`; la guía en `docs/recursos.md` y la skill `recursos`.
 
+## Fase 10 — Escenario 3D (propuesta)
+
+Anotada el 2/oct/2026, después de la entrega de DYMMSA de la semana 40. Hoy la app siempre se ve de frente: el zoom recorta y el marco de dispositivo es una imagen fija sobre la que ffmpeg escala la captura. La idea es darle profundidad al video sin tocar la app grabada.
+
+### Idea
+
+- **Cámara desde varios ángulos.** La grabación se encoge un poco y queda como un plano dentro de un escenario HTML que la envuelve: se inclina, gira o se aleja en perspectiva, con sombra y fondo de la marca, y vuelve de frente cuando hay algo que leer.
+- **Transiciones de nuestro lado.** En los cambios de página y entre secciones, la transición la hace el escenario (la pantalla se empuja, se voltea o se aleja y entra la siguiente) en lugar de la disolvencia de hoy.
+- **Cosas que aparecen entre secciones.** Textos y recursos que entran en el escenario, alrededor de la grabación, no encima de ella.
+- **Escenas con profundidad y variedad.** Recursos que no son tarjetas planas: una lista de pendientes en un pizarrón, notas en un corcho, papeles en un escritorio, con capas a distinta distancia, sombras y luz.
+
+### Cómo encaja en la arquitectura
+
+- **Una etapa nueva, `stage`, entre overlays y compose.** Es una página HTML que se renderiza cuadro a cuadro como los overlays (`__walkthroughSeek`) y lleva dentro la captura como `<video>` sincronizado, que ya se sabe buscar al instante de cada cuadro. Su salida reemplaza a la captura en el montaje.
+- **Node calcula la cámara; la página solo la aplica.** Ángulo, escala, distancia y transición de cada cuadro salen de funciones puras (`src/stage/`) a partir de la timeline, igual que la escena de efectos. La página pone un `transform` en CSS 3D, sin estado.
+- **El marco de dispositivo pasa a ser una capa del escenario.** Así la laptop o el teléfono giran junto con la pantalla.
+- **La captura ya viene con densidad alta** (`deviceScaleFactor`), así que encogerla e inclinarla no pierde nitidez.
+
+### Reglas que conviene fijar desde el inicio
+
+- **De frente para leer.** Mientras hay una marca, un clic o una etiqueta, la cámara está de frente o casi. La timeline la endereza antes de cada marca y la auditoría avisa si no le da tiempo.
+- **Ángulos chicos.** Entre 6° y 12° basta para que se sienta 3D; más cansa y deforma el texto.
+- **Un movimiento por frase,** como el scroll y las marcas: la cámara no se mueve mientras la voz nombra algo en pantalla.
+
+### Pasos
+
+1. **10.1 Prueba de escenario.** Diez segundos de una captura real (la de DYMMSA sirve) dentro de un escenario fijo inclinado, para medir cuánto se tarda el render y si el texto se sigue leyendo. Esto decide si se sigue con el resto.
+2. **10.2 Planos.** `shot:` en los segmentos (`flat`, `tilt-left`, `tilt-right`, `top`, `wide`) con su palabra (`at`), más la regla de enderezar antes de las marcas.
+3. **10.3 Transiciones del escenario.** `transition:` en el tour o el segmento (`dissolve`, la de hoy; `push`, `flip`, `fly`), colocadas en las navegaciones que ya conoce la timeline.
+4. **10.4 Escenas con profundidad.** Un kit de escena en `kit.js` (capas, luz, sombra) y recursos que lo usen: `board.html` (pizarrón con una lista que se escribe a gis y se va tachando con la voz), `corkboard.html` (notas clavadas), y los capítulos entrando al escenario.
+5. **10.5 Catálogo y guía.** Ejemplos en `tours/examples/catalogo.yaml`, reglas en `docs/recursos.md` y en la skill `recursos`.
+
+### Riesgos
+
+- **Tiempo de render.** El escenario es un pase más a pantalla completa, del orden de lo que ya cuestan los overlays. `--preview` puede saltarlo o hacerlo a la mitad.
+- **Legibilidad.** Por eso las reglas de arriba y la prueba 10.1 antes de comprometerse.
+
 ## Estimación
 
 | Fase | Tamaño |
@@ -309,3 +347,4 @@ Ejemplos en `tours/examples/catalogo.yaml` (tablas y líneas de tiempo), `resalt
 | 7 | Grande: 7.1 mediana, cada recurso de 7.2 a 7.4 mediano |
 | 8 | Mediana |
 | 9 | Mediana-grande (9.4 toca el montaje) |
+| 10 | Grande: 10.1 chica, 10.2 y 10.3 medianas, 10.4 mediana por escena |

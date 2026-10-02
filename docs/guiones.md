@@ -28,9 +28,9 @@ Cómo escribir un tour que se vea tranquilo y con las marcas a tiempo. El motor 
 
 ## Navegar
 
-- **Como un usuario.** Se navega con los menús y enlaces de la app (`click` con `wait`), no con `goto`, salvo que no haya un camino natural. Cada cambio de pantalla se disuelve, sea `goto` o clic.
+- **Como un usuario.** Se navega con los menús y enlaces de la app (`click` con `wait`), no con `goto`, salvo que no haya un camino natural. Cada cambio de pantalla se disuelve, sea `goto` o clic, salvo que el tour o el segmento pidan otra `transition`.
 - **Menús con pausa.** Entre abrir un menú y hacer clic en su enlace va por lo menos 1 s: la voz nombra la sección («under relax and play») y luego el destino («Emerald Pool»).
-- **No marques en la disolvencia.** Nada de marcas en los 0,5 s después de una navegación.
+- **No marques en la disolvencia.** Nada de marcas en los 0,5 s después de una navegación, o en los 0,8 s con una transición del escenario (`push`, `flip`, `fly`).
 
 ## Revisar antes de entregar
 

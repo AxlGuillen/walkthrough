@@ -329,7 +329,7 @@ Anotada el 2/oct/2026, después de la entrega de DYMMSA de la semana 40. Hoy la 
    - **La sincronía de `<video>` sirve tal cual,** con una condición: el reloj toma el primer cuadro en que ve el video como su segundo 0, así que el escenario cubre la captura desde el inicio o recibe el tramo ya recortado.
    - **La captura en 1080p alcanza** para encogerla al 78 % e inclinarla sin perder nitidez.
 2. **10.2 Planos ✅ (2/oct/2026).** `shot:` en `do` (`flat`, `wide`, `left`, `right`, `top`, con `angle` y `duration`) y su palabra. La cámara se endereza sola antes de cada marca, clic o tecleo; `check` y la auditoría avisan si no alcanza. Solo se renderizan los tramos fuera de frente, y todavía no se combinan con `frame`. Ejemplo en `tours/examples/planos.yaml`.
-3. **10.3 Transiciones del escenario.** `transition:` en el tour o el segmento (`dissolve`, la de hoy; `push`, `flip`, `fly`), colocadas en las navegaciones que ya conoce la timeline.
+3. **10.3 Transiciones del escenario ✅ (2/oct/2026).** `transition:` en el tour o el segmento (`dissolve`, la de siempre; `push`, `flip`, `fly`, de 0,8 s). La captura corta en esas navegaciones y el escenario dibuja el cambio: la pantalla vieja detenida en su último cuadro y la nueva en vivo, dentro de la pose de la cámara. Ejemplo en `tours/examples/transiciones.yaml`.
 4. **10.4 Escenas con profundidad.** Un kit de escena en `kit.js` (capas, luz, sombra) y recursos que lo usen: `board.html` (pizarrón con una lista que se escribe a gis y se va tachando con la voz), `corkboard.html` (notas clavadas), y los capítulos entrando al escenario.
 5. **10.5 Catálogo y guía.** Ejemplos en `tours/examples/catalogo.yaml`, reglas en `docs/recursos.md` y en la skill `recursos`.
 

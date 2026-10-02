@@ -19,6 +19,7 @@ Piezas animadas que se declaran en el YAML con sus datos y sus palabras clave, y
 | Señalar algo que ya está en la pantalla | No es un recurso: `highlight` (con su `style`, ver «Resaltar») o `label` |
 | Que la app se vea dentro de un navegador, una laptop o un teléfono | `frame:` en el tour (ver «Marco de dispositivo») |
 | Darle profundidad al recorrido, ver la app desde un ángulo | `shot:` en el segmento (ver «Planos») |
+| Que los cambios de pantalla se vean distintos a la disolvencia | `transition:` en el tour o el segmento (ver «Transiciones») |
 | Un texto corto encima de la app | `lower-third.html`; un atajo de teclado, `shortcut.html`; dos capturas lado a lado, `compare.html` |
 | Subrayar un momento («¡Listo!») | `sticker.html`, un emoji con un texto breve |
 | Que el video se vea del proyecto | `brand:` y `texture:` en el tour (ver «Marcas» y «Texturas») |
@@ -278,10 +279,29 @@ La pantalla ocupa menos que el video, así que la app se ve más chica: con `fra
 - **De frente para leer.** Antes de cada `highlight`, `label`, `click` o `type`, la cámara se endereza sola y se queda de frente hasta el siguiente plano. Un plano luce en una frase que habla de la pantalla en general; la marca llega después, ya de frente.
 - **Con aire.** Entre el plano y la primera marca, por lo menos 2,5 s: 1,2 para llegar, uno para verse y 0,8 para enderezarse. `check` avisa si no alcanza.
 - **6° a 8°.** Se lee igual que de frente; 12° ya se siente inclinado. Uno o dos planos por sección, no uno por frase.
-- **Sin `frame` por ahora:** el schema rechaza un tour con los dos.
+- **Sin `frame` por ahora:** el schema rechaza un tour con planos y marco.
 - **Cuesta render:** cada segundo fuera de frente es un pase más del navegador; de frente no cuesta nada.
 
 Ejemplo de los cinco en `tours/examples/planos.yaml`.
+
+## Transiciones
+
+`transition:` decide cómo un cambio de pantalla (un `goto` después del inicio o un `click` con `wait`) da paso al siguiente. Va en el tour, para todo el video, o en un segmento, para los cambios de ese segmento:
+
+| `transition` | Cómo se ve |
+|---|---|
+| `dissolve` (por defecto) | La pantalla vieja se desvanece sobre la nueva, 0,5 s |
+| `push` | La vieja sale por la izquierda y la nueva entra por la derecha, un poco más chicas a medio camino |
+| `flip` | Gira como una tarjeta y aterriza en la nueva |
+| `fly` | La vieja se aleja y se apaga; la nueva llega de más cerca |
+
+Las tres del escenario duran 0,8 s, toman el fondo del tour y respetan el plano en que esté la cámara.
+
+- **Una por video, o una para las secciones.** `push` es la más tranquila para un recorrido; `flip` y `fly` marcan un cambio de tema (al entrar a un módulo). Todas iguales cansan menos que alternarlas.
+- **Nada de marcas en los 0,8 s después del cambio:** la auditoría lo avisa.
+- **Sin `frame` por ahora,** como los planos.
+
+Ejemplo de las cuatro en `tours/examples/transiciones.yaml`.
 
 ## Marcas
 

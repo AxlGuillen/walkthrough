@@ -122,9 +122,9 @@ El anillo de resaltado y el clic dibujado **sí** van en la página: se inyectan
 1. **La timeline los separa.** `shot` se escribe en `do` con su palabra, pero la timeline lo guarda en `timeline.shots` y no en `actions`, así que la captura no cambia.
 2. **El plan es puro** (`src/stage/plan.ts`). `pose()` da la pose de cada plano (`flat`, `wide`, `left`, `right`, `top`; `angle` entre 3° y 12°, 8° por defecto) y `stagePlan()` arma los movimientos con easing (1,2 s por defecto), los tramos fuera de frente y los avisos.
 3. **De frente para leer.** Antes de un `highlight`, `label`, `click` o `type`, la cámara se endereza sola (0,8 s) y queda de frente 0,2 s antes; ahí se queda hasta el siguiente plano. Si no le da tiempo, o si el plano duraría menos de 1 s antes de enderezarse, `check` y la auditoría del render lo avisan.
-4. **Solo se renderizan los tramos fuera de frente.** `stage.html` reproduce `capture.mp4` en un `<video>` que se busca a la mitad de cada cuadro (sin reloj virtual: la página no anima nada por su cuenta) y aplica la pose que Node calculó con un `transform` 3D. Cada tramo empieza y termina en cuadros enteros (`spanFrames`).
+4. **Solo se renderizan los tramos fuera de frente** o con un cambio de pantalla del escenario (`transition`, ver «Transiciones entre pantallas»). `stage.html` reproduce `capture.mp4` en un `<video>` que se busca a la mitad de cada cuadro (sin reloj virtual: la página no anima nada por su cuenta) y aplica la pose que Node calculó con un `transform` 3D. Cada tramo empieza y termina en cuadros enteros (`spanFrames`).
 5. **El montaje** pone cada tramo sobre la captura en su segundo, antes de los overlays. Al principio y al final de un tramo la pose es de frente, así que el corte no se nota.
-6. **Con `frame` todavía no:** el marco se compone plano encima de la captura, y el schema rechaza un tour con los dos.
+6. **Con `frame` todavía no:** el marco se compone plano encima de la captura, y el schema rechaza un tour con `frame` y planos o transiciones del escenario.
 
 La prueba 10.1 (`docs/plan.md`) midió unos 0,16 s por cuadro a 1080p; por eso el escenario no se renderiza de frente.
 
@@ -155,6 +155,8 @@ La prueba 10.1 (`docs/plan.md`) midió unos 0,16 s por cuadro a 1080p; por eso e
 `click: { on, wait: <selector> }` y la acción `wait: { until: <selector> }` esperan a que la siguiente pantalla muestre ese elemento con el reloj corriendo, fuera del tiempo del video, como `goto`. En el video, el elemento ya está en el cuadro del clic: no se ven estados de carga a medias.
 
 **Disolvencia en vez de corte** (`TRANSITION`, 0,5 s): antes de un `goto` o de un clic con `wait`, se toma una captura de la página sin la capa de efectos. Ya cargada la nueva, esa imagen se pone encima en el top layer (`transitionLayer`) y se desvanece con una animación que la sincronía congela cuadro a cuadro. La capa de efectos se vuelve a subir en cada cuadro, así las marcas siguen vivas encima de la disolvencia.
+
+**Transiciones del escenario** (`transition: push | flip | fly` en el tour o en el segmento; `dissolve` es la de arriba y la de siempre): la timeline marca esas navegaciones (`TimedAction.transition`) y la captura no hace su disolvencia, corta. El escenario dibuja el cambio en 0,8 s (`CHANGE_LENGTH`): la pantalla vieja es un segundo `<video>` detenido en el último cuadro antes del corte, y la nueva corre en vivo. Dónde va cada una en cada momento lo calcula `changeLayers()` (puro), dentro de la pose de la cámara; ver «Escenario y planos».
 
 ## Efectos en la página
 

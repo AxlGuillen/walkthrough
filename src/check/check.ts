@@ -7,6 +7,7 @@ import { dataDependent, suggest } from '../inspect/selectors.ts';
 import { snapshotPage } from '../inspect/snapshot.ts';
 import { layoutFlow } from '../flow/layout.ts';
 import { resourceFor } from '../resources/registry.ts';
+import { stagePlan } from '../stage/plan.ts';
 import { resolveOverlay } from '../overlays/render.ts';
 import type { Size } from '../timeline/camera.ts';
 import type { Timeline, TimedAction } from '../timeline/build.ts';
@@ -55,6 +56,15 @@ export function checkResources(timeline: Timeline, canvas: Size, lang: string): 
     const notes = resource.warnings(overlay.data, canvas, lang, overlay.beats, overlay.end - overlay.start);
     return [{ time: overlay.start, label: `${overlay.src} data`, status: notes.length ? 'warn' : 'ok', notes }];
   });
+}
+
+// Camera shots, with what the stage could not fit: a mark too close to straighten for.
+export function checkShots(timeline: Timeline): CheckItem[] {
+  const { notes } = stagePlan(timeline);
+  return [
+    ...timeline.shots.map(({ time, shot }) => ({ time, label: `shot ${shot.to}`, status: 'ok' as const, notes: [] })),
+    ...notes.map(({ time, note }) => ({ time, label: 'camera', status: 'warn' as const, notes: [note] })),
+  ];
 }
 
 export async function checkTour(root: string, tour: Tour, timeline: Timeline): Promise<CheckItem[]> {

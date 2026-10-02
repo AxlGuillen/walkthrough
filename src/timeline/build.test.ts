@@ -56,6 +56,20 @@ describe('buildTimeline', () => {
     ]);
   });
 
+  it('keeps camera shots apart from the actions the capture runs', () => {
+    const shot = buildTimeline(parseTour(`
+title: Board
+url: https://example.com
+segments:
+  - say: Este es el tablero.
+    do:
+      - shot: { to: left, at: tablero }
+      - goto: /board
+`), [speech[0]], options);
+    expect(shot.actions.map(a => a.action.kind)).toEqual(['goto']);
+    expect(shot.shots).toEqual([{ time: 1.7, segment: 0, shot: { kind: 'shot', to: 'left', angle: undefined, duration: undefined, at: 'tablero' } }]);
+  });
+
   it('defaults overlays to run until the end of their segment', () => {
     expect(timeline.overlays).toEqual([
       { src: 'overlays/new.html', params: {}, start: 4.5, end: 7, fade: 0.3, segment: 1, beats: {} },

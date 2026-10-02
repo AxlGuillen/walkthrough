@@ -96,6 +96,23 @@ const wait = z.strictObject({
 const action = z.union([goto, click, hover, type, zoom, highlight, label, scroll, wait]);
 export type Action = z.infer<typeof action>;
 
+export const SHOTS = ['flat', 'wide', 'left', 'right', 'top'] as const;
+
+// A camera angle on the whole recording, drawn by the stage after capture; the page never
+// sees it. angle tilts left, right and top; duration is how long the move takes.
+const shot = z.strictObject({
+  shot: z.union([
+    z.enum(SHOTS).transform(to => ({ to, angle: undefined, duration: undefined, at: undefined })),
+    z.strictObject({
+      to: z.enum(SHOTS),
+      angle: z.number().min(3).max(12).optional(),
+      duration: z.number().min(0.4).max(3).optional(),
+      ...timed,
+    }),
+  ]),
+}).transform(({ shot }) => ({ kind: 'shot' as const, ...shot }));
+export type Shot = z.infer<typeof shot>;
+
 // An HTML page laid over the video. params reach it as a query string, so one
 // template (a lower third, a title card) serves many texts. beats name the moments its
 // animation lands on, each on a word of the narration; data is structured input (a chart's
@@ -189,7 +206,7 @@ export type Flow = z.infer<typeof flow>;
 const segment = z.strictObject({
   say: z.string().trim().min(1).optional(),
   hold: z.number().positive().optional(),
-  do: z.array(action).default([]),
+  do: z.array(z.union([action, shot])).default([]),
   overlays: z.array(overlay).default([]),
   flow: flow.optional(),
 }).refine(s => s.say !== undefined || s.hold !== undefined, {
@@ -238,5 +255,10 @@ export const tourSchema = z.strictObject({
   ]).prefault(true),
   accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'use a #RRGGBB color').default('#FF3B5C'),
   segments: z.array(segment).min(1),
+}).superRefine((tour, ctx) => {
+  // The stage tilts the bare recording; a device frame is composed after it, flat.
+  if (tour.frame !== 'none' && tour.segments.some(s => s.do.some(step => step.kind === 'shot'))) {
+    ctx.addIssue({ code: 'custom', message: 'shots do not work with a device frame yet; drop frame or the shots', path: ['frame'] });
+  }
 });
 export type Tour = z.infer<typeof tourSchema>;

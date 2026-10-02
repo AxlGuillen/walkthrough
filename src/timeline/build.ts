@@ -1,4 +1,4 @@
-import type { Action, Anchor, Flow, Tour } from '../tour/schema.ts';
+import type { Action, Anchor, Flow, Shot, Tour } from '../tour/schema.ts';
 import type { SpeechTiming, Word } from '../voice/types.ts';
 import { findPhrase } from './words.ts';
 
@@ -20,6 +20,12 @@ export interface TimedAction {
   time: number;
   segment: number;
   action: Action;
+}
+
+export interface TimedShot {
+  time: number;
+  segment: number;
+  shot: Shot;
 }
 
 // Steps in narration order: a decision's own steps, then its first branch, then its second.
@@ -70,6 +76,8 @@ export interface Timeline {
   segments: TimedSegment[];
   actions: TimedAction[];
   overlays: TimedOverlay[];
+  // Camera angles for the stage, kept apart from actions: the capture never runs them.
+  shots: TimedShot[];
   words: Word[];
 }
 
@@ -83,7 +91,7 @@ export function buildTimeline(
   speech: readonly (SpeechTiming | undefined)[],
   { leadIn = LEAD_IN, tailOut = TAIL_OUT }: TimelineOptions = {},
 ): Timeline {
-  const timeline: Timeline = { duration: 0, segments: [], actions: [], overlays: [], words: [] };
+  const timeline: Timeline = { duration: 0, segments: [], actions: [], overlays: [], shots: [], words: [] };
 
   tour.segments.forEach((segment, index) => {
     const label = `segment ${index + 1}`;
@@ -110,10 +118,11 @@ export function buildTimeline(
       return start + offset;
     };
 
-    const actions = segment.do
-      .map(action => ({ time: resolve(action.at, start, action.kind), segment: index, action }))
-      .sort((a, b) => a.time - b.time);
-    timeline.actions.push(...actions);
+    const steps = segment.do.map(step => ({ time: resolve(step.at, start, step.kind), step })).sort((a, b) => a.time - b.time);
+    for (const { time, step } of steps) {
+      if (step.kind === 'shot') timeline.shots.push({ time, segment: index, shot: step });
+      else timeline.actions.push({ time, segment: index, action: step });
+    }
 
     for (const overlay of segment.overlays) {
       const what = `overlay ${overlay.src}`;

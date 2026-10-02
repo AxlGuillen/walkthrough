@@ -83,6 +83,34 @@ segments:
 `)).toThrow(TourError);
   });
 
+  it('reads a shot in its short and long forms, and keeps its angle in range', () => {
+    const shots = parseTour(`
+title: Board
+url: https://example.com
+segments:
+  - say: Hola
+    do:
+      - shot: left
+      - shot: { to: top, angle: 5, duration: 2, at: Hola }
+`).segments[0]!.do;
+    expect(shots).toEqual([
+      { kind: 'shot', to: 'left', angle: undefined, duration: undefined, at: undefined },
+      { kind: 'shot', to: 'top', angle: 5, duration: 2, at: 'Hola' },
+    ]);
+    expect(() => parseTour(minimal.replace('segments:', 'segments:\n  - hold: 1\n    do: [{ shot: { to: left, angle: 20 } }]'))).toThrow(TourError);
+  });
+
+  it('rejects shots with a device frame, which the stage cannot tilt yet', () => {
+    expect(() => parseTour(`
+title: Board
+url: https://example.com
+frame: laptop
+segments:
+  - hold: 1
+    do: [{ shot: wide }]
+`)).toThrow(/device frame/);
+  });
+
   it('reports invalid YAML as a TourError', () => {
     expect(() => parseTour('title: [unclosed')).toThrow(/invalid YAML/);
   });

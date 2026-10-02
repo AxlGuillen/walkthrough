@@ -1,0 +1,27 @@
+title: Planos de cámara
+url: https://sunsetshores.urresort.com/accommodations/
+accent: "#C8633A"
+texture: mesh
+# Los planos de `shot` sobre una página pública (docs/recursos.md, «Planos»), sin voz. La
+# cámara se endereza sola antes del resaltado del último segmento. Aquí nada hace clic.
+segments:
+  - hold: 2.5
+    do:
+      - goto: /accommodations/
+  - hold: 3
+    do:
+      - shot: { to: left, at: 0.2 }
+  - hold: 3
+    do:
+      - shot: { to: right, angle: 6, at: 0.2 }
+  - hold: 3
+    do:
+      - shot: { to: top, angle: 6, at: 0.2 }
+  - hold: 3
+    do:
+      - shot: { to: wide, at: 0.2 }
+  - hold: 4.5
+    do:
+      - shot: { to: left, angle: 6, at: 0.2 }
+      - highlight: { on: 'h1', at: 3.8, style: marker }
+  - hold: 1.5

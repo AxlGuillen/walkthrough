@@ -14,13 +14,24 @@ export interface FrameInput {
   output: Size;
 }
 
+// A stretch rendered on the stage: it replaces the capture, whole frame, while the camera is off the flat.
+export interface StageInput {
+  input: number;
+  start: number;
+}
+
 // Overlays stack in tour order above the capture; subtitles go last so they stay readable.
-export function videoGraph(overlays: readonly OverlayInput[], subtitles?: string, frame?: FrameInput): string {
+export function videoGraph(overlays: readonly OverlayInput[], subtitles?: string, frame?: FrameInput, stage: readonly StageInput[] = []): string {
   const parts: string[] = [];
   let base = '[0:v]';
+  stage.forEach(({ input, start }, i) => {
+    parts.push(`[${input}:v]setpts=PTS-STARTPTS+${start.toFixed(3)}/TB[s${i}]`);
+    parts.push(`${base}[s${i}]overlay=eof_action=pass[staged${i}]`);
+    base = `[staged${i}]`;
+  });
   if (frame) {
     const { screen, output } = frame;
-    parts.push(`[0:v]scale=${screen.width}:${screen.height}:flags=lanczos,setsar=1,pad=${output.width}:${output.height}:${screen.x}:${screen.y}:color=black[screen]`);
+    parts.push(`${base}scale=${screen.width}:${screen.height}:flags=lanczos,setsar=1,pad=${output.width}:${output.height}:${screen.x}:${screen.y}:color=black[screen]`);
     parts.push(`[screen][${frame.input}:v]overlay=0:0[framed]`);
     base = '[framed]';
   }

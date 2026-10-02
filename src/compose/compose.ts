@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { deviceProfile, type Quality } from '../capture/devices.ts';
+import { deviceProfile, FPS, type Quality } from '../capture/devices.ts';
 import type { Timeline } from '../timeline/build.ts';
 import type { Rect, Size } from '../timeline/camera.ts';
 import { FRAME_FILE, outputLayout } from '../frame/render.ts';
@@ -13,6 +13,8 @@ import { audioGraph, type Loudness } from './audio.ts';
 import { EVENTS_FILE, type CaptureEvent } from '../capture/events.ts';
 import { eventsFromTimeline, soundEvents, type SoundEvent } from './sfx.ts';
 import { karaokeAss } from './subtitles.ts';
+import { stagePlan } from '../stage/plan.ts';
+import { spanFrames, stageFile } from '../stage/render.ts';
 import { videoGraph } from './video.ts';
 
 const run = promisify(execFile);
@@ -27,17 +29,21 @@ export interface ComposeInputs {
   subtitles?: string;
   // The device still and where the recording goes inside it.
   frame?: { file: string; screen: Rect; output: Size };
+  // Stretches rendered on the stage, in place of the capture while the camera is off the flat.
+  stage?: { file: string; start: number }[];
   duration: number;
   output: string;
   draft?: boolean;
 }
 
-function graphs({ capture, clips, music, overlays = [], sfx = [], sfxVolume = 1, subtitles, frame, duration }: ComposeInputs, loudness?: Loudness) {
+function graphs({ capture, clips, music, overlays = [], sfx = [], sfxVolume = 1, subtitles, frame, stage = [], duration }: ComposeInputs, loudness?: Loudness) {
   const inputs = ['-i', capture, ...clips.flatMap(clip => ['-i', clip.file])];
   if (music) inputs.push('-stream_loop', '-1', '-i', music.file);
   const firstOverlay = 1 + clips.length + (music ? 1 : 0);
   inputs.push(...overlays.flatMap(overlay => ['-i', overlay.file]));
   if (frame) inputs.push('-i', frame.file);
+  const firstStage = firstOverlay + overlays.length + (frame ? 1 : 0);
+  inputs.push(...stage.flatMap(clip => ['-i', clip.file]));
 
   const audio = audioGraph({
     clips: clips.map((clip, i) => ({ input: i + 1, start: clip.start })),
@@ -48,7 +54,8 @@ function graphs({ capture, clips, music, overlays = [], sfx = [], sfxVolume = 1,
     ...(music ? { music: { input: clips.length + 1, volume: music.volume } } : {}),
   });
   const video = videoGraph(overlays.map((overlay, i) => ({ ...overlay, input: firstOverlay + i })), subtitles,
-    frame ? { input: firstOverlay + overlays.length, screen: frame.screen, output: frame.output } : undefined);
+    frame ? { input: firstOverlay + overlays.length, screen: frame.screen, output: frame.output } : undefined,
+    stage.map((clip, i) => ({ input: firstStage + i, start: clip.start })));
   return { inputs, audio, video };
 }
 
@@ -110,6 +117,11 @@ export async function composeTour(
     frame = { file: FRAME_FILE, screen: outputLayout({ frame: tour.frame, device: tour.device, canvas: deviceProfile(tour.device).output, output }).screen, output };
   }
 
+  const fps = FPS[quality];
+  const stage = stagePlan(timeline).spans.map((span, i) => ({ file: stageFile(i), start: spanFrames(span, fps).first / fps }));
+  const absent = stage.find(clip => !existsSync(path.join(outDir, clip.file)));
+  if (absent) throw new Error(`${absent.file} is missing; render without --from=compose first`);
+
   const output = 'video.mp4';
   const inputs: ComposeInputs = {
     capture: 'capture.mp4', clips, overlays, duration: timeline.duration, output, draft: quality === 'preview',
@@ -118,6 +130,7 @@ export async function composeTour(
     ...(subtitles ? { subtitles } : {}),
     ...(music ? { music } : {}),
     ...(frame ? { frame } : {}),
+    ...(stage.length ? { stage } : {}),
   };
   // A stuck filter graph ignores SIGTERM and would spin forever; kill it hard instead.
   const timeout = Math.round(Math.max(120, timeline.duration * 10) * 1000);

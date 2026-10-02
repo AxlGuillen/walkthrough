@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="base.css">
+<script src="params.js"></script>
+<style>
+  html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: var(--stage); }
+  #world { position: absolute; inset: 0; perspective: 115vmax; perspective-origin: 50% 45%; }
+  #plane { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  #screen {
+    position: absolute; inset: 0; overflow: hidden; background: #fff;
+    border-radius: calc(var(--depth, 0) * 0.8vmin);
+    box-shadow: 0 calc(var(--depth, 0) * 3.6vmin) calc(var(--depth, 0) * 8vmin) rgba(0, 0, 0, calc(var(--depth, 0) * 0.55));
+  }
+  video { display: block; width: 100%; height: 100%; }
+</style>
+</head>
+<body>
+<div id="world"><div id="plane"><div id="screen"><video muted playsinline preload="auto"></video></div></div></div>
+<script>
+  const video = document.querySelector('video');
+  video.src = param('src');
+
+  // Node computes the pose of every frame; the page only places the recording and its frame.
+  window.__walkthroughStage = async (pose, time) => {
+    const plane = document.getElementById('plane');
+    plane.style.transform = `translate(${pose.x * 100}vw, ${pose.y * 100}vh) scale(${pose.scale}) `
+      + `rotateY(${pose.rotateY}deg) rotateX(${pose.rotateX}deg)`;
+    document.documentElement.style.setProperty('--depth', String(pose.depth));
+    if (Math.abs(video.currentTime - time) > 1e-4) {
+      const seeked = new Promise(resolve => video.addEventListener('seeked', resolve, { once: true }));
+      video.currentTime = time;
+      await seeked;
+    }
+  };
+</script>
+</body>
+</html>

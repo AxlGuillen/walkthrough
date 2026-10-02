@@ -30,6 +30,17 @@ describe('videoGraph', () => {
     expect(graph).toContain('[framed][o0]overlay');
   });
 
+  it('lays stage stretches over the capture at their start, below the overlays', () => {
+    const graph = videoGraph([{ input: 2, start: 0, end: 1, fade: 0 }], undefined, undefined, [{ input: 3, start: 1.5 }, { input: 4, start: 6 }]);
+    expect(graph.split(';').slice(0, 4)).toEqual([
+      '[3:v]setpts=PTS-STARTPTS+1.500/TB[s0]',
+      '[0:v][s0]overlay=eof_action=pass[staged0]',
+      '[4:v]setpts=PTS-STARTPTS+6.000/TB[s1]',
+      '[staged0][s1]overlay=eof_action=pass[staged1]',
+    ]);
+    expect(graph).toContain('[staged1][o0]overlay');
+  });
+
   it('never lets the fades overlap on a short overlay', () => {
     expect(videoGraph([{ input: 1, start: 0, end: 0.4, fade: 1 }])).toContain('fade=t=out:st=0.200:d=0.200');
   });

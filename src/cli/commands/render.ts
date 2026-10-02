@@ -13,6 +13,8 @@ import { auditTiming, formatTiming } from '../../check/timing.ts';
 import { EVENTS_FILE, type CaptureEvent } from '../../capture/events.ts';
 import { renderOverlays } from '../../overlays/render.ts';
 import { renderFrame } from '../../frame/render.ts';
+import { stagePlan } from '../../stage/plan.ts';
+import { renderStage } from '../../stage/render.ts';
 import { ROOT, STORAGE } from '../context.ts';
 import { voice } from './voice.ts';
 
@@ -49,6 +51,14 @@ export async function render(tourFile: string, from: string | undefined, preview
       await renderFrame({ frame: tour.frame, device: tour.device, url: tour.url, tourDir: paths.dir, outDir,
         canvas: deviceProfile(tour.device).output, output: deviceProfile(tour.device, quality).output, look: tourLook(tour) });
     }
+    const plan = stagePlan(timeline);
+    await renderStage({
+      plan, capture, tourDir: paths.dir, outDir, draft: preview,
+      canvas: deviceProfile(tour.device).output, output: deviceProfile(tour.device, quality).output, fps: FPS[quality],
+      look: tourLook(tour),
+      onFrame: (span, frame, total) => process.stderr.write(`\r  stage ${span}: ${frame}/${total}   `),
+    });
+    if (plan.spans.length) process.stderr.write('\n');
   }
 
   const composed = await composeTour(tour, timeline, outDir, paths.dir, { quality, ...(preview ? { voiceDir: '../voice' } : {}) });
@@ -65,7 +75,10 @@ export async function render(tourFile: string, from: string | undefined, preview
   }
 
   const events = path.join(outDir, EVENTS_FILE);
-  if (existsSync(events)) console.log(formatTiming(auditTiming(JSON.parse(await readFile(events, 'utf8')) as CaptureEvent[], timeline)));
+  if (existsSync(events)) {
+    const notes = [...auditTiming(JSON.parse(await readFile(events, 'utf8')) as CaptureEvent[], timeline), ...stagePlan(timeline).notes];
+    console.log(formatTiming(notes.sort((a, b) => a.time - b.time)));
+  }
 
   if (open) {
     const url = `${await ensureGallery(ROOT)}/#${anchor}`;

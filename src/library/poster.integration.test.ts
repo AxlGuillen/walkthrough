@@ -16,8 +16,8 @@ afterAll(async () => {
 
 describe('posters', () => {
   it('keeps videos and previews apart under the work folder', () => {
-    expect(posterFile('/w', { file: 'uws/tablero/a.mp4' })).toBe('/w/posters/videos/uws/tablero/a.jpg');
-    expect(posterFile('/w', { preview: 'uws/tablero' })).toBe('/w/posters/previews/uws/tablero.jpg');
+    expect(posterFile('/w', { file: 'uws/tablero/a.mp4' })).toBe(path.join('/w/posters/videos/uws/tablero/a.jpg'));
+    expect(posterFile('/w', { preview: 'uws/tablero' })).toBe(path.join('/w/posters/previews/uws/tablero.jpg'));
   });
 
   it('cuts a still once, and again only when the video is newer', async () => {

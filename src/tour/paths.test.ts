@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { defaultStorage, tourPaths, voiceCacheDir } from './paths.ts';
 
@@ -28,11 +29,11 @@ describe('tourPaths', () => {
     expect(tourPaths('tours/uws-tasks/board.yaml', '/repo', { work: '/w', videos: '/v' })).toEqual({
       project: 'uws-tasks',
       name: 'board',
-      file: '/repo/tours/uws-tasks/board.yaml',
-      dir: '/repo/tours/uws-tasks',
-      workDir: '/w/tours/uws-tasks/board',
-      videoDir: '/v/uws-tasks/board',
+      file: path.resolve('/repo/tours/uws-tasks/board.yaml'),
+      dir: path.resolve('/repo/tours/uws-tasks'),
+      workDir: path.join('/w/tours/uws-tasks/board'),
+      videoDir: path.join('/v/uws-tasks/board'),
     });
-    expect(voiceCacheDir({ work: '/w', videos: '/v' })).toBe('/w/voice');
+    expect(voiceCacheDir({ work: '/w', videos: '/v' })).toBe(path.join('/w/voice'));
   });
 });

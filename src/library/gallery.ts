@@ -18,6 +18,11 @@ export function resolveVideo(videosRoot: string, relative: unknown): string | nu
   return file.startsWith(path.resolve(videosRoot) + path.sep) ? file : null;
 }
 
+// The page names videos by this key, so it is the same on every system.
+export function libraryKey(videosRoot: string, file: string): string {
+  return path.relative(videosRoot, file).split(path.sep).join('/');
+}
+
 export function resolvePreview(workRoot: string, key: unknown): string | null {
   if (typeof key !== 'string') return null;
   const parts = key.split('/');
@@ -58,7 +63,7 @@ export function startGallery(storage: Storage, port = GALLERY_PORT): Promise<htt
 }
 
 async function sendPage(storage: Storage, response: http.ServerResponse) {
-  const videos = (await listVideos(storage.videos)).map(v => ({ ...v, relative: path.relative(storage.videos, v.file) }));
+  const videos = (await listVideos(storage.videos)).map(v => ({ ...v, relative: libraryKey(storage.videos, v.file) }));
   const previews = await listPreviews(storage.work);
   const page = galleryPage({ videos, previews, cacheBytes: await sizeOf(path.join(storage.work, 'tours')), videosRoot: storage.videos });
   response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -98,7 +103,7 @@ async function sendPoster(storage: Storage, url: URL, response: http.ServerRespo
   const at = Number(url.searchParams.get('t') ?? 0);
   if (!file || !existsSync(file) || !Number.isFinite(at) || at < 0 || at > 3600) return reply(response, 404, 'not found');
   const preview = url.searchParams.get('preview');
-  const poster = posterFile(storage.work, preview ? { preview } : { file: path.relative(storage.videos, file) });
+  const poster = posterFile(storage.work, preview ? { preview } : { file: libraryKey(storage.videos, file) });
   await ensurePoster(file, poster, at);
   response.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' });
   createReadStream(poster).pipe(response);

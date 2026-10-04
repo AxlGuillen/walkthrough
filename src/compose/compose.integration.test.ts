@@ -41,7 +41,7 @@ segments:
     await composeTour(tour, timeline, dir, dir);
 
     expect(Number(probe('video.mp4', 'format=duration'))).toBeCloseTo(3, 1);
-    expect(probe('video.mp4', 'stream=codec_type').split('\n')).toEqual(['video', 'audio']);
+    expect(probe('video.mp4', 'stream=codec_type').split(/\r?\n/)).toEqual(['video', 'audio']);
     expect(readFileSync(path.join(dir, 'subs.ass'), 'utf8')).toContain('{\\k50}Hola');
   }, 60_000);
 

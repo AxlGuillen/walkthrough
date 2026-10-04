@@ -3,14 +3,14 @@ import type http from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parseRange, resolvePreview, resolveVideo, startGallery } from './gallery.ts';
+import { libraryKey, parseRange, resolvePreview, resolveVideo, startGallery } from './gallery.ts';
 import { publishVideo } from './library.ts';
 import { isGallery } from './launch.ts';
 import { escapeHtml, formatBytes, formatDuration, formatWhen, galleryPage, previewAnchor, shortenHome, stillAt, summarize, videoAnchor } from './page.ts';
 
 describe('resolveVideo', () => {
   it('accepts only mp4 files inside the library', () => {
-    expect(resolveVideo('/v', 'uws/tablero/a.mp4')).toBe('/v/uws/tablero/a.mp4');
+    expect(resolveVideo('/v', 'uws/tablero/a.mp4')).toBe(path.resolve('/v/uws/tablero/a.mp4'));
     expect(resolveVideo('/v', '../etc/passwd.mp4')).toBeNull();
     expect(resolveVideo('/v', '/v/../x.mp4')).toBeNull();
     expect(resolveVideo('/v', 'uws/a.json')).toBeNull();
@@ -18,9 +18,15 @@ describe('resolveVideo', () => {
   });
 });
 
+describe('libraryKey', () => {
+  it('names a video with forward slashes on every system', () => {
+    expect(libraryKey(path.resolve('/v'), path.resolve('/v/uws/tablero/a.mp4'))).toBe('uws/tablero/a.mp4');
+  });
+});
+
 describe('resolvePreview', () => {
   it('maps project/tour to its preview and nothing else', () => {
-    expect(resolvePreview('/w', 'uws-tasks/tablero')).toBe('/w/tours/uws-tasks/tablero/preview/video.mp4');
+    expect(resolvePreview('/w', 'uws-tasks/tablero')).toBe(path.join('/w/tours/uws-tasks/tablero/preview/video.mp4'));
     expect(resolvePreview('/w', '../etc')).toBeNull();
     expect(resolvePreview('/w', 'a/../b')).toBeNull();
     expect(resolvePreview('/w', 'a/b/c')).toBeNull();

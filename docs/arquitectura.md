@@ -40,22 +40,29 @@ Cada etapa lee solo archivos de la anterior, así que se puede repetir por separ
 
 ## Almacenamiento
 
-Nada generado vive en el repo:
+Nada generado vive en el repo. Cada sistema tiene su carpeta de caché (`<caché>`) y su carpeta de videos (`<videos>`):
+
+| Sistema | `<caché>` | `<videos>` | Papelera |
+|---|---|---|---|
+| macOS | `~/Library/Caches/walkthrough` | `~/Movies/walkthrough` | `~/.Trash` |
+| Windows | `%LOCALAPPDATA%\walkthrough` | `~\Videos\walkthrough` | Papelera de reciclaje |
+| Linux | `$XDG_CACHE_HOME/walkthrough` (o `~/.cache`) | `~/Videos/walkthrough` | `~/.local/share/Trash/files` |
 
 | Qué | Dónde | Se puede borrar |
 |---|---|---|
-| Archivos de trabajo (voz por segmento, timeline, captura, overlays) | `~/Library/Caches/walkthrough/tours/<project>/<tour>/` | Sí; se regeneran |
-| Caché de voz | `~/Library/Caches/walkthrough/voice/` | Sí; cuesta volver a pedir la voz |
-| Videos finales | `~/Movies/walkthrough/<project>/<tour>/<fecha_hora>.mp4` + `.json` con título, duración, dispositivo y tamaño | Solo a la Papelera |
+| Archivos de trabajo (voz por segmento, timeline, captura, overlays) | `<caché>/tours/<project>/<tour>/` | Sí; se regeneran |
+| Caché de voz | `<caché>/voice/` | Sí; cuesta volver a pedir la voz |
+| Videos finales | `<videos>/<project>/<tour>/<fecha_hora>.mp4` + `.json` con título, duración, dispositivo y tamaño | Solo a la Papelera |
 
 - Se cambian con `WALKTHROUGH_WORK` y `WALKTHROUGH_VIDEOS`.
+- **Abrir, mostrar y tirar** pasan por `src/desktop/`: `open` en macOS, `Start-Process` y el Explorador en Windows, `xdg-open` en Linux. En Windows la ruta viaja en una variable de entorno, así PowerShell nunca la interpreta.
 - **Cada render es un archivo nuevo**, así se pueden comparar versiones.
-- **`walkthrough gallery`** abre `http://localhost:4717`, una página local para ver los videos por proyecto, mostrarlos en Finder, mandarlos a la Papelera o limpiar la caché. Solo escucha en `127.0.0.1` y rechaza acciones cuyo `Origin` no sea el suyo, para que otra página no pueda borrar nada. Sirve el video con `Range`, que Safari exige para reproducir.
+- **`walkthrough gallery`** abre `http://localhost:4717`, una página local para ver los videos por proyecto, mostrarlos en el Finder o el Explorador, mandarlos a la Papelera o limpiar la caché. Solo escucha en `127.0.0.1` y rechaza acciones cuyo `Origin` no sea el suyo, para que otra página no pueda borrar nada. Sirve el video con `Range`, que Safari exige para reproducir.
 - **Diseño de la galería:** la línea «Acid Grid» de Reels Analytics (tinta y casi-blanco, el lima #D9F24A como único color y siempre como fondo bajo tinta, tarjetas de 22 px con sombra), con tema claro y oscuro (sigue al sistema y recuerda la elección en `localStorage`) y el icono 4XL como favicon. Arriba, tarjetas de resumen (videos, último render, minutos generados); luego una sección por proyecto y las vistas previas, con estado vacío. Space Grotesk y JetBrains Mono se piden por nombre, con fuentes del sistema de respaldo: nada se carga de internet.
-- **Imágenes fijas** (`src/library/poster.ts`): el navegador pinta mal el cuadro de un video en pausa, así que `/poster` corta uno con ffmpeg al 20 % del video (entre 2 y 20 s, pasada la tarjeta de título), lo guarda en `~/Library/Caches/walkthrough/posters/` y lo vuelve a cortar si el video es más nuevo. Los videos llevan `preload="none"` y solo se cargan al darles play. `clean` borra los posters con el resto de la caché de trabajo.
+- **Imágenes fijas** (`src/library/poster.ts`): el navegador pinta mal el cuadro de un video en pausa, así que `/poster` corta uno con ffmpeg al 20 % del video (entre 2 y 20 s, pasada la tarjeta de título), lo guarda en `<caché>/posters/` y lo vuelve a cortar si el video es más nuevo. Los videos llevan `preload="none"` y solo se cargan al darles play. `clean` borra los posters con el resto de la caché de trabajo.
 - **`render --open`** abre la galería directo en el video recién hecho (o en la vista previa): cada tarjeta tiene un ancla estable (`#v-…`, `#p-…`) y la página baja hasta ella y la resalta. Si la galería no está corriendo, se arranca en segundo plano y queda viva después del comando. Se reconoce por su título, así que otra app en el puerto 4717 no se confunde con ella.
 - **`walkthrough clean`** borra los archivos de trabajo. Con `--voice` también borra la caché de voz, y con `--keep=<n>` manda a la Papelera todo menos los *n* renders más nuevos de cada tour. La carpeta vieja `out/` del repo, si existe, también va a la Papelera.
-- **Nunca se borra un video de forma permanente**: va a `~/.Trash` con un nombre que no pisa lo que ya haya ahí.
+- **Nunca se borra un video de forma permanente**: va a la Papelera del sistema; en macOS y Linux, con un nombre que no pisa lo que ya haya ahí.
 
 ## El tour
 
@@ -143,7 +150,7 @@ La prueba 10.1 (`docs/plan.md`) midió unos 0,16 s por cuadro a 1080p; por eso e
 
 ## Etiquetas
 
-`label: { on, text, side, duration }` dibuja en la capa de efectos una burbuja del color de acento, con letra tipo plumón (Marker Felt, que viene con macOS), y una flecha a mano hacia el elemento.
+`label: { on, text, side, duration }` dibuja en la capa de efectos una burbuja del color de acento, con letra tipo plumón (Marker Felt, que viene con macOS; en Windows cae en Comic Sans), y una flecha a mano hacia el elemento.
 
 - **Colocación:** una función pura (`layoutLabel`) prueba arriba, abajo, derecha e izquierda y se queda con el primer lado donde cabe; `side` lo fija a mano. El ancho del texto se estima en Node, antes de que exista.
 - **Texto:** se ajusta por palabras, con 3 líneas como máximo.
@@ -243,14 +250,14 @@ overlays:
 - **Animación por posición:** `params.js` expone `walkthrough` (`beats`, `data`, `theme`, `beat(nombre)`) y dos formas de registrar una animación en pausa: `walkthrough.timeline(t => …)` o `walkthrough.gsap(timeline)`. En cada cuadro el render llama `__walkthroughSeek(t)` antes de la captura, así la animación cae en el segundo exacto y dos renders dan los mismos cuadros (lo comprueba una prueba con `framemd5`). Las plantillas que animan con CSS siguen con la sincronía de siempre.
 - **GSAP vendorizado** en `templates/overlays/vendor/gsap/` (3.15.0: núcleo, SplitText, DrawSVG, MorphSVG, CustomEase; licencia en su `AVISO.md`).
 - **Kit de movimiento** (`templates/overlays/kit.js`): curvas y duraciones de la familia, `kit.timeline()`, `kit.split()` (letras o palabras, nunca líneas, para no depender de que carguen las fuentes), `kit.count()` (números en `es-MX` o `en-US` según el tour), `kit.draw()` y `kit.drift()`, la cámara de las escenas con profundidad.
-- **Escenas con profundidad** (`templates/overlays/scene.css`, fase 10.4): un cuarto con luz y viñeta, un `rig` en perspectiva que guarda cada pieza a su profundidad (`translateZ`: la sombra en la pared detrás, el tablero, la repisa más al frente) y `kit.drift()`, que entra desde un ángulo más abierto y luego deriva despacio todo lo que dura el overlay, así lo cercano se mueve más que lo lejano. Las letras de gis y de plumón son fuentes de macOS (Chalkduster, Marker Felt, Noteworthy), sin archivos; el gis se rompe con un filtro SVG. Cuestan más que una tabla: unos 0,5–0,75 s por cuadro a 1080p, por capturar sin pérdida un cuadro opaco lleno de degradados.
+- **Escenas con profundidad** (`templates/overlays/scene.css`, fase 10.4): un cuarto con luz y viñeta, un `rig` en perspectiva que guarda cada pieza a su profundidad (`translateZ`: la sombra en la pared detrás, el tablero, la repisa más al frente) y `kit.drift()`, que entra desde un ángulo más abierto y luego deriva despacio todo lo que dura el overlay, así lo cercano se mueve más que lo lejano. Las letras de gis y de plumón son fuentes de macOS (Chalkduster, Marker Felt, Noteworthy), sin archivos, así que fuera de una Mac salen con letra de respaldo; el gis se rompe con un filtro SVG. Cuestan más que una tabla: unos 0,5–0,75 s por cuadro a 1080p, por capturar sin pérdida un cuadro opaco lleno de degradados.
 - **Duración y acento como texto:** la plantilla recibe `?duration=` (sus segundos en pantalla, para calcular una salida desde el final) y `--accent-ink`, el acento para texto y líneas finas: con un acento claro en tema claro pasa a tinta, porque el lima no se lee sobre blanco.
 - **Tema** (`theme: dark | light` en el tour): llega como `?theme=` junto con el acento y el idioma (`lang`). `base.css` define los tokens (`--stage`, `--panel`, `--surface`, `--line`, `--stroke`, `--scrim`) y las plantillas, flujos incluidos, solo usan tokens.
 - **Recursos con datos** (`src/resources/registry.ts`): una plantilla que toma `data` (`chart.html`, `code.html`, `table.html`, `roadmap.html`, `board.html`, `corkboard.html`) declara su esquema, los beats de sus partes, su escena y sus avisos. `check` calcula la escena como el render y reporta lo que no se leería (etiquetas cortadas, código que no cabe o que sigue escribiéndose cuando el overlay se va). Al cargar el tour se valida `data` y cada `at` de dentro se vuelve un beat (`p0`, `p1`… en una serie; `value`, `before`, `after`); los beats escritos a mano ganan. Al renderizar, Node calcula la escena con los beats ya en segundos y la pasa como `?scene=`. Las gráficas (`src/charts/`) reparten los puntos sin palabra entre sus vecinos con el mismo `spreadTimes` de los flujos, con su propio ritmo mínimo.
 - **Marcas** (`src/brands/`, `assets/brands/<marca>/brand.yaml`): al cargar el tour, la marca llena el acento, el tema y la textura que el tour no fija. `tourLook` pasa a cada overlay el nombre, los dos colores (`--brand-1`, `--brand-2`, y el tinte del fondo oscuro, `--stage-tint`) y sus imágenes como URL: la más ancha (`brandLogo`, sobre el eyebrow) y la más cuadrada (`brandMark` con `markShape`, al centro de `style: brand` y en la marca de agua). `watermark: true` hace que la timeline agregue `watermark.html` entre el primer y el último segmento, sin sonido (`silent`).
 - **Texturas** (`texture`): `data-texture` en `<html>` cambia `--stage` por capas de CSS sobre `--stage-base` (grano en un SVG `feTurbulence` en línea, puntos, líneas, mallas de color). Todo fondo propio usa `--stage`.
 - **Emojis** (`src/emoji/emoji.ts`, `templates/overlays/vendor/fluent-emoji/`): `emojiName` valida un nombre contra `index.json` y sugiere parecidos; `params.emoji` se valida al cargar. En la página, `walkthrough.emoji(nombre)` da la URL en el estilo del tour (`emojiStyle`).
-- **Probador:** `walkthrough overlay <plantilla> --beats=… --params=… --data=archivo --theme=… --device=…` renderiza un overlay suelto sobre gris medio en `~/Library/Caches/walkthrough/probe/`, para diseñar un recurso sin armar un tour. Las rutas relativas se resuelven desde la carpeta actual.
+- **Probador:** `walkthrough overlay <plantilla> --beats=… --params=… --data=archivo --theme=… --device=…` renderiza un overlay suelto sobre gris medio en `<caché>/probe/`, para diseñar un recurso sin armar un tour. Las rutas relativas se resuelven desde la carpeta actual.
 
 ## Flujos
 
@@ -319,7 +326,7 @@ interface VoiceProvider {
 ```
 
 - **Una sola voz en todo el tour.** Sin `reference_id`, Fish puede elegir una voz distinta en cada llamada. El adaptador expone `defaultVoice` («Drez», `47a92a11ad4a4b79aac40ad587fa61b1`, español, narrador calmado) y un tour la cambia con `voice:`.
-- **Caché** en `~/Library/Caches/walkthrough/voice/<sha256>`. La clave incluye proveedor, modelo, voz, idioma, texto y prosodia.
+- **Caché** en `<caché>/voice/<sha256>`. La clave incluye proveedor, modelo, voz, idioma, texto y prosodia.
 - **Duración real** calculada de los bytes de PCM, después de reconstruir la cabecera WAV del stream.
 - **Etiquetas de expresión** (`[excited]`) filtradas de las palabras dentro del adaptador.
 
@@ -365,7 +372,7 @@ setup:
   - ⚠ si hay varios resultados, si el selector depende de datos (una clave de ticket, un número largo) o si hay un diálogo abierto.
 
   Antes de declarar que algo no existe espera hasta 5 s: las pantallas a las que se llega con un clic del lado del cliente no disparan `load`. Sale con código 1 si hay fallas.
-- **`walkthrough inspect <url> [--session] [--device]`** es solo lectura: navega sin hacer clics y escribe un reporte Markdown con captura en `~/Library/Caches/walkthrough/inspect/<host>/`. Por pantalla lista encabezados, anclas estables (`data-tour` > `data-testid` > enlaces internos > `aria-label` > ids no generados > texto corto), diálogos abiertos, zonas con scroll y claves de `localStorage` que parecen de onboarding.
+- **`walkthrough inspect <url> [--session] [--device]`** es solo lectura: navega sin hacer clics y escribe un reporte Markdown con captura en `<caché>/inspect/<host>/`. Por pantalla lista encabezados, anclas estables (`data-tour` > `data-testid` > enlaces internos > `aria-label` > ids no generados > texto corto), diálogos abiertos, zonas con scroll y claves de `localStorage` que parecen de onboarding.
   - Sigue solo los enlaces de navegación y una vez por ruta, ignorando el query.
   - Los controles por fila («Edit <título>») se agrupan en un selector de prefijo, porque llevan datos en la etiqueta.
 - **Auditoría de tiempos** (`src/check/timing.ts`): al terminar cada render, lee `events.json` (lo que de verdad pasó en la captura) y avisa de lo que se vería a destiempo:
@@ -375,7 +382,7 @@ setup:
   - una marca que un flujo a pantalla completa o una tarjeta de título tapa antes de 1,2 s, o que se retiró antes de ese tiempo porque la taparon.
 
   Cada aviso dice cómo corregirlo, casi siempre moviendo `at` a una palabra posterior. Las reglas de escritura están en `docs/guiones.md`.
-- **`walkthrough render --preview`** mantiene el viewport (la app se ve idéntica) y reduce la salida a la mitad y a 15 fps. Los overlays se diseñan sobre el lienzo completo y se escalan. Queda en `…/<tour>/preview/`, fuera de `~/Movies`, y la galería lo muestra en «Vistas previas». Comparte voz y timeline con el render final.
+- **`walkthrough render --preview`** mantiene el viewport (la app se ve idéntica) y reduce la salida a la mitad y a 15 fps. Los overlays se diseñan sobre el lienzo completo y se escalan. Queda en `…/<tour>/preview/`, fuera de `<videos>`, y la galería lo muestra en «Vistas previas». Comparte voz y timeline con el render final.
   - En uws-tasks tardó 2 min 10 s contra unos 11 min del final: 5× más rápido.
   - Por cuadro ya domina el costo fijo (sincronía, efectos, reloj) más que los píxeles: 132 ms contra ~360 ms.
 

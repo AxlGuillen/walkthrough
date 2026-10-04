@@ -1,4 +1,5 @@
 /* Shared look for overlay templates. Sizes use vmin so a template fits 16:9 and 9:16 alike. */
+@import url("vendor/fonts/fonts.css");
 :root {
   --accent: #FF3B5C;
   /* Text on an accent fill; params.js darkens it for a light accent. */
@@ -26,6 +27,9 @@
   --shadow: rgba(0, 0, 0, 0.45);
   --font: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   --mono: "SF Mono", ui-monospace, Menlo, monospace;
+  /* Hand lettering, vendored so it looks the same on every system. */
+  --marker: "Permanent Marker", cursive;
+  --hand: "Kalam", cursive;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 /* theme: light in the tour; params.js sets data-theme before anything paints. */

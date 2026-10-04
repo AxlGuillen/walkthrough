@@ -24,7 +24,7 @@
       radial-gradient(35% 25% at 72% 62%, rgba(255, 255, 255, 0.05), transparent 70%);
     box-shadow: inset 0 0 6vmin rgba(0, 0, 0, 0.45);
   }
-  .chalk .writing { font-family: "Chalkduster", "Chalkboard SE", cursive; color: #f2efe4; filter: url(#chalk); }
+  .chalk .writing { font-family: var(--hand); color: #f2efe4; filter: url(#chalk); }
   .chalk .title { color: #f7e8a6; }
   .chalk .stroke { stroke: #f2efe4; filter: url(#chalk); }
   .chalk .stroke.mark { stroke: color-mix(in srgb, var(--accent) 55%, #fff6c8); }
@@ -35,7 +35,7 @@
     box-shadow: inset 0 0 3vmin rgba(0, 0, 0, 0.12);
   }
   .white .frame { background: linear-gradient(180deg, #e3e6e8, #a9afb5 55%, #8b9298); box-shadow: inset 0 0.3vmin 0 rgba(255, 255, 255, 0.7); }
-  .white .writing { font-family: "Marker Felt", "Noteworthy", cursive; font-weight: 700; color: #1d3f8f; }
+  .white .writing { font-family: var(--marker); color: #1d3f8f; }
   .white .title { color: #111; }
   .white .stroke { stroke: #1d3f8f; }
   .white .stroke.mark { stroke: #d42d2d; }

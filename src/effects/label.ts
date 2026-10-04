@@ -12,8 +12,10 @@ export interface LabelLayout {
 }
 
 export const LABEL_FONT = { size: 22, line: 28, padX: 18, padY: 12 };
-// Rough glyph width for the marker font: layout happens in Node, before any text exists.
+// Rough glyph widths for Permanent Marker, whose capitals run wide: layout happens in Node,
+// before any text exists.
 const CHAR_WIDTH = 11.5;
+const CAPITAL_WIDTH = 15;
 const MAX_CHARS = 32;
 const MAX_LINES = 3;
 const GAP = 64;
@@ -33,11 +35,15 @@ export function wrapText(text: string, maxChars = MAX_CHARS, maxLines = MAX_LINE
   return kept;
 }
 
+export function lineWidth(line: string): number {
+  return [...line].reduce((sum, char) => sum + (char !== char.toLowerCase() ? CAPITAL_WIDTH : CHAR_WIDTH), 0);
+}
+
 // Tries the sides in order and keeps the first where the bubble fits on screen; a target
 // with no room anywhere still gets its preferred side, pushed back inside the frame.
 export function layoutLabel(target: Rect, text: string, viewport: Size, side?: LabelSide): LabelLayout {
   const lines = wrapText(text);
-  const width = Math.max(...lines.map(line => line.length)) * CHAR_WIDTH + LABEL_FONT.padX * 2;
+  const width = Math.max(...lines.map(lineWidth)) + LABEL_FONT.padX * 2;
   const height = lines.length * LABEL_FONT.line + LABEL_FONT.padY * 2;
   const cx = target.x + target.width / 2;
   const cy = target.y + target.height / 2;

@@ -1,0 +1,13 @@
+/* One weight each; the 400–700 range keeps the browser from faking a bold. */
+@font-face {
+  font-family: "Permanent Marker";
+  src: url("PermanentMarker-Regular.ttf") format("truetype");
+  font-weight: 400 700;
+  font-display: block;
+}
+@font-face {
+  font-family: "Kalam";
+  src: url("Kalam-Bold.ttf") format("truetype");
+  font-weight: 400 700;
+  font-display: block;
+}

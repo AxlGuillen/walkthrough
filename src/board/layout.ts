@@ -35,7 +35,7 @@ export function boardBeats(board: Board): Record<string, string | number> {
   return beats;
 }
 
-// Chalkduster and Marker Felt run wide.
+// Permanent Marker capitals run wide (up to 0.57 em a letter).
 const CHAR_EM = 0.62;
 // Letters per second a hand writes on a board.
 const WRITING = 16;

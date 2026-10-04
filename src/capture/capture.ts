@@ -1,6 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { cursorPosition, sceneAt } from '../effects/scene.ts';
+import { markerFont } from '../effects/font.ts';
 import { renderScene } from '../effects/svg.ts';
 import type { Timeline } from '../timeline/build.ts';
 import { cameraAt, followCursor, fullFrame } from '../timeline/camera.ts';
@@ -43,7 +44,7 @@ export async function captureTour({
   try {
     const page = context.pages()[0] ?? (await context.newPage());
     const clock = await installClock(page);
-    await page.addInitScript(effectsLayer);
+    await page.addInitScript(effectsLayer, await markerFont());
     await page.addInitScript(scrollControl);
     await page.addInitScript(transitionLayer);
     await installSetup(page, tour);

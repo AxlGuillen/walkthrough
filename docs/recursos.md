@@ -268,7 +268,7 @@ El pizarrón y el corcho no son tarjetas planas: cuelgan en una pared con el fon
 
 - **Una por sección, como interludio.** Tapan la app, como una gráfica a pantalla completa.
 - **Cuestan render:** unas dos o tres veces lo de una tabla por segundo en pantalla.
-- **Letras de macOS** (Chalkduster, Marker Felt, Noteworthy): no hay archivos que bajar, pero solo se ven bien en una Mac; en Windows salen con letra de respaldo.
+- **Letras vendorizadas:** Permanent Marker (plumón: pizarrón blanco, título del corcho) y Kalam (a mano: gis, con su filtro, y notas), en `templates/overlays/vendor/fonts/`. Se ven igual en macOS y Windows; las plantillas las piden con `var(--marker)` y `var(--hand)`.
 
 Ejemplos de los tres en `tours/examples/catalogo.yaml`.
 

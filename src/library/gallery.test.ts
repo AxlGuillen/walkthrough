@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseRange, resolvePreview, resolveVideo, startGallery } from './gallery.ts';
 import { publishVideo } from './library.ts';
 import { isGallery } from './launch.ts';
-import { escapeHtml, formatBytes, formatDuration, formatWhen, galleryPage, previewAnchor, stillAt, summarize, videoAnchor } from './page.ts';
+import { escapeHtml, formatBytes, formatDuration, formatWhen, galleryPage, previewAnchor, shortenHome, stillAt, summarize, videoAnchor } from './page.ts';
 
 describe('resolveVideo', () => {
   it('accepts only mp4 files inside the library', () => {
@@ -76,6 +76,13 @@ describe('galleryPage', () => {
     expect(page).toContain('<span>9:16</span>');
     expect(page).toContain('~/Movies/walkthrough');
     expect(page).toContain('rel="icon" type="image/svg+xml"');
+  });
+
+  it('shortens the home folder on every system', () => {
+    expect(shortenHome('/Users/someone/Movies/walkthrough')).toBe('~/Movies/walkthrough');
+    expect(shortenHome('C:\\Users\\someone\\Videos\\walkthrough')).toBe('~\\Videos\\walkthrough');
+    expect(shortenHome('/home/someone/Videos/walkthrough')).toBe('~/Videos/walkthrough');
+    expect(shortenHome('/srv/videos')).toBe('/srv/videos');
   });
 
   it('gives every card a stable anchor and focuses the one in the URL hash', () => {

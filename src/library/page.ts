@@ -54,6 +54,10 @@ export function summarize(videos: readonly Video[]): LibrarySummary {
 }
 
 // Stable ids for gallery cards, so a link can land on one video: /#v-uws-tasks-tablero-…
+export function shortenHome(dir: string): string {
+  return dir.replace(/^(\/Users\/[^/]+|\/home\/[^/]+|[A-Za-z]:\\Users\\[^\\]+)/, '~');
+}
+
 export function videoAnchor(relative: string): string {
   return `v-${relative.replace(/\.mp4$/, '').replace(/[^a-zA-Z0-9]+/g, '-')}`;
 }
@@ -200,7 +204,7 @@ export function galleryPage({ videos, previews = [], cacheBytes, videosRoot, now
   <header>
     <div class="brand">
       <span class="logo"><svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><g transform="translate(8,14)">${LOGO_PATHS}</g></svg></span>
-      <span class="name">Walkthrough<code class="mono muted">${escapeHtml(videosRoot.replace(/^\/Users\/[^/]+/, '~'))}</code></span>
+      <span class="name">Walkthrough<code class="mono muted">${escapeHtml(shortenHome(videosRoot))}</code></span>
     </div>
     <nav aria-label="Secciones"><a href="#videos" class="on">Videos</a><a href="#previews">Vistas previas</a></nav>
     <div class="actions">

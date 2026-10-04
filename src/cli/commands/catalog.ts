@@ -1,4 +1,4 @@
-import { execFile, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { lookFrom } from '../../brands/look.ts';
@@ -7,6 +7,7 @@ import { backdropArgs, catalogShots } from '../../overlays/catalog.ts';
 import { renderOverlays } from '../../overlays/render.ts';
 import { buildTimeline } from '../../timeline/build.ts';
 import { parseTour } from '../../tour/load.ts';
+import { openPath } from '../../desktop/desktop.ts';
 import { ROOT, STORAGE } from '../context.ts';
 
 export const CATALOG_TOUR = path.join(ROOT, 'tours/examples/catalogo.yaml');
@@ -61,5 +62,5 @@ export async function catalog({ device: devices, theme, texture, brand, emojiSty
     console.log(shots.map((shot, i) => `    ${String(i + 1).padStart(2)}. ${shot.label}`).join('\n'));
     sheets.push(sheet);
   }
-  if (open) execFile('open', sheets);
+  if (open) sheets.forEach(openPath);
 }

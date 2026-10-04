@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { copyFile, mkdir, readdir, readFile, rename, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { recycle } from '../desktop/desktop.ts';
 
 export interface VideoMeta {
   title: string;
@@ -82,8 +83,19 @@ export function olderThanKept(entries: readonly VideoEntry[], keep: number): Vid
     });
 }
 
-// Videos go to the macOS Trash, never straight to deletion, so a slip can be undone.
-export async function moveToTrash(file: string, trash = path.join(os.homedir(), '.Trash')): Promise<string> {
+// Windows has no Trash folder to move into; its Recycle Bin is reached through the shell.
+export function trashFolder(platform = process.platform, home = os.homedir()): string | undefined {
+  if (platform === 'darwin') return path.join(home, '.Trash');
+  if (platform === 'win32') return undefined;
+  return path.join(home, '.local', 'share', 'Trash', 'files');
+}
+
+// Videos go to the system's Trash, never straight to deletion, so a slip can be undone.
+export async function moveToTrash(file: string, trash = trashFolder()): Promise<string> {
+  if (!trash) {
+    await recycle(file);
+    return file;
+  }
   await mkdir(trash, { recursive: true });
   const { name, ext } = path.parse(file);
   let target = path.join(trash, `${name}${ext}`);

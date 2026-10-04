@@ -1,8 +1,8 @@
-import { execFile } from 'node:child_process';
 import { createReadStream, existsSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
+import { fileManagerName, revealFile } from '../desktop/desktop.ts';
 import type { Storage } from '../tour/paths.ts';
 import { clean } from './clean.ts';
 import { listPreviews, listVideos, sizeOf, trashVideo } from './library.ts';
@@ -65,7 +65,7 @@ export function startGallery(storage: Storage, port = GALLERY_PORT): Promise<htt
 async function sendPage(storage: Storage, response: http.ServerResponse) {
   const videos = (await listVideos(storage.videos)).map(v => ({ ...v, relative: libraryKey(storage.videos, v.file) }));
   const previews = await listPreviews(storage.work);
-  const page = galleryPage({ videos, previews, cacheBytes: await sizeOf(path.join(storage.work, 'tours')), videosRoot: storage.videos });
+  const page = galleryPage({ videos, previews, cacheBytes: await sizeOf(path.join(storage.work, 'tours')), videosRoot: storage.videos, fileManager: fileManagerName() });
   response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
   response.end(page);
 }
@@ -117,7 +117,7 @@ async function act(storage: Storage, action: string, body: { file?: unknown }, r
   const file = resolveVideo(storage.videos, body.file);
   if (!file || !existsSync(file)) return reply(response, 404, 'video not found');
   if (action === '/reveal') {
-    execFile('open', ['-R', file]);
+    revealFile(file);
     return reply(response, 200, 'ok');
   }
   if (action === '/trash') {

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { clean } from './clean.ts';
-import { listPreviews, listVideos, moveToTrash, olderThanKept, publishVideo, stamp, type VideoEntry } from './library.ts';
+import { listPreviews, listVideos, moveToTrash, olderThanKept, publishVideo, stamp, trashFolder, type VideoEntry } from './library.ts';
 
 let dir: string;
 let storage: { work: string; videos: string };
@@ -73,6 +73,14 @@ describe('olderThanKept', () => {
     const entries = [entry('a', '1'), entry('a', '3'), entry('a', '2'), entry('b', '1')];
     expect(olderThanKept(entries, 2).map(e => e.file)).toEqual(['a-1']);
     expect(olderThanKept(entries, 0)).toHaveLength(4);
+  });
+});
+
+describe('trashFolder', () => {
+  it('uses the Trash folder on macOS and Linux and the Recycle Bin on Windows', () => {
+    expect(trashFolder('darwin', '/Users/me')).toBe(path.join('/Users/me', '.Trash'));
+    expect(trashFolder('linux', '/home/me')).toBe(path.join('/home/me', '.local', 'share', 'Trash', 'files'));
+    expect(trashFolder('win32', 'C:\\Users\\me')).toBeUndefined();
   });
 });
 

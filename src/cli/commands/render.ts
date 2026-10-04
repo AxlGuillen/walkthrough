@@ -4,7 +4,7 @@ import path from 'node:path';
 import { captureTour } from '../../capture/capture.ts';
 import { deviceProfile, FPS, type Quality } from '../../capture/devices.ts';
 import { composeTour } from '../../compose/compose.ts';
-import { execFile } from 'node:child_process';
+import { openPath } from '../../desktop/desktop.ts';
 import { ensureGallery } from '../../library/launch.ts';
 import { previewMetaFile, publishVideo } from '../../library/library.ts';
 import { previewAnchor, videoAnchor } from '../../library/page.ts';
@@ -82,7 +82,7 @@ export async function render(tourFile: string, from: string | undefined, preview
 
   if (open) {
     const url = `${await ensureGallery(ROOT)}/#${anchor}`;
-    execFile('open', [url]);
+    openPath(url);
     console.log(`  opened ${url}`);
   } else {
     console.log('  see it in the gallery: bun run gallery  (or render with --open)');

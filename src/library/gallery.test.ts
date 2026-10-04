@@ -84,6 +84,12 @@ describe('galleryPage', () => {
     expect(page).toContain('rel="icon" type="image/svg+xml"');
   });
 
+  it("names the system's file manager on the reveal button", () => {
+    const video = { title: 'A', project: 'p', tour: 't', device: 'desktop' as const, duration: 10, bytes: 1, createdAt: '2026-09-28T18:00:00.000Z', file: '/v/p/t/a.mp4', relative: 'p/t/a.mp4' };
+    expect(galleryPage({ videos: [video], cacheBytes: 0, videosRoot: '/v' })).toContain('Finder</button>');
+    expect(galleryPage({ videos: [video], cacheBytes: 0, videosRoot: '/v', fileManager: 'Explorador' })).toContain('Explorador</button>');
+  });
+
   it('shortens the home folder on every system', () => {
     expect(shortenHome('/Users/someone/Movies/walkthrough')).toBe('~/Movies/walkthrough');
     expect(shortenHome('C:\\Users\\someone\\Videos\\walkthrough')).toBe('~\\Videos\\walkthrough');

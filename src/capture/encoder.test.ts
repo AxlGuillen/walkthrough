@@ -26,6 +26,12 @@ describe('encoderArgs', () => {
     expect(overlay.slice(overlay.indexOf('-vf') + 2, overlay.indexOf('-vf') + 4)).toEqual(['-c:v', 'qtrle']);
   });
 
+  it('repeats a single frame in ffmpeg, for an overlay where nothing moves', () => {
+    const still = encoderArgs({ fps: 30, output: { width: 1920, height: 1080 }, file: 'o.mov', alpha: true, repeat: 90 });
+    expect(still[still.indexOf('-vf') + 1]).toContain(',loop=loop=89:size=1');
+    expect(still.join(' ')).toContain('-frames:v 90');
+  });
+
   it('trades quality for speed on drafts', () => {
     const draft = encoderArgs({ fps: 15, output: { width: 960, height: 540 }, file: 'p.mp4', draft: true }).join(' ');
     expect(draft).toContain('-preset veryfast -crf 23');

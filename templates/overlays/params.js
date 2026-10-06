@@ -41,6 +41,10 @@ window.walkthrough = {
   // An emoji of the vendored Fluent set by name, in the tour's style (color or 3d).
   emoji(name) { return new URL(`vendor/fluent-emoji/${name}${params.get('emojiStyle') === '3d' ? '.3d.png' : '.svg'}`, location.href).href; },
   timeline(seek) { seekers.push(seek); },
+  // Nothing on the page moves: no timeline registered, no CSS animation, no video. The render
+  // shoots such a page once and repeats the frame. Anything that changes over time registers
+  // here (timeline or gsap), or the page is shot as a still.
+  still() { return seekers.length === 0 && document.getAnimations().length === 0 && !document.querySelector('video'); },
   gsap(timeline) {
     timeline.pause(0);
     seekers.push(t => timeline.seek(t, false));

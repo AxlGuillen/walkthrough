@@ -4,7 +4,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium, type Page } from 'playwright-core';
 import { installClock } from '../capture/clock.ts';
-import { startEncoder } from '../capture/encoder.ts';
+import { startEncoder, type Encoder } from '../capture/encoder.ts';
 import { shooter } from '../capture/shot.ts';
 import { frameCount } from '../capture/schedule.ts';
 import { flowScene } from '../flow/scene.ts';
@@ -16,7 +16,7 @@ declare global {
   interface Window {
     // Set by templates/overlays/params.js: places the template's paused animation at t seconds.
     __walkthroughSeek?(t: number): void;
-    walkthrough?: { beats: Record<string, number>; data: unknown; theme: string; duration: number; beat(name: string, fallback?: number): number };
+    walkthrough?: { beats: Record<string, number>; data: unknown; theme: string; duration: number; beat(name: string, fallback?: number): number; still?(): boolean };
   }
 }
 
@@ -103,7 +103,7 @@ export async function renderOverlays({
       if (!source) throw new Error(`overlay not found: ${overlay.src} (looked in ${tourDir} and ${templatesDir})`);
 
       const context = await browser.newContext({ viewport: canvas, deviceScaleFactor: 1 });
-      const encoder = startEncoder({ fps, output, file: path.join(outDir, overlayFile(index)), alpha: true });
+      let encoder: Encoder | undefined;
       try {
         const page = await context.newPage();
         const clock = await installClock(page);
@@ -113,6 +113,18 @@ export async function renderOverlays({
         const camera = await shooter(page, { viewport: canvas, deviceScaleFactor: 1, transparent: true });
 
         const total = frameCount(overlay.end - overlay.start, fps);
+        const file = path.join(outDir, overlayFile(index));
+        // A page where nothing moves (a watermark) is shot once; every frame would be this one.
+        if (await page.evaluate(() => window.walkthrough?.still?.() ?? false)) {
+          encoder = startEncoder({ fps, output, file, alpha: true, repeat: total });
+          await clock.syncAnimations();
+          await page.evaluate(() => window.__walkthroughSeek?.(0));
+          await encoder.write(await camera.shot());
+          await encoder.finish();
+          onFrame?.(index + 1, total, total);
+          continue;
+        }
+        encoder = startEncoder({ fps, output, file, alpha: true });
         for (let frame = 0; frame < total; frame++) {
           await clock.syncAnimations();
           await page.evaluate(t => window.__walkthroughSeek?.(t), frame / fps);
@@ -122,7 +134,7 @@ export async function renderOverlays({
         }
         await encoder.finish();
       } catch (error) {
-        await encoder.finish().catch(() => {});
+        await encoder?.finish().catch(() => {});
         throw error;
       } finally {
         await context.close();

@@ -124,3 +124,34 @@ segments:
   }, 120_000);
 });
 
+describe('still overlays', () => {
+  it('shoots a page where nothing moves once, and repeats that frame for as long as it is on', async () => {
+    const tour = parseTour(`
+title: Fixture
+url: https://example.com
+segments:
+  - hold: 2
+    overlays:
+      - { src: ${path.join(ROOT, 'tests/fixtures/overlay/still.html')}, fade: 0 }
+`);
+    const out = path.join(dir, 'still');
+    await mkdir(out, { recursive: true });
+    const shots: number[] = [];
+    await renderOverlays({
+      overlays: buildTimeline(tour, []).overlays, tourDir: dir, outDir: out, canvas: output, output, fps: 10,
+      onFrame: (_, frame) => shots.push(frame),
+    });
+    expect(shots).toEqual([20]);
+    const frames = execFileSync('ffmpeg', ['-v', 'error', '-i', path.join(out, 'overlays', '01.mov'), '-f', 'framemd5', '-']).toString()
+      .split('\n').filter(line => line && !line.startsWith('#')).map(line => line.split(',').at(-1)!.trim());
+    expect(frames).toHaveLength(20);
+    expect(new Set(frames).size).toBe(1);
+    const rgba = execFileSync('ffmpeg', ['-v', 'error', '-ss', '1.5', '-i', path.join(out, 'overlays', '01.mov'), '-frames:v', '1',
+      '-vf', 'format=rgba,crop=1:1:1800:960', '-f', 'rawvideo', '-pix_fmt', 'rgba', '-']);
+    // rgba(255, 200, 0, 0.7), give or take the level Chrome's premultiplied alpha rounds off.
+    const [r, g, b, a] = [...rgba];
+    expect([r, b, a]).toEqual([255, 0, 179]);
+    expect(Math.abs(g! - 200)).toBeLessThanOrEqual(1);
+  }, 60_000);
+});
+

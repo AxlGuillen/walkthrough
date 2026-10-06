@@ -7,6 +7,8 @@ export interface EncoderOptions {
   file: string;
   alpha?: boolean;
   draft?: boolean;
+  // One frame in, this many out: ffmpeg decodes the still once and repeats it.
+  repeat?: number;
 }
 
 // Frames arrive as PNGs of varying size (the camera crop); ffmpeg rebuilds the scale
@@ -14,8 +16,8 @@ export interface EncoderOptions {
 // With alpha, frames are stored losslessly as QuickTime Animation (qtrle) so compose can lay
 // them over the capture: the same pixels as PNG, 18 times faster to write and 30 to read, and a
 // third of the size, since it only stores what changed since the frame before.
-export function encoderArgs({ fps, output, file, alpha = false, draft = false }: EncoderOptions): string[] {
-  const scale = `scale=${output.width}:${output.height}:flags=lanczos,setsar=1`;
+export function encoderArgs({ fps, output, file, alpha = false, draft = false, repeat }: EncoderOptions): string[] {
+  const scale = `scale=${output.width}:${output.height}:flags=lanczos,setsar=1${repeat ? `,loop=loop=${repeat - 1}:size=1` : ''}`;
   const codec = alpha
     ? ['-vf', `${scale},format=argb`, '-c:v', 'qtrle']
     : ['-vf', `${scale},format=yuv420p`, '-c:v', 'libx264', ...(draft ? ['-preset', 'veryfast', '-crf', '23'] : ['-preset', 'medium', '-crf', '12'])];
@@ -23,6 +25,7 @@ export function encoderArgs({ fps, output, file, alpha = false, draft = false }:
     '-y', '-v', 'error',
     '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-',
     ...codec, '-r', String(fps),
+    ...(repeat ? ['-frames:v', String(repeat)] : []),
     file,
   ];
 }

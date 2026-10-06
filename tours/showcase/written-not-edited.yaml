@@ -1,0 +1,185 @@
+title: Written, not edited
+url: https://sunsetshores.urresort.com/
+device: desktop
+language: en
+voice: 933563129e564b19a115bedd57b7406a  # "Sarah", the English voice of the other demos
+brand: 4xl
+typeface: editorial
+watermark: true
+transition: push
+music: { track: ../uws-tasks/assets/music/corporate-calm-background.mp3, volume: 0.022 }
+# Internal demo of what walkthrough can do, over the public Sunset Shores microsite. Read-only:
+# menus and links only, nothing is added to the trip (that writes to UrVenue UAT).
+#
+# Pacing: one camera move per sentence, marks on a later word once the screen is still, and
+# a full-screen resource at most twice in a row before going back to the site.
+segments:
+  # Opening: the empty stage, then the screen rises under the title.
+  - say: This is not a screen recording. It's a video written like a script, and rendered from a real website, one frame at a time.
+    do:
+      - goto: /
+      - shot: { to: away, duration: 0.4, at: 0 }
+    aside:
+      layout: inset
+      at: 0.8
+      eyebrow: walkthrough · an internal demo
+      title: Written, *not edited*
+
+  - say: Every frame is placed. A virtual camera, a scroll that is planned ahead, and marks that stay with the page.
+    do:
+      - highlight: { on: '#h-stayform', at: stay, style: box }
+    aside:
+      at: placed
+      eyebrow: The camera
+      title: Every frame is *placed*
+      points:
+        - { text: A virtual camera, emoji: eyes, at: virtual }
+        - { text: A scroll planned ahead, emoji: sparkles, at: scroll }
+        - { text: Marks that stay with the page, emoji: pushpin, at: marks }
+
+  - say: It can step back to show the whole page, turn to give it depth, or lean in like a product shot. And the moment there is something to read, it straightens up on its own.
+    do:
+      - shot: { to: wide, at: step }
+      - shot: { to: left, angle: 7, at: turn }
+      - shot: { to: top, angle: 6, at: lean }
+      - highlight: { on: 'h2:has-text("A headland with the sea on three sides")', at: own, style: marker }
+
+  - say: It points the way a person would. It can underline a promise. Then circle a detail a little further down, and leave a note right beside it.
+    do:
+      - highlight: { on: 'h2:has-text("Rooms and suites that open onto the water")', at: promise, style: underline }
+      - scroll: { to: 'h3:has-text("Garden Room")', at: Then }
+      - highlight: { on: 'h3:has-text("Garden Room")', at: detail, style: circle }
+      - label: { on: 'h3:has-text("Headland Villa")', text: "A note, right where it matters", at: beside }
+
+  # Resources: what the screen cannot say alone.
+  - say: And when the screen can't say it alone, it draws it. You write the script, a voice reads it, the browser captures every frame, and it all becomes one video.
+    flow:
+      title: How a walkthrough is made
+      steps:
+        - { text: Write the script, emoji: memo, at: write }
+        - { text: A voice reads it, emoji: microphone, at: voice }
+        - { text: Every frame captured, emoji: eyes, at: captures }
+        - { text: One finished video, emoji: sparkles, at: becomes }
+
+  - say: Under the hood, five hundred and seven tests keep every frame honest.
+    overlays:
+      - src: chart.html
+        data: { type: stat, label: automated tests, value: 507, emoji: check-mark-button, at: hood }
+
+  # Back to the site: a card-like turn into the restaurant.
+  - say: Changing pages becomes a moment of its own. The screen turns like a card, and lands on the next one.
+    transition: flip
+    do:
+      - click: { on: 'nav[aria-label="Primary"] button:has-text("Eat & Drink")', at: Changing }
+      - click: { on: '#mega-eat a[href="/dining/vera-restaurant/"]', at: turns, wait: 'h2:has-text("Tonight")' }
+
+  - say: Beside the screen, there is room to explain. Vera writes its menu every afternoon, and the chef's counter seats only six.
+    hold: 10
+    do:
+      - scroll: { to: 'h2:has-text("Tonight")', at: Vera }
+      - highlight: { on: 'h3:has-text("Eight courses")', at: counter, style: brackets }
+    aside:
+      layout: aside-right
+      at: room
+      eyebrow: Vera Restaurant
+      title: A menu written *every afternoon*
+      points:
+        - { text: Five courses in the dining room, emoji: fork-and-knife-with-plate, at: menu }
+        - { text: Eight at the chef's counter, emoji: glowing-star, at: chef's }
+
+  - say: Compared with recording by hand, a fix is just an edited word. Every mark lands on the voice, one script renders both formats, and it all stays in your brand.
+    overlays:
+      - src: table.html
+        data:
+          title: By hand, or written
+          columns: [Screen recording, walkthrough]
+          highlight: walkthrough
+          rows:
+            - { label: Fixed by editing a word, values: [no, yes], emoji: memo, at: fix }
+            - { label: Marks land on the voice, values: [partial, yes], emoji: microphone, at: mark }
+            - { label: Wide and vertical, values: [no, yes], emoji: mobile-phone, at: formats }
+            - { label: In your brand, values: [partial, yes], emoji: sparkles, at: brand }
+
+  - say: It took nine days. A first narrated tour, then animated resources, then brands and frames, then a 3D stage. And this is where it stands today.
+    overlays:
+      - src: roadmap.html
+        data:
+          title: Nine days of walkthrough
+          milestones:
+            - { date: Sep 28, title: A narrated tour, emoji: microphone, at: tour }
+            - { date: Sep 30, title: Animated resources, emoji: sparkles, at: resources }
+            - { date: Oct 1, title: Brands and frames, emoji: laptop, at: brands }
+            - { date: Oct 2, title: A 3D stage, emoji: eyes, at: stage }
+            - { date: Oct 6, title: The screen in the layout, emoji: rocket, status: now, at: today }
+
+  # Back to the site once more.
+  - say: Back on the site, the next page flies in from the distance. And when one thing matters most, everything else quietly steps back.
+    transition: fly
+    do:
+      - click: { on: 'nav[aria-label="Primary"] button:has-text("Relax & Play")', at: Back }
+      - click: { on: '#mega-relax a[href="/pool/"]', at: flies, wait: 'h2:has-text("What you can reserve")' }
+      - scroll: { to: 'h2:has-text("What you can reserve")', at: distance }
+      - highlight: { on: 'h3:has-text("Cabana 2")', at: quietly, style: spotlight }
+
+  # The story around the work.
+  - say: It can also tell the story around the work. This week brought three things. Camera shots, page transitions, and text beside the screen. The first is done, the second too, and the third just landed.
+    overlays:
+      - src: board.html
+        data:
+          title: This week
+          items:
+            - { text: Camera shots, at: Camera, done: first }
+            - { text: Page transitions, at: transitions, done: second }
+            - { text: Text beside the screen, at: beside, done: landed }
+
+  - say: And a few ideas are already pinned for what comes next. A mosaic of formats, chapters that walk onto the stage, and frames that turn with the camera.
+    overlays:
+      - src: corkboard.html
+        data:
+          title: What comes next
+          notes:
+            - { text: A mosaic of formats, emoji: mobile-phone, at: mosaic }
+            - { text: Chapters on the stage, emoji: bookmark, at: chapters }
+            - { text: Frames that turn, emoji: laptop, at: frames }
+
+  # The reveal: the screen leans back and the script that made the video takes its place.
+  - say: Everything you just watched was written, not edited. Every shot, every mark, every transition is a line in a file, timed to a word of the voice.
+    do:
+      - shot: { to: top, angle: 6, at: Everything }
+    overlays:
+      - src: code.html
+        from: written
+        data:
+          language: yaml
+          file: tours/showcase/written-not-edited.yaml
+          reveal: lines
+          code: |
+            - say: It can step back, turn, or lean in.
+              do:
+                - shot: { to: wide, at: step }
+                - shot: { to: left, angle: 7, at: turn }
+                - highlight: { on: h2, at: own, style: marker }
+            - say: Changing pages becomes a moment of its own.
+              transition: flip
+          highlight:
+            - { lines: "3-4", at: shot, note: A camera move }
+            - { lines: 5, at: mark, note: A mark }
+            - { lines: 7, at: transition, note: A transition }
+
+  - say: And one command renders all of it.
+    hold: 5.5
+    overlays:
+      - src: code.html
+        data:
+          view: terminal
+          run: [command]
+          code: |
+            $ bun run walkthrough render written-not-edited.yaml
+            ✓ timing: nothing off-beat
+
+  - say: Write it once. Render it anywhere.
+    hold: 5.5
+    overlays:
+      - src: closing.html
+        from: 0.3
+        params: { style: kinetic, title: walkthrough, subtitle: Write it once. Render it anywhere. }

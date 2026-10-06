@@ -142,13 +142,14 @@ export function buildTimeline(
       const from = resolve(overlay.from, start, what);
       const to = resolve(overlay.to, end, what);
       if (to <= from) throw new TimelineError(`${label}: ${what} ends before it starts`);
-      // Each word is looked for after the one before, so a repeated word can mark two beats.
+      // Each word is looked for after the one before, so a repeated word can mark two beats;
+      // one said earlier (a board's items, then their ticks) is looked for from the start.
       let lastWord: number | undefined;
       const beats = Object.fromEntries(Object.entries(overlay.beats).map(([name, at]) => {
         let time: number;
         if (typeof at === 'number') time = resolve(at, start, `${what} beat "${name}"`);
         else {
-          const match = locate(at, `${what} beat "${name}"`, lastWord);
+          const match = (spoken && findPhrase(spoken.words, at, lastWord)) || locate(at, `${what} beat "${name}"`);
           lastWord = match.start;
           time = resolve(leadIn + match.start, start, `${what} beat "${name}"`);
         }

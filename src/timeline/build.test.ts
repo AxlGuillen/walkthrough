@@ -320,6 +320,12 @@ segments:
     expect(overlay.beats).toEqual({ title: 0, line: 1.5, again: 4.5, end: 3.5 });
   });
 
+  it('finds a beat said before the beat above it, as a board writes its items and then ticks them', () => {
+    const overlay = build('{ src: custom.html, beats: { i0: venue, d0: booking, i1: Sunset } }');
+    // venue at 4s, booking at 6s, and Sunset, said first, at 1s; the lead-in adds 0.5s.
+    expect(overlay.beats).toEqual({ i0: 4.5, d0: 6.5, i1: 1.5 });
+  });
+
   it('carries structured data through untouched', () => {
     const overlay = build('{ src: custom.html, data: { series: [{ label: Mon, value: 3 }] } }');
     expect(overlay.data).toEqual({ series: [{ label: 'Mon', value: 3 }] });

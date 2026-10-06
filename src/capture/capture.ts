@@ -31,11 +31,13 @@ export interface CaptureOptions {
   quality?: Quality;
   fps?: number;
   headless?: boolean;
+  // Stops between frames, when a render running alongside failed.
+  signal?: AbortSignal;
   onFrame?: (frame: number, total: number) => void;
 }
 
 export async function captureTour({
-  root, tour, timeline, file, quality = 'final', fps = FPS[quality], headless = true, onFrame,
+  root, tour, timeline, file, quality = 'final', fps = FPS[quality], headless = true, signal, onFrame,
 }: CaptureOptions): Promise<{ frames: number }> {
   const device = deviceProfile(captureDevice(tour.device, tour.frame), quality);
   const context = await openContext(root, { headless, device, ...(tour.session ? { session: tour.session } : {}) });
@@ -56,6 +58,7 @@ export async function captureTour({
 
     let previous = -Infinity;
     for (let frame = 0; frame < total; frame++) {
+      signal?.throwIfAborted();
       stage.time = frame / fps;
       await prepareTargets(stage);
       for (const action of dueActions(timeline.actions, previous, stage.time)) {

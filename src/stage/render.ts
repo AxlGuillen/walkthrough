@@ -46,12 +46,14 @@ export interface StageRenderOptions {
   fps: number;
   draft?: boolean;
   look?: OverlayLook;
+  // Stops between frames, when a render running alongside failed.
+  signal?: AbortSignal;
   onFrame?: (span: number, frame: number, total: number) => void;
 }
 
 // Only the stretches off the flat: everywhere else the capture is already the picture.
 // The capture plays inside the page, seeked to the middle of each frame it shows.
-export async function renderStage({ plan, capture, tourDir, outDir, canvas, output, fps, draft = false, look = {}, onFrame }: StageRenderOptions): Promise<void> {
+export async function renderStage({ plan, capture, tourDir, outDir, canvas, output, fps, draft = false, look = {}, signal, onFrame }: StageRenderOptions): Promise<void> {
   await rm(path.join(outDir, 'stage'), { recursive: true, force: true });
   if (plan.spans.length === 0) return;
   await mkdir(path.join(outDir, 'stage'), { recursive: true });
@@ -75,6 +77,7 @@ export async function renderStage({ plan, capture, tourDir, outDir, canvas, outp
       const encoder = startEncoder({ fps, output, file: path.join(outDir, stageFile(index)), draft });
       try {
         for (let frame = 0; frame < count; frame++) {
+          signal?.throwIfAborted();
           const { pose, time, change } = stageFrame(plan, first + frame, fps);
           await page.evaluate(([pose, time, change]) => window.__walkthroughStage!(pose, time, change), [pose, time, change] as const);
           await encoder.write(await camera.shot());

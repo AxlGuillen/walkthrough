@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { chromium, type Page } from 'playwright-core';
 import { installClock } from '../capture/clock.ts';
 import { startEncoder, type Encoder } from '../capture/encoder.ts';
+import { pool } from '../cli/parallel.ts';
 import { shooter } from '../capture/shot.ts';
 import { frameCount } from '../capture/schedule.ts';
 import { flowScene } from '../flow/scene.ts';
@@ -83,22 +84,29 @@ export interface OverlayRenderOptions {
   fps: number;
   look?: OverlayLook;
   templatesDir?: string;
+  // Overlays rendered at once, each in its own page.
+  jobs?: number;
+  // Stops between frames, when a render running alongside failed.
+  signal?: AbortSignal;
   onFrame?: (overlay: number, frame: number, total: number) => void;
 }
 
 // Each overlay gets its own clock starting at zero, so its entrance animations begin
 // exactly when it appears in the video. It is laid out on the full canvas and scaled to
-// the output, so a preview shows the same design, only smaller.
+// the output, so a preview shows the same design, only smaller. Up to `jobs` render at once,
+// longest first so the last one to finish is a short one.
 export async function renderOverlays({
-  overlays, tourDir, outDir, canvas, output, fps, look = {}, templatesDir = TEMPLATES_DIR, onFrame,
+  overlays, tourDir, outDir, canvas, output, fps, look = {}, templatesDir = TEMPLATES_DIR, jobs = 1, signal, onFrame,
 }: OverlayRenderOptions): Promise<void> {
   await rm(path.join(outDir, 'overlays'), { recursive: true, force: true });
   if (overlays.length === 0) return;
   await mkdir(path.join(outDir, 'overlays'), { recursive: true });
 
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const longestFirst = [...overlays.keys()].sort((a, b) => (overlays[b]!.end - overlays[b]!.start) - (overlays[a]!.end - overlays[a]!.start));
   try {
-    for (const [index, overlay] of overlays.entries()) {
+    await pool(longestFirst, jobs, async index => {
+      const overlay = overlays[index]!;
       const source = resolveOverlay(tourDir, overlay.src, templatesDir);
       if (!source) throw new Error(`overlay not found: ${overlay.src} (looked in ${tourDir} and ${templatesDir})`);
 
@@ -122,10 +130,11 @@ export async function renderOverlays({
           await encoder.write(await camera.shot());
           await encoder.finish();
           onFrame?.(index + 1, total, total);
-          continue;
+          return;
         }
         encoder = startEncoder({ fps, output, file, alpha: true });
         for (let frame = 0; frame < total; frame++) {
+          signal?.throwIfAborted();
           await clock.syncAnimations();
           await page.evaluate(t => window.__walkthroughSeek?.(t), frame / fps);
           await encoder.write(await camera.shot());
@@ -139,7 +148,7 @@ export async function renderOverlays({
       } finally {
         await context.close();
       }
-    }
+    });
   } finally {
     await browser.close();
   }

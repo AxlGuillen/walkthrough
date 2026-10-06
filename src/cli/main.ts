@@ -26,6 +26,7 @@ const USAGE = `usage:
       --open                          open the gallery on the new video when done
       --from=overlays                 reuse the capture; re-render overlays and compose
       --from=compose                  reuse capture and overlays; only rebuild the final video
+      --jobs=N                        overlays rendered at once, next to the capture (default by memory)
   walkthrough overlay <template.html> render one overlay alone, to design a resource without a tour
       --beats=title=0.4,line=1.2      its beats, in seconds
       --params=title=Hola             its params
@@ -47,7 +48,7 @@ const { positionals, values } = parseArgs({
     from: { type: 'string' }, voice: { type: 'boolean' }, keep: { type: 'string' }, 'no-open': { type: 'boolean' },
     session: { type: 'string' }, device: { type: 'string' }, preview: { type: 'boolean' }, open: { type: 'boolean' },
     beats: { type: 'string' }, params: { type: 'string' }, data: { type: 'string' }, duration: { type: 'string' },
-    theme: { type: 'string' }, accent: { type: 'string' }, lang: { type: 'string' }, texture: { type: 'string' }, brand: { type: 'string' }, emoji: { type: 'string' }, typeface: { type: 'string' },
+    jobs: { type: 'string' }, theme: { type: 'string' }, accent: { type: 'string' }, lang: { type: 'string' }, texture: { type: 'string' }, brand: { type: 'string' }, emoji: { type: 'string' }, typeface: { type: 'string' },
   },
 });
 const [command, target, url] = positionals;
@@ -57,7 +58,7 @@ try {
   if (command === 'voice' && target) await voice(target);
   else if (command === 'check' && target) await check(target);
   else if (command === 'inspect' && target) await inspect(target, values.session, values.device);
-  else if (command === 'render' && target) await render(target, values.from, values.preview ?? false, values.open ?? false);
+  else if (command === 'render' && target) await render(target, values.from, values.preview ?? false, values.open ?? false, ...(values.jobs === undefined ? [] : [Number(values.jobs)]));
   else if (command === 'overlay' && target) {
     const { beats, params, data, duration, device, theme, accent, lang, texture, brand } = values;
     await overlay({ src: target, open: values.open ?? false, beats, params, data, duration, device, theme, accent, lang, texture, brand, emojiStyle: values.emoji, typeface: values.typeface });

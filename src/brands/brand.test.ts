@@ -22,7 +22,8 @@ describe('the shipped brands', () => {
     expect(brandLook(loadBrand('4xl'), 'dark')).toMatchObject({ markSquare: true });
     expect(brandLook(loadBrand('urvenue'), 'light').logo).toMatch(/logo-light\.svg$/);
     expect(imageAspect(brandImage(loadBrand('urvenue'), 'logo', 'dark')!)).toBeCloseTo(142 / 42, 1);
-  });
+    // Each raster image is measured with ffprobe, a process apiece: slow on a busy machine.
+  }, 30_000);
 
   it('gives overlays the brand name, colors and images', () => {
     const look = tourLook({ accent: '#DC2626', theme: 'dark', language: 'es', texture: 'lines', brand: 'dymmsa' });

@@ -338,6 +338,15 @@ Anotada el 2/oct/2026, después de la entrega de DYMMSA de la semana 40. Hoy la 
 - **Tiempo de render.** El escenario es un pase más a pantalla completa, del orden de lo que ya cuestan los overlays. `--preview` puede saltarlo o hacerlo a la mitad.
 - **Legibilidad.** Por eso las reglas de arriba y la prueba 10.1 antes de comprometerse.
 
+## Fase 11 — La pantalla dentro de una composición ✅ (6/oct/2026)
+
+Para el video de muestra de la herramienta: que la grabación deje de ser siempre el fondo y forme parte de una composición, con texto a su lado o un título encima.
+
+- **11.1 Planos con espacio ✅:** `aside-left`, `aside-right`, `inset` y `away`, con `room()` (el espacio libre, calculado desde la misma pose) y su versión en 9:16.
+- **11.2 Aparte ✅:** `aside.html` (eyebrow, título que sube palabra por palabra con énfasis entre asteriscos, hasta cuatro puntos en su palabra) y el atajo `aside:` del segmento, que crea el overlay y los dos planos.
+- **11.3 Tipografía ✅:** `typeface: editorial` con Instrument Serif vendorizada.
+- **Pendiente:** un mosaico de clips (`<video>`) para mostrar varios formatos a la vez.
+
 ## Estimación
 
 | Fase | Tamaño |

@@ -21,6 +21,8 @@ Piezas animadas que se declaran en el YAML con sus datos y sus palabras clave, y
 | Señalar algo que ya está en la pantalla | No es un recurso: `highlight` (con su `style`, ver «Resaltar») o `label` |
 | Que la app se vea dentro de un navegador, una laptop o un teléfono | `frame:` en el tour (ver «Marco de dispositivo») |
 | Darle profundidad al recorrido, ver la app desde un ángulo | `shot:` en el segmento (ver «Planos») |
+| Explicar algo con texto junto a la app, sin taparla | `aside:` en el segmento (ver «Aparte») |
+| Títulos con más carácter | `typeface: editorial` en el tour (ver «Tipografía») |
 | Que los cambios de pantalla se vean distintos a la disolvencia | `transition:` en el tour o el segmento (ver «Transiciones») |
 | Un texto corto encima de la app | `lower-third.html`; un atajo de teclado, `shortcut.html`; dos capturas lado a lado, `compare.html` |
 | Subrayar un momento («¡Listo!») | `sticker.html`, un emoji con un texto breve |
@@ -340,6 +342,41 @@ La pantalla ocupa menos que el video, así que la app se ve más chica: con `fra
 - **Cuesta render:** cada segundo fuera de frente es un pase más del navegador; de frente no cuesta nada.
 
 Ejemplo de los cinco en `tours/examples/planos.yaml`.
+
+## Aparte
+
+`aside:` en un segmento hace sitio en el escenario: la pantalla se corre a un lado (o baja, bajo un título) y en el espacio que deja entran un eyebrow, un título y hasta cuatro puntos, cada uno en su palabra. Al terminar, el texto sale y la pantalla vuelve sola a pantalla completa. Es un plano y un overlay (`aside.html`) coordinados por las mismas palabras.
+
+| `layout` | La pantalla | El texto |
+|---|---|---|
+| `aside-left` (por defecto) | A la izquierda, al 60 %, girada 4° hacia el texto | A la derecha |
+| `aside-right` | A la derecha | A la izquierda |
+| `inset` | Abajo, inclinada hacia atrás como foto de producto | Arriba, centrado: un título, sin puntos |
+
+En 9:16, `aside-left` y `aside-right` ponen la pantalla arriba y el texto abajo.
+
+```yaml
+- say: Every frame is placed, not recorded. A virtual camera, a scroll planned ahead, and marks that follow the page.
+  aside:
+    at: placed
+    until: page              # por defecto, el fin del segmento
+    eyebrow: The camera
+    title: Every frame is *placed*, not recorded
+    points:
+      - { text: A virtual camera, emoji: eyes, at: camera }
+      - { text: Smooth scroll ahead of time, at: scroll }
+      - { text: Marks that follow the page, emoji: pushpin, at: marks }
+```
+
+- ***Palabras entre asteriscos*** van en cursiva y en el color de acento (con `typeface: editorial`; en la letra del sistema, solo en el acento). Una o dos por título.
+- **De lado se lee:** con `aside-left` o `aside-right` la pantalla no se endereza antes de un `highlight`, así que puedes resaltar algo mientras el texto lo explica. `inset` sí se endereza.
+- **Una entrada desde fuera del cuadro:** `shot: { to: away, duration: 0.4, at: 0 }` al inicio deja el escenario vacío y el `inset` siguiente sube la pantalla a su sitio, bajo el título. Así abre `tours/examples/aparte.yaml`.
+- **Uno por sección, no dos seguidos:** entre dos `aside` la pantalla vuelve a pantalla completa y se aparta otra vez. Si quieres dos ideas juntas, ponlas en un solo `aside` con puntos.
+- `check` avisa si el título no cabe, si hay más texto que espacio o si un punto llega tarde para leerse. Sin `frame` por ahora, como los planos.
+
+## Tipografía
+
+`typeface: editorial` en el tour pone los títulos (aperturas, capítulos, cierres, apartes, gráficas, tablas…) en **Instrument Serif**, una serif de exhibición (OFL, en `templates/overlays/vendor/fonts/`). El texto corrido sigue en la letra del sistema. Por defecto, `system`. Sirve para videos con tono de presentación; para entregas de trabajo, la del sistema es más neutra.
 
 ## Transiciones
 

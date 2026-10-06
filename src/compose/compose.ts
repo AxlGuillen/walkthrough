@@ -118,7 +118,7 @@ export async function composeTour(
   }
 
   const fps = FPS[quality];
-  const stage = stagePlan(timeline).spans.map((span, i) => ({ file: stageFile(i), start: spanFrames(span, fps).first / fps }));
+  const stage = stagePlan(timeline, tour.device === 'mobile').spans.map((span, i) => ({ file: stageFile(i), start: spanFrames(span, fps).first / fps }));
   const absent = stage.find(clip => !existsSync(path.join(outDir, clip.file)));
   if (absent) throw new Error(`${absent.file} is missing; render without --from=compose first`);
 

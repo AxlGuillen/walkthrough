@@ -18,7 +18,22 @@ export function parseTour(source: string, brandsDir = BRANDS_DIR): Tour {
   }
   const result = tourSchema.safeParse(withBrand(raw, brandsDir));
   if (!result.success) throw new TourError(z.prettifyError(result.error));
-  return withResources(result.data);
+  return withResources(withAsides(result.data));
+}
+
+export const ASIDE_TEMPLATE = 'aside.html';
+
+// An aside is an aside.html overlay over the same words; the timeline adds its two shots.
+function withAsides(tour: Tour): Tour {
+  for (const segment of tour.segments) {
+    if (!segment.aside) continue;
+    const { at, until, ...data } = segment.aside;
+    segment.overlays.push({
+      src: ASIDE_TEMPLATE, fade: 0.3, params: {}, beats: {}, data,
+      ...(at === undefined ? {} : { from: at }), ...(until === undefined ? {} : { to: until }),
+    });
+  }
+  return tour;
 }
 
 // A brand fills in what the tour leaves unsaid: its accent, theme and texture.

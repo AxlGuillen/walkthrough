@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Text beside the screen while a room shot sets it aside (aside-left, aside-right) or low
+     under a title (inset). Node lays out the room (src/aside/) to match the stage's pose; this
+     page fills it. Beats: p0, p1… for each point. -->
+<link rel="stylesheet" href="base.css">
+<style>
+  .box { position: absolute; display: flex; flex-direction: column; justify-content: center; box-sizing: border-box; }
+  .box.center { align-items: center; text-align: center; }
+  .eyebrow { display: flex; align-items: center; gap: 1.2em; color: var(--accent-ink); font-weight: 700; letter-spacing: 0.32em; text-transform: uppercase; }
+  .box.center .eyebrow { justify-content: center; }
+  .rule { width: 3.2em; height: 0.14em; border-radius: 1em; background: var(--accent); transform-origin: 0 50%; }
+  .title { margin: 0.55em 0 0; font-family: var(--display); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05; text-wrap: balance; }
+  .title em { font-style: italic; color: var(--accent-ink); }
+  :root:not([data-typeface="editorial"]) .title em { font-style: normal; }
+  .points { list-style: none; margin: 1.4em 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.7em; }
+  .point { display: flex; align-items: center; gap: 0.75em; color: var(--ink); font-weight: 600; line-height: 1.3; }
+  .point img { width: 1.6em; height: 1.6em; flex: none; object-fit: contain; }
+  .point .bar { width: 0.22em; align-self: stretch; flex: none; border-radius: 1em; background: var(--accent); }
+  .word { display: inline-block; }
+</style>
+</head>
+<body>
+<script src="params.js"></script>
+<script src="vendor/gsap/gsap.min.js"></script>
+<script src="vendor/gsap/SplitText.min.js"></script>
+<script src="kit.js"></script>
+<script>
+  const scene = JSON.parse(new URLSearchParams(location.search).get('scene') ?? 'null');
+  const px = n => `${n}px`;
+  const tl = kit.timeline();
+  const el = (tag, className, parent) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    parent.append(node);
+    return node;
+  };
+
+  const box = el('div', `box ${scene.align}`, document.body);
+  Object.assign(box.style, { left: px(scene.box.x), top: px(scene.box.y), width: px(scene.box.width), height: px(scene.box.height) });
+
+  if (scene.eyebrow) {
+    const eyebrow = el('div', 'eyebrow', box);
+    eyebrow.style.fontSize = px(scene.font.eyebrow);
+    const rule = el('span', 'rule', eyebrow);
+    el('span', '', eyebrow).textContent = scene.eyebrow;
+    tl.fromTo(rule, { scaleX: 0 }, { scaleX: 1, duration: 0.6, ease: kit.ease.inOut }, scene.enter);
+    tl.fromTo(eyebrow.lastChild, { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.5 }, scene.enter + 0.15);
+  }
+
+  // The title rises word by word out of its own line, each run keeping its emphasis.
+  const title = el('h1', 'title', box);
+  title.style.fontSize = px(scene.font.title);
+  for (const run of scene.title) el(run.em ? 'em' : 'span', '', title).textContent = run.text;
+  const words = kit.split(title, 'words', { mask: true });
+  tl.fromTo(words, { yPercent: 110 }, { yPercent: 0, duration: 0.7, stagger: 0.06, ease: kit.ease.out }, scene.enter + 0.2);
+
+  if (scene.points.length) {
+    const list = el('ul', 'points', box);
+    list.style.fontSize = px(scene.font.point);
+    for (const point of scene.points) {
+      const item = el('li', 'point', list);
+      if (point.emoji) {
+        const img = el('img', '', item);
+        img.alt = '';
+        img.src = walkthrough.emoji(point.emoji);
+        tl.fromTo(img, { scale: 0.3, rotation: -14, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.55, ease: 'back.out(2.2)' }, point.time);
+      } else {
+        tl.fromTo(el('span', 'bar', item), { scaleY: 0 }, { scaleY: 1, duration: 0.4 }, point.time);
+      }
+      const text = el('span', '', item);
+      text.textContent = point.text;
+      tl.fromTo(text, { opacity: 0, x: -18 }, { opacity: 1, x: 0, duration: 0.5 }, point.time + 0.08);
+    }
+  }
+
+  // Out before the screen comes back: up and away, the title last.
+  tl.to(box.children, { opacity: 0, y: -16, duration: 0.45, stagger: 0.05, ease: kit.ease.exit }, scene.exit);
+</script>
+</body>
+</html>

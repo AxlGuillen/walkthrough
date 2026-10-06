@@ -192,6 +192,18 @@ segments:
             - { text: Notas en un corcho, emoji: pushpin }
             - { text: El marco como capa }
 
+  # Aparte (sin el escenario: aquí solo el texto, en el sitio que deja la pantalla)
+  - hold: 5
+    overlays:
+      - src: aside.html
+        data:
+          eyebrow: La cámara
+          title: Cada cuadro se *coloca*, no se graba
+          points:
+            - { text: Una cámara virtual, emoji: eyes, at: 1.6 }
+            - { text: Scroll preparado, emoji: sparkles, at: 2.2 }
+            - { text: Marcas que siguen la página, emoji: pushpin, at: 2.8 }
+
   # Flujos
   - hold: 5
     flow:
@@ -229,8 +241,8 @@ segments:
     flow:
       shape: compare
       title: Reservar una mesa
-      before: { label: Antes, steps: [{ text: Llamar al venue, at: 0.5 }, { text: Esperar respuesta, at: 1.2 }, { text: Mandar transferencia, at: 1.9 }] }
-      after: { label: Ahora, steps: [{ text: Reservar en línea, at: 2.8 }, { text: Pagar con tarjeta, at: 3.5 }] }
+      before: { label: Antes, steps: [{ text: Llamar al venue, at: 0.5 }, { text: Esperar respuesta, at: 1.3 }, { text: Mandar transferencia, at: 2.1 }] }
+      after: { label: Ahora, steps: [{ text: Reservar en línea, at: 2.9 }, { text: Pagar con tarjeta, at: 3.7 }] }
   - hold: 4
     flow:
       mode: card

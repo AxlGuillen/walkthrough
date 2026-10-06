@@ -72,6 +72,8 @@ export interface TimedOverlay {
 }
 
 export const FLOW_TEMPLATE = 'flow.html';
+// How long before an aside ends its screen starts back, as its text leaves.
+const ASIDE_RETURN = 0.35;
 export const WATERMARK_TEMPLATE = 'watermark.html';
 // Room for the flow to fade in before its first step, and for the last one to be read.
 const FLOW_FIRST_STEP = 0.4;
@@ -157,6 +159,15 @@ export function buildTimeline(
         src: overlay.src, params: overlay.params, start: from, end: to, fade: overlay.fade, segment: index, beats,
         ...(overlay.data === undefined ? {} : { data: overlay.data }),
       });
+    }
+
+    if (segment.aside) {
+      // The screen moves aside as the text comes in, and back once the text has left.
+      const from = resolve(segment.aside.at, start, 'aside');
+      const to = resolve(segment.aside.until, end, 'aside');
+      const still = { angle: undefined, duration: undefined, at: undefined };
+      timeline.shots.push({ time: from, segment: index, shot: { kind: 'shot', to: segment.aside.layout, ...still } });
+      timeline.shots.push({ time: Math.max(from, to - ASIDE_RETURN), segment: index, shot: { kind: 'shot', to: 'flat', ...still } });
     }
 
     if (segment.flow) {

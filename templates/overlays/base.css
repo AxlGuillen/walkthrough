@@ -1,4 +1,6 @@
 /* Shared look for overlay templates. Sizes use vmin so a template fits 16:9 and 9:16 alike. */
+@font-face { font-family: "Instrument Serif"; src: url("vendor/fonts/instrument-serif/InstrumentSerif-Regular.ttf"); font-weight: 400; font-style: normal; }
+@font-face { font-family: "Instrument Serif"; src: url("vendor/fonts/instrument-serif/InstrumentSerif-Italic.ttf"); font-weight: 400; font-style: italic; }
 :root {
   --accent: #FF3B5C;
   /* Text on an accent fill; params.js darkens it for a light accent. */
@@ -26,6 +28,8 @@
   --shadow: rgba(0, 0, 0, 0.45);
   --font: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
   --mono: "SF Mono", ui-monospace, Menlo, monospace;
+  /* Titles: the system face by default, a display serif with typeface: editorial. */
+  --display: var(--font);
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 /* theme: light in the tour; params.js sets data-theme before anything paints. */
@@ -61,6 +65,9 @@
   --stage: radial-gradient(80vmax 70vmax at 90% 10%, color-mix(in srgb, var(--brand-2) 42%, transparent), transparent 65%),
     radial-gradient(80vmax 70vmax at 5% 100%, color-mix(in srgb, var(--brand-1) 48%, transparent), transparent 65%), var(--stage-base);
 }
+/* A serif display face has no heavy weight: titles drop to regular and open their tracking. */
+:root[data-typeface="editorial"] { --display: "Instrument Serif", "Iowan Old Style", Georgia, serif; }
+:root[data-typeface="editorial"] .title { font-family: var(--display); font-weight: 400; letter-spacing: -0.012em; }
 html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; font-family: var(--font); color: var(--ink); }
 [data-param]:empty { display: none; }
 .panel {

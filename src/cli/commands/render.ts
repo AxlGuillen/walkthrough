@@ -51,7 +51,7 @@ export async function render(tourFile: string, from: string | undefined, preview
       await renderFrame({ frame: tour.frame, device: tour.device, url: tour.url, tourDir: paths.dir, outDir,
         canvas: deviceProfile(tour.device).output, output: deviceProfile(tour.device, quality).output, look: tourLook(tour) });
     }
-    const plan = stagePlan(timeline);
+    const plan = stagePlan(timeline, tour.device === 'mobile');
     await renderStage({
       plan, capture, tourDir: paths.dir, outDir, draft: preview,
       canvas: deviceProfile(tour.device).output, output: deviceProfile(tour.device, quality).output, fps: FPS[quality],
@@ -76,7 +76,7 @@ export async function render(tourFile: string, from: string | undefined, preview
 
   const events = path.join(outDir, EVENTS_FILE);
   if (existsSync(events)) {
-    const notes = [...auditTiming(JSON.parse(await readFile(events, 'utf8')) as CaptureEvent[], timeline), ...stagePlan(timeline).notes];
+    const notes = [...auditTiming(JSON.parse(await readFile(events, 'utf8')) as CaptureEvent[], timeline), ...stagePlan(timeline, tour.device === 'mobile').notes];
     console.log(formatTiming(notes.sort((a, b) => a.time - b.time)));
   }
 

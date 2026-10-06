@@ -15,6 +15,7 @@ window.param = (name, fallback = '') => params.get(name) ?? fallback;
 window.asset = name => new URL(name, params.get('base') ?? location.href).href;
 document.documentElement.dataset.theme = params.get('theme') ?? 'dark';
 document.documentElement.dataset.texture = params.get('texture') ?? 'plain';
+document.documentElement.dataset.typeface = params.get('typeface') ?? 'system';
 const [brand1, brand2] = (params.get('colors') ?? '').split(',');
 if (brand1) {
   document.documentElement.style.setProperty('--brand-1', brand1);

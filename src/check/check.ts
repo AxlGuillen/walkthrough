@@ -59,8 +59,8 @@ export function checkResources(timeline: Timeline, canvas: Size, lang: string): 
 }
 
 // Camera shots, with what the stage could not fit: a mark too close to straighten for.
-export function checkShots(timeline: Timeline): CheckItem[] {
-  const { notes } = stagePlan(timeline);
+export function checkShots(timeline: Timeline, portrait = false): CheckItem[] {
+  const { notes } = stagePlan(timeline, portrait);
   return [
     ...timeline.shots.map(({ time, shot }) => ({ time, label: `shot ${shot.to}`, status: 'ok' as const, notes: [] })),
     ...notes.map(({ time, note }) => ({ time, label: 'camera', status: 'warn' as const, notes: [note] })),

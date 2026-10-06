@@ -20,10 +20,11 @@ export interface CatalogOptions {
   texture: string | undefined;
   brand: string | undefined;
   emojiStyle: string | undefined;
+  typeface: string | undefined;
   open: boolean;
 }
 
-export async function catalog({ device: devices, theme, texture, brand, emojiStyle, open }: CatalogOptions): Promise<void> {
+export async function catalog({ device: devices, theme, texture, brand, emojiStyle, typeface, open }: CatalogOptions): Promise<void> {
   const base = parseTour(await readFile(CATALOG_TOUR, 'utf8'));
   if (base.segments.some(segment => segment.say !== undefined)) throw new Error('the catalog has no narration: use hold and beats in seconds');
   const list: Device[] = devices === 'both' ? ['desktop', 'mobile'] : [devices === 'mobile' ? 'mobile' : 'desktop'];
@@ -31,10 +32,10 @@ export async function catalog({ device: devices, theme, texture, brand, emojiSty
 
   for (const device of list) {
     // A brand, texture or theme given here shows the whole catalog in that look.
-    const look = lookFrom({ brand: brand ?? base.brand, accent: brand ? undefined : base.accent, theme: theme ?? (brand ? undefined : base.theme), texture: texture ?? (brand ? undefined : base.texture), lang: base.language, emojiStyle: emojiStyle ?? base.emojiStyle });
+    const look = lookFrom({ brand: brand ?? base.brand, accent: brand ? undefined : base.accent, theme: theme ?? (brand ? undefined : base.theme), texture: texture ?? (brand ? undefined : base.texture), lang: base.language, emojiStyle: emojiStyle ?? base.emojiStyle, typeface: typeface ?? base.typeface });
     const tour = { ...base, device, theme: (look.theme ?? base.theme) as typeof base.theme };
     const timeline = buildTimeline(tour, []);
-    const outDir = path.join(STORAGE.work, 'catalog', [device, tour.theme, look.texture, brand, look.emojiStyle].filter(Boolean).join('-'));
+    const outDir = path.join(STORAGE.work, 'catalog', [device, tour.theme, look.texture, brand, look.emojiStyle, look.typeface].filter(Boolean).join('-'));
     await rm(outDir, { recursive: true, force: true });
     await mkdir(path.join(outDir, 'shots'), { recursive: true });
     const output = deviceProfile(device, 'preview').output;

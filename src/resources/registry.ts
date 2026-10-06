@@ -2,6 +2,8 @@ import path from 'node:path';
 import type { ZodType } from 'zod';
 import { boardBeats, boardScene, type BoardScene } from '../board/layout.ts';
 import { boardSchema } from '../board/schema.ts';
+import { asideBeats, asideScene, type AsideScene } from '../aside/layout.ts';
+import { asideSchema } from '../aside/schema.ts';
 import { chartBeats, chartScene, type ChartScene } from '../charts/layout.ts';
 import { chartSchema } from '../charts/schema.ts';
 import { codeBeats, codeScene, type CodeScene } from '../code/layout.ts';
@@ -28,6 +30,10 @@ export interface Resource<T> {
 }
 
 const RESOURCES: Record<string, Resource<never>> = {
+  'aside.html': {
+    schema: asideSchema, beats: asideBeats, scene: asideScene,
+    warnings: (...args: Parameters<typeof asideScene>) => (asideScene(...args) as AsideScene).warnings,
+  } as unknown as Resource<never>,
   'chart.html': {
     schema: chartSchema, beats: chartBeats, scene: chartScene,
     warnings: (...args: Parameters<typeof chartScene>) => (chartScene(...args) as ChartScene).truncated.map(text => `label "${text}" does not fit and is cut`),

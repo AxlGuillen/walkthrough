@@ -96,7 +96,7 @@ const wait = z.strictObject({
 const action = z.union([goto, click, hover, type, zoom, highlight, label, scroll, wait]);
 export type Action = z.infer<typeof action>;
 
-export const SHOTS = ['flat', 'wide', 'left', 'right', 'top'] as const;
+export const SHOTS = ['flat', 'wide', 'left', 'right', 'top', 'aside-left', 'aside-right', 'inset', 'away'] as const;
 
 // How one screen gives way to the next: dissolve happens in the page; the others on the stage.
 export const TRANSITIONS = ['dissolve', 'push', 'flip', 'fly'] as const;
@@ -213,6 +213,13 @@ const segment = z.strictObject({
   do: z.array(z.union([action, shot])).default([]),
   overlays: z.array(overlay).default([]),
   flow: flow.optional(),
+  // The screen set aside (or low, under a title) with text in the room it leaves, from `at`
+  // until `until`; the rest is aside.html's data (src/aside/schema.ts), checked on load.
+  aside: z.looseObject({
+    layout: z.enum(['aside-left', 'aside-right', 'inset']).default('aside-left'),
+    at: anchor.optional(),
+    until: anchor.optional(),
+  }).optional(),
   // The changes of screen in this segment, over the tour's transition.
   transition: z.enum(TRANSITIONS).optional(),
 }).refine(s => s.say !== undefined || s.hold !== undefined, {
@@ -240,6 +247,8 @@ export const tourSchema = z.strictObject({
   texture: z.enum(TEXTURES).default('plain'),
   // The brand's mark in a corner while the app is on screen, not over the opening or closing.
   watermark: z.boolean().default(false),
+  // Titles in the system face, or in a display serif (Instrument Serif, vendored).
+  typeface: z.enum(['system', 'editorial']).default('system'),
   // Fluent Emoji in their vector Color style, or the 3D one.
   emojiStyle: z.enum(['color', '3d']).default('color'),
   // The recording inside a browser window, a laptop or a phone, over the tour's stage.
@@ -265,7 +274,7 @@ export const tourSchema = z.strictObject({
   segments: z.array(segment).min(1),
 }).superRefine((tour, ctx) => {
   // The stage tilts the bare recording; a device frame is composed after it, flat.
-  if (tour.frame !== 'none' && tour.segments.some(s => s.do.some(step => step.kind === 'shot'))) {
+  if (tour.frame !== 'none' && tour.segments.some(s => s.aside || s.do.some(step => step.kind === 'shot'))) {
     ctx.addIssue({ code: 'custom', message: 'shots do not work with a device frame yet; drop frame or the shots', path: ['frame'] });
   }
   const staged = tour.transition !== 'dissolve' || tour.segments.some(s => s.transition && s.transition !== 'dissolve');

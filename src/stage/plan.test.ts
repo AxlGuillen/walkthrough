@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { TimedAction, TimedShot } from '../timeline/build.ts';
 import type { Shot } from '../tour/schema.ts';
-import { CAMERA, CHANGE_LENGTH, changeAt, changeLayers, FLAT, pose, poseAt, stagePlan } from './plan.ts';
+import type { Rect } from '../timeline/camera.ts';
+import { CAMERA, CHANGE_LENGTH, changeAt, changeLayers, FLAT, pose, poseAt, room, ROOM_SHOTS, stagePlan } from './plan.ts';
 
 const shot = (time: number, to: Shot['to'], extra: Partial<Shot> = {}): TimedShot =>
   ({ time, segment: 0, shot: { kind: 'shot', to, angle: undefined, duration: undefined, at: undefined, ...extra } });
@@ -120,5 +121,49 @@ describe('changes of screen', () => {
     expect(changeLayers('flip', 0.3).old.opacity).toBe(1);
     expect(changeLayers('flip', 0.3).next.opacity).toBe(0);
     expect(changeLayers('flip', 0.7).next.opacity).toBe(1);
+  });
+});
+
+describe('room shots', () => {
+  const desktop = { width: 1920, height: 1080 };
+  const mobile = { width: 1080, height: 1920 };
+  const screenOf = (to: Parameters<typeof pose>[0], canvas: typeof desktop): Rect => {
+    const p = pose(to, CAMERA.angle, canvas.height > canvas.width);
+    const width = canvas.width * p.scale, height = canvas.height * p.scale;
+    return { x: canvas.width * (0.5 + p.x) - width / 2, y: canvas.height * (0.5 + p.y) - height / 2, width, height };
+  };
+  const apart = (a: Rect, b: Rect) => a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y;
+
+  for (const [name, canvas] of [['16:9', desktop], ['9:16', mobile]] as const) {
+    for (const to of ROOM_SHOTS) {
+      it(`${to} in ${name} leaves a room inside the frame, clear of the screen`, () => {
+        const free = room(to, canvas);
+        expect(free.x).toBeGreaterThan(0);
+        expect(free.y).toBeGreaterThan(0);
+        expect(free.x + free.width).toBeLessThan(canvas.width);
+        expect(free.y + free.height).toBeLessThan(canvas.height);
+        expect(free.width * free.height).toBeGreaterThan(canvas.width * canvas.height * 0.08);
+        expect(apart(free, screenOf(to, canvas))).toBe(true);
+      });
+    }
+  }
+
+  it('sets the screen aside on its side in 16:9 and above the text in 9:16', () => {
+    expect(pose('aside-left').x).toBeLessThan(0);
+    expect(pose('aside-right').x).toBeGreaterThan(0);
+    expect(pose('aside-left', CAMERA.angle, true).y).toBeLessThan(0);
+    expect(room('aside-left', mobile).y).toBeGreaterThan(mobile.height / 2);
+  });
+
+  it('keeps an aside screen where it is for a mark, but straightens an inset one', () => {
+    const aside = plan([shot(1, 'aside-left')], [mark(4)]);
+    expect(poseAt(aside.moves, 4)).toEqual(pose('aside-left'));
+    expect(aside.notes).toEqual([]);
+    const inset = plan([shot(1, 'inset')], [mark(5)]);
+    expect(poseAt(inset.moves, 5)).toEqual(FLAT);
+  });
+
+  it('takes the screen out of the frame with away', () => {
+    expect(screenOf('away', desktop).y).toBeGreaterThan(desktop.height);
   });
 });

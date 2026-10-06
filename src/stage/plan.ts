@@ -1,3 +1,4 @@
+import type { Rect, Size } from '../timeline/camera.ts';
 import type { Timeline } from '../timeline/build.ts';
 import type { Shot, Transition } from '../tour/schema.ts';
 
@@ -59,14 +60,46 @@ export const CAMERA = {
   shortest: 1,
 };
 
-export function pose(to: Shot['to'], angle = CAMERA.angle): Pose {
+// The shots that leave room on the stage: aside moves the screen to one side (above, in 9:16)
+// and inset sets it low, tilted back like a product shot, under a title. away takes it out of
+// the frame, to bring it in or send it off.
+export type RoomShot = 'aside-left' | 'aside-right' | 'inset';
+export const ROOM_SHOTS: readonly RoomShot[] = ['aside-left', 'aside-right', 'inset'];
+
+export function pose(to: Shot['to'], angle = CAMERA.angle, portrait = false): Pose {
   switch (to) {
+    case 'aside-left': return portrait ? ASIDE_PORTRAIT : { scale: 0.6, rotateX: 0, rotateY: -4, x: -0.17, y: 0, depth: 1 };
+    case 'aside-right': return portrait ? ASIDE_PORTRAIT : { scale: 0.6, rotateX: 0, rotateY: 4, x: 0.17, y: 0, depth: 1 };
+    case 'inset': return portrait ? { scale: 0.6, rotateX: 8, rotateY: 0, x: 0, y: 0.17, depth: 1 } : { scale: 0.62, rotateX: 10, rotateY: 0, x: 0, y: 0.17, depth: 1 };
+    case 'away': return { scale: 0.62, rotateX: 14, rotateY: 0, x: 0, y: 0.95, depth: 1 };
     case 'flat': return FLAT;
     case 'wide': return { scale: 0.84, rotateX: 0, rotateY: 0, x: 0, y: 0, depth: 1 };
     case 'left': return { scale: 0.82, rotateX: 2, rotateY: angle, x: -0.012, y: -0.006, depth: 1 };
     case 'right': return { scale: 0.82, rotateX: 2, rotateY: -angle, x: 0.012, y: -0.006, depth: 1 };
     case 'top': return { scale: 0.8, rotateX: angle, rotateY: 0, x: 0, y: -0.03, depth: 1 };
   }
+}
+
+const ASIDE_PORTRAIT: Pose = { scale: 0.56, rotateX: 0, rotateY: 0, x: 0, y: -0.19, depth: 1 };
+
+// The free part of the canvas beside the screen in a room shot, with a margin from both.
+export function room(to: RoomShot, canvas: Size): Rect {
+  const portrait = canvas.height > canvas.width;
+  const p = pose(to, CAMERA.angle, portrait);
+  const width = canvas.width * p.scale;
+  const height = canvas.height * p.scale;
+  const left = canvas.width * (0.5 + p.x) - width / 2;
+  const top = canvas.height * (0.5 + p.y) - height / 2;
+  const gap = Math.min(canvas.width, canvas.height) * 0.05;
+  const edge = Math.min(canvas.width, canvas.height) * 0.06;
+  if (to === 'inset') return { x: edge, y: edge, width: canvas.width - 2 * edge, height: top - gap - edge };
+  if (portrait) {
+    const y = top + height + gap;
+    return { x: edge, y, width: canvas.width - 2 * edge, height: canvas.height - edge - y };
+  }
+  const x = to === 'aside-left' ? left + width + gap : edge;
+  const right = to === 'aside-left' ? canvas.width - edge : left - gap;
+  return { x, y: top, width: right - x, height };
 }
 
 const isFlat = (p: Pose) => p.depth === 0 && p.scale === 1 && p.rotateX === 0 && p.rotateY === 0 && p.x === 0 && p.y === 0;
@@ -95,7 +128,7 @@ const READ = new Set(['highlight', 'label', 'click', 'type']);
 
 // Shots move the camera; before anything to read, it straightens on its own and stays flat
 // until the next shot. A move cut short by the next one starts from wherever it got to.
-export function stagePlan(timeline: Pick<Timeline, 'shots' | 'actions' | 'duration'>): StagePlan {
+export function stagePlan(timeline: Pick<Timeline, 'shots' | 'actions' | 'duration'>, portrait = false): StagePlan {
   const reads = timeline.actions.filter(a => READ.has(a.action.kind)).map(a => a.time);
   const moves: Move[] = [];
   const notes: StagePlan['notes'] = [];
@@ -116,11 +149,12 @@ export function stagePlan(timeline: Pick<Timeline, 'shots' | 'actions' | 'durati
   };
 
   shots.forEach(({ time, shot }, i) => {
-    const target = pose(shot.to, shot.angle);
+    const target = pose(shot.to, shot.angle, portrait);
     const next = shots[i + 1]?.time ?? timeline.duration;
     const duration = shot.duration ?? CAMERA.move;
     push(time, Math.min(time + duration, timeline.duration), target);
-    if (isFlat(target)) return;
+    // Beside text the screen stays square enough to read: it does not straighten.
+    if (isFlat(target) || shot.to === 'aside-left' || shot.to === 'aside-right') return;
 
     const read = reads.find(r => r > time && r < next);
     if (read === undefined) return;

@@ -1,0 +1,39 @@
+title: Pantalla aparte
+url: https://sunsetshores.urresort.com/accommodations/
+brand: 4xl
+typeface: editorial
+language: en
+# La pantalla deja sitio a un texto (docs/recursos.md, «Aparte»): entra desde fuera del cuadro
+# bajo un título (inset), se corre a un lado con puntos (aside-left) y al otro mientras se
+# resalta algo (aside-right). Sin voz; aquí nada hace clic.
+segments:
+  - hold: 5
+    do:
+      - goto: /accommodations/
+      - shot: { to: away, duration: 0.4, at: 0 }
+    aside:
+      layout: inset
+      at: 0.6
+      until: 4.8
+      eyebrow: A walkthrough demo
+      title: Sunset *Shores*
+  - hold: 6.5
+    aside:
+      at: 0.4
+      until: 6.2
+      eyebrow: The camera
+      title: Every frame is *placed*, not recorded
+      points:
+        - { text: A virtual camera, emoji: eyes, at: 2.4 }
+        - { text: Smooth scroll ahead of time, emoji: sparkles, at: 3.3 }
+        - { text: Marks that follow the page, emoji: pushpin, at: 4.2 }
+  - hold: 6
+    do:
+      - highlight: { on: 'h1', at: 2.6, style: marker }
+    aside:
+      layout: aside-right
+      at: 0.4
+      until: 5.7
+      eyebrow: Read it here
+      title: The screen stays *readable*
+  - hold: 2

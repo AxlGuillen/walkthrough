@@ -70,6 +70,24 @@ segments:
     expect(shot.shots).toEqual([{ time: 1.7, segment: 0, shot: { kind: 'shot', to: 'left', angle: undefined, duration: undefined, at: 'tablero' } }]);
   });
 
+  it('turns an aside into its overlay and two shots, out and back', () => {
+    const timeline = buildTimeline(parseTour(`
+title: Board
+url: https://example.com
+segments:
+  - hold: 6
+    aside:
+      layout: aside-right
+      at: 1
+      until: 5
+      title: The *board*
+      points: [{ text: One, at: 3 }]
+`), [], options);
+    expect(timeline.shots.map(s => [s.time, s.shot.to])).toEqual([[1, 'aside-right'], [4.65, 'flat']]);
+    expect(timeline.overlays).toMatchObject([{ src: 'aside.html', start: 1, end: 5, beats: { p0: 2 }, data: { layout: 'aside-right', title: 'The *board*' } }]);
+    expect(() => parseTour('title: x\nurl: https://example.com\nsegments:\n  - hold: 2\n    aside: { title: x, colour: red }\n')).toThrow(/aside.html[\s\S]*colour/);
+  });
+
   it('marks the changes of screen the stage draws, by tour and by segment', () => {
     const staged = buildTimeline(parseTour(`
 title: Board

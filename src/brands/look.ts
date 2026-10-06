@@ -43,8 +43,11 @@ export function brandLook(brand: Brand, theme: 'dark' | 'light'): BrandLook {
 }
 
 // What every overlay of a tour learns about its look.
-export function tourLook(tour: Pick<Tour, 'accent' | 'theme' | 'language' | 'texture' | 'brand'> & { emojiStyle?: Tour['emojiStyle'] }): OverlayLook {
-  const look: OverlayLook = { accent: tour.accent, theme: tour.theme, lang: tour.language, texture: tour.texture, ...(tour.emojiStyle === '3d' ? { emojiStyle: '3d' } : {}) };
+export function tourLook(tour: Pick<Tour, 'accent' | 'theme' | 'language' | 'texture' | 'brand'> & { emojiStyle?: Tour['emojiStyle']; typeface?: Tour['typeface'] }): OverlayLook {
+  const look: OverlayLook = {
+    accent: tour.accent, theme: tour.theme, lang: tour.language, texture: tour.texture,
+    ...(tour.emojiStyle === '3d' ? { emojiStyle: '3d' } : {}), ...(tour.typeface === 'editorial' ? { typeface: 'editorial' } : {}),
+  };
   if (!tour.brand) return look;
   const brand = loadBrand(tour.brand);
   const images = brandLook(brand, tour.theme);
@@ -56,12 +59,12 @@ export function tourLook(tour: Pick<Tour, 'accent' | 'theme' | 'language' | 'tex
 }
 
 // A look from loose options (the probe, the catalog): a brand's choices unless overridden.
-export function lookFrom(options: { brand?: string | undefined; accent?: string | undefined; theme?: string | undefined; texture?: string | undefined; lang?: string | undefined; emojiStyle?: string | undefined }): OverlayLook {
+export function lookFrom(options: { brand?: string | undefined; accent?: string | undefined; theme?: string | undefined; texture?: string | undefined; lang?: string | undefined; emojiStyle?: string | undefined; typeface?: string | undefined }): OverlayLook {
   const brand = options.brand ? loadBrand(options.brand) : undefined;
   const theme = options.theme === 'light' || options.theme === 'dark' ? options.theme : brand?.theme ?? 'dark';
   return tourLook({
     accent: options.accent ?? brand?.accent ?? '#FF3B5C', theme, language: options.lang === 'en' ? 'en' : 'es',
     texture: (options.texture ?? brand?.texture ?? 'plain') as Tour['texture'], ...(options.brand ? { brand: options.brand } : {}),
-    ...(options.emojiStyle === '3d' ? { emojiStyle: '3d' as const } : {}),
+    ...(options.emojiStyle === '3d' ? { emojiStyle: '3d' as const } : {}), ...(options.typeface === 'editorial' ? { typeface: 'editorial' as const } : {}),
   });
 }

@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { chromium, type Page } from 'playwright-core';
 import { installClock } from '../capture/clock.ts';
 import { startEncoder } from '../capture/encoder.ts';
+import { shooter } from '../capture/shot.ts';
 import { frameCount } from '../capture/schedule.ts';
 import { flowScene } from '../flow/scene.ts';
 import { resourceFor } from '../resources/registry.ts';
@@ -109,12 +110,13 @@ export async function renderOverlays({
         // Loaded with the clock frozen, not through settle(): nothing may run before frame 0.
         await page.goto(overlayUrl(source, tourDir, overlayParams(overlay, canvas, look.lang), look));
         await mediaReady(page);
+        const camera = await shooter(page, { viewport: canvas, deviceScaleFactor: 1, transparent: true });
 
         const total = frameCount(overlay.end - overlay.start, fps);
         for (let frame = 0; frame < total; frame++) {
           await clock.syncAnimations();
           await page.evaluate(t => window.__walkthroughSeek?.(t), frame / fps);
-          await encoder.write(await page.screenshot({ omitBackground: true }));
+          await encoder.write(await camera.shot());
           await clock.advance(1000 / fps);
           onFrame?.(index + 1, frame + 1, total);
         }

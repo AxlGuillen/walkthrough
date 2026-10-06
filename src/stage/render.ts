@@ -3,6 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 import { startEncoder } from '../capture/encoder.ts';
+import { shooter } from '../capture/shot.ts';
 import { overlayUrl, TEMPLATES_DIR, type OverlayLook } from '../overlays/render.ts';
 import type { Size } from '../timeline/camera.ts';
 import { changeAt, changeLayers, poseAt, type Layer, type Pose, type StagePlan } from './plan.ts';
@@ -68,6 +69,7 @@ export async function renderStage({ plan, capture, tourDir, outDir, canvas, outp
         })));
     });
 
+    const camera = await shooter(page, { viewport: canvas, deviceScaleFactor: 1 });
     for (const [index, span] of plan.spans.entries()) {
       const { first, count } = spanFrames(span, fps);
       const encoder = startEncoder({ fps, output, file: path.join(outDir, stageFile(index)), draft });
@@ -75,7 +77,7 @@ export async function renderStage({ plan, capture, tourDir, outDir, canvas, outp
         for (let frame = 0; frame < count; frame++) {
           const { pose, time, change } = stageFrame(plan, first + frame, fps);
           await page.evaluate(([pose, time, change]) => window.__walkthroughStage!(pose, time, change), [pose, time, change] as const);
-          await encoder.write(await page.screenshot());
+          await encoder.write(await camera.shot());
           onFrame?.(index + 1, frame + 1, count);
         }
         await encoder.finish();

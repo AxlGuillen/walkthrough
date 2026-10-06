@@ -13,6 +13,7 @@ import { captureDevice } from '../frame/layout.ts';
 import { deviceProfile, FPS, type Quality } from './devices.ts';
 import { EVENTS_FILE } from './events.ts';
 import { startEncoder } from './encoder.ts';
+import { hideCaret, shooter } from './shot.ts';
 import { effectsLayer, scrollControl, transitionLayer } from './runtime.ts';
 import { applyScrolls } from './scroll.ts';
 import { dueActions, frameCount } from './schedule.ts';
@@ -47,7 +48,9 @@ export async function captureTour({
     await page.addInitScript(effectsLayer, await markerFont());
     await page.addInitScript(scrollControl);
     await page.addInitScript(transitionLayer);
+    await page.addInitScript(hideCaret);
     await installSetup(page, tour);
+    const camera = await shooter(page, device);
     const stage = createStage(page, clock, tour, device, timeline);
     const home = fullFrame(device.viewport);
 
@@ -70,7 +73,7 @@ export async function captureTour({
       const markup = renderScene(sceneAt(stage.time, stage.effects), tour.accent);
       await page.evaluate(markup => window.__walkthrough?.draw?.(markup), markup);
       const follow = (rect: typeof home, at: number) => followCursor(rect, cursorPosition(at, stage.effects), device.viewport);
-      await encoder.write(await page.screenshot({ clip: cameraAt(stage.time, stage.camera, home, follow) }));
+      await encoder.write(await camera.shot(cameraAt(stage.time, stage.camera, home, follow)));
       await clock.advance(1000 / fps);
       onFrame?.(frame + 1, total);
     }

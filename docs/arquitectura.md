@@ -38,6 +38,8 @@ voice ──────┘   (pure)      frames     ffmpeg
 
 Cada etapa lee solo archivos de la anterior, así que se puede repetir por separado. Cambiar un overlay repite `overlays` y `compose`, sin volver a entrar a la app.
 
+**Etapas en paralelo.** `overlays` no necesita la captura, así que corre al mismo tiempo que `capture`, en los núcleos que deja libres el Chrome de la captura, ocupado en uno solo. `stage` sí la necesita y arranca en cuanto termina, aunque los overlays sigan. Si una etapa falla, las demás se detienen en el siguiente cuadro (`together`, en `src/cli/parallel.ts`). Ver «Rendimiento».
+
 ## Almacenamiento
 
 Nada generado vive en el repo. Cada sistema tiene su carpeta de caché (`<caché>`) y su carpeta de videos (`<videos>`):
@@ -114,7 +116,7 @@ Todo lo que viene después solo ejecuta lo que dice la timeline; nadie más calc
 
 El zoom no toca la página:
 1. Se captura con la densidad justa para que el zoom máximo quede a un píxel de origen por píxel de salida: desktop es un viewport de 1600×900 a 2,4× (3840×2160) para salir a 1920×1080; mobile es 405×720 a 5,33× para salir a 1080×1920.
-2. La cámara es un rectángulo en px CSS: cada cuadro es un `screenshot({ clip })` de ese rectángulo, y ffmpeg lo escala a la salida (reconstruye el filtro `scale` cuando cambia el tamaño del recorte).
+2. La cámara es un rectángulo en px CSS: cada cuadro es una captura de ese rectángulo (`shooter`, ver «Rendimiento»), y ffmpeg la escala a la salida (reconstruye el filtro `scale` cuando cambia el tamaño del recorte).
 3. **Zoom proporcional** (`fitRect`): el objetivo ocupa ~60 % del cuadro (`FILL`), con zoom entre 1,2× (`MIN_ZOOM`) y 2× (`MAX_ZOOM`). Si ni a 1,2× cabe, no se hace zoom: un acercamiento tan leve se lee como temblor. `zoom: { to, scale }` fija el zoom a mano.
 4. **Centrado:** antes de un zoom, el objetivo se centra con scroll suave si la página o su contenedor lo permiten. Contra un borde que no hace scroll (el sidebar, por ejemplo) la cámara sigue topando con el límite de la pantalla, porque ahí no hay píxeles.
 5. **Seguimiento** (`zoom: { to, follow: true }`): mientras dura ese zoom, la cámara se desplaza lo justo para mantener el cursor dentro de una zona segura (18 % de margen). La transición siguiente parte del cuadro ya desplazado, así que salir del zoom no brinca.
@@ -232,7 +234,8 @@ overlays:
   | `table.html` | Tabla de comparación (`src/table/`): filas en su palabra, ✓ y ✕ dibujados, una columna destacada |
   | `roadmap.html` | Línea de tiempo (`src/roadmap/`): hitos `done`, `now` y `next`, horizontal en 16:9 y vertical en 9:16 |
   | `opening.html`, `chapter-card.html`, `closing.html` | Aperturas, capítulos y cierres en tres estilos (`kinetic`, `over-app`, `brand`), con `beats`; comparten `titles.css` y las coreografías de `titles.js`. Guía en `docs/recursos.md` |
-- **Render aparte** (`src/overlays/render.ts`): cada overlay se abre en su propia página, al tamaño de salida, con `deviceScaleFactor: 1` y fondo transparente (`omitBackground`). Se guarda como `overlays/NN.mov` con PNG por cuadro, sin pérdida y con alfa.
+- **Render aparte** (`src/overlays/render.ts`): cada overlay se abre en su propia página, al tamaño de salida, con `deviceScaleFactor: 1` y fondo transparente. Se guarda como `overlays/NN.mov` en QuickTime Animation (`qtrle`), sin pérdida y con alfa. Varios se renderizan a la vez (`--jobs`), los más largos primero.
+- **Overlays fijos:** si la página no registró nada que se mueva (`walkthrough.still()` en `params.js`: ni timelines, ni animaciones CSS, ni `<video>`), se captura una vez y ffmpeg repite el cuadro (`loop`). Así sale la marca de agua. Una plantilla que cambie con el tiempo lo registra con `walkthrough.timeline()` o `walkthrough.gsap()`; si no, se renderiza como fija.
 - **Reloj propio que empieza en cero.** La página se carga con el reloj congelado, no vía `settle()`, así que sus animaciones de entrada arrancan justo cuando el overlay aparece en el video. Antes del primer cuadro se espera a las fuentes, imágenes y videos, por evento, porque los timers están congelados.
 - **`params`** reutiliza una plantilla con distintos textos: el HTML los lee con `URLSearchParams`.
 - **Montaje:** `setpts` desplaza el overlay a su inicio, `fade` con `alpha=1` lo desvanece y `overlay=eof_action=pass` lo compone en el orden del tour. Los subtítulos van encima de todo.
@@ -365,6 +368,29 @@ setup:
 - las sesiones guardadas, y las que algún tour pide pero nadie ha guardado;
 - el tamaño de la caché.
 
+## Rendimiento
+
+Auditado el 6/oct/2026 sobre el showcase (2:25, 18 frases, 13 overlays, planos y transiciones) en un M2 de 8 núcleos y 8 GB. Lo caro no era dibujar, sino comprimir y mover imágenes. Todo lo siguiente da **los mismos píxeles**; las pruebas lo comparan.
+
+| Etapa | Antes | Después |
+|---|---|---|
+| Captura | 44,0 min | 16,4 min (con los overlays dentro) |
+| Overlays | 20,3 min | En paralelo con la captura |
+| Escenario | 7,7 min | 4,4 min |
+| Montaje | 3,7 min | 2,7 min |
+| **Total** | **75,8 min** | **23,5 min** |
+| Overlays en disco | ~8 GB | 2,3 GB |
+
+Entre los dos videos finales: SSIM 0,995 y PSNR promedio de 48,9 dB. Solo 2 de 4 327 cuadros quedan por debajo de 35 dB, y caen a mitad de un fundido del menú del sitio; lado a lado se ven iguales.
+
+- **Capturas con el PNG rápido de Chrome** (`src/capture/shot.ts`): `Page.captureScreenshot` con `optimizeForSpeed`, que sigue siendo PNG sin pérdida pero comprime menos. Un cuadro 4K pasó de 1 064 a 167 ms; uno de overlay, de 239 a 85 ms; uno del escenario, de 193 a 47 ms. Además se salta lo que Playwright hace en cada captura: recorrer todo el DOM para ocultar el cursor de texto (aquí se oculta una vez, con `hideCaret`) y volver a poner el fondo. Igual que Playwright, espera a las fuentes y recorta en coordenadas de página con escala igual a la densidad.
+- **Overlays en `qtrle` en vez de PNG:** codificar pasó de 160 a 9 ms por cuadro y decodificar en el montaje de 33 a 1 ms; ocupa un tercio.
+- **Overlays fijos de un cuadro** y **overlays en paralelo con la captura** (ver «Overlays» y «Pipeline»).
+- **`--jobs`:** overlays a la vez. Por omisión sale de la memoria (`defaultJobs`): 1 con 8 GB, porque la captura en 4K ya lleva la Mac al swap; 2 con 16 GB; hasta 4 con más.
+- **Nada que dependa del reloj real dentro de un cuadro.** `presence()` le daba 150 ms a la página para decir si una marca seguía visible; en una Mac cargada, la respuesta llegaba tarde y la marca se retiraba sola. Ahora pregunta sin esperar si el elemento existe y, si existe, lo mide sin límite corto.
+- **Ruido conocido:** Chrome aplica *dithering* a los degradados y dos rasterizados de la misma página pueden diferir en un nivel, lo capture quien lo capture. Las pruebas de píxeles usan colores sólidos.
+- **Pruebas:** Vitest usa la mitad de los núcleos (`vitest.config.ts`); con uno por núcleo, las suites que abren Chrome agotaban los 8 GB.
+
 ## Iterar sin renderizar
 
 - **`walkthrough check <tour>`** recorre el tour con el reloj normal y sin capturar cuadros, así que tarda segundos: el de uws-tasks, 9 s. Hace los mismos clics que el render y reporta por acción:
@@ -396,7 +422,7 @@ walkthrough voice  <tour>              solo voz: para oírla y revisar tiempos
 walkthrough doctor                      revisar el entorno
 walkthrough check  <tour>               validar sin renderizar
 walkthrough inspect <url> [--session=<s>] [--device=mobile]
-walkthrough render <tour> [--preview] [--open] [--from=overlays|compose]
+walkthrough render <tour> [--preview] [--open] [--from=overlays|compose] [--jobs=N]
 walkthrough overlay <plantilla> [--beats --params --data --theme --device --open]   probar un overlay suelto
 walkthrough catalog [--device=mobile|both] [--theme=light] [--open]           todos los recursos y una hoja de contacto
 walkthrough gallery [--no-open]           ver los videos generados

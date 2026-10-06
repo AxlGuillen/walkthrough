@@ -347,6 +347,19 @@ Para el video de muestra de la herramienta: que la grabación deje de ser siempr
 - **11.3 Tipografía ✅:** `typeface: editorial` con Instrument Serif vendorizada.
 - **Pendiente:** un mosaico de clips (`<video>`) para mostrar varios formatos a la vez.
 
+## Fase 12 — Rendimiento ✅ (6/oct/2026)
+
+Un render final del showcase (2:25) tardaba 75,8 min en un M2 de 8 GB: captura 44, overlays 20, escenario 8, montaje 4. La auditoría midió que el tiempo se iba en comprimir y mover imágenes, no en dibujarlas, y que Chrome trabajaba en un solo núcleo con la Mac casi ociosa. Detalle en `docs/arquitectura.md`, «Rendimiento».
+
+1. **Capturas con el PNG rápido de Chrome** (`optimizeForSpeed`), sin lo que Playwright hace alrededor de cada una: un cuadro 4K pasó de 1 064 a 167 ms, con los mismos píxeles.
+2. **Overlays en QuickTime Animation (`qtrle`)** en vez de PNG: sin pérdida, 18 veces más rápido de escribir, 30 de leer y un tercio del disco.
+3. **Overlays en paralelo con la captura** (`--jobs`, por omisión según la memoria) y el escenario en cuanto termina la captura.
+4. **Overlays fijos de un solo cuadro**, como la marca de agua.
+
+De paso: las marcas ya no se retiran solas cuando una Mac cargada tarda en responder (`presence()` dependía de 150 ms de reloj real), y Vitest usa la mitad de los núcleos, para que la suite quepa en 8 GB.
+
+**Resultado:** 23,5 min (3,2 veces más rápido), con SSIM 0,995 entre los dos videos. **Pendiente, sin pérdida:** reutilizar los cuadros de overlay en los que no hay animación activa. **Solo tras compararlo lado a lado:** capturar a menos densidad los tours sin `zoom`.
+
 ## Estimación
 
 | Fase | Tamaño |
@@ -362,3 +375,4 @@ Para el video de muestra de la herramienta: que la grabación deje de ser siempr
 | 8 | Mediana |
 | 9 | Mediana-grande (9.4 toca el montaje) |
 | 10 | Grande: 10.1 chica, 10.2 y 10.3 medianas, 10.4 mediana por escena |
+| 12 | Mediana: cuatro cambios chicos, medidos uno por uno |

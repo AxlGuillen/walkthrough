@@ -44,7 +44,7 @@ segments:
       - shot: { to: top, angle: 6, at: lean }
       - highlight: { on: 'h2:has-text("A headland with the sea on three sides")', at: own, style: marker }
 
-  - say: It points the way a person would. It can underline a promise. Then circle a detail a little further down, and leave a note right beside it.
+  - say: It points the way a person would. It can underline a promise. Then, a little further down, circle a detail, and leave a note right beside it.
     do:
       - highlight: { on: 'h2:has-text("Rooms and suites that open onto the water")', at: promise, style: underline }
       - scroll: { to: 'h3:has-text("Garden Room")', at: Then }

@@ -1,6 +1,6 @@
 ---
 name: recursos
-description: Agrega a un tour de walkthrough recursos animados que van al ritmo de la voz: aperturas, capítulos y cierres, gráficas (barras, línea, dona, cifra, antes/después), código (editor, terminal, diff), tablas de comparación, líneas de tiempo, pizarrones con listas que se tachan, notas en un corcho, estilos de resaltado, planos de cámara, transiciones y marcos de dispositivo. Úsala cuando el autor pida abrir o cerrar un video, mostrar cifras o datos, comparar opciones, contar un plan por hitos, enseñar una lista de pendientes o ideas sueltas, enseñar código o comandos, variar cómo se señala la app, meterla en un navegador, laptop o teléfono, o mejorar cómo se ve un tour más allá de recorrerla.
+description: Agrega a un tour de walkthrough recursos animados que van al ritmo de la voz: aperturas, capítulos y cierres, gráficas (barras, línea, dona, cifra, antes/después), código (editor, terminal, diff), tablas de comparación, líneas de tiempo, pizarrones con listas que se tachan, notas en un corcho, estilos de resaltado, planos de cámara, transiciones, texto aparte de la pantalla (`aside`), tipografía editorial y marcos de dispositivo. Úsala cuando el autor pida abrir o cerrar un video, mostrar cifras o datos, comparar opciones, contar un plan por hitos, enseñar una lista de pendientes o ideas sueltas, enseñar código o comandos, variar cómo se señala la app, meterla en un navegador, laptop o teléfono, o mejorar cómo se ve un tour más allá de recorrerla.
 ---
 
 # Recursos en un tour

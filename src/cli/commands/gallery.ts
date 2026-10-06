@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process';
+import { openPath } from '../../desktop/desktop.ts';
 import { GALLERY_PORT, startGallery } from '../../library/gallery.ts';
 import { STORAGE } from '../context.ts';
 
@@ -10,5 +10,5 @@ export async function gallery(open: boolean): Promise<void> {
   const address = server.address();
   const url = `http://localhost:${typeof address === 'object' && address ? address.port : GALLERY_PORT}`;
   console.log(`gallery at ${url} (ctrl+c to stop)`);
-  if (open) execFile('open', [url]);
+  if (open) openPath(url);
 }

@@ -1,10 +1,11 @@
 import { onAccent } from './color.ts';
+import { MARKER_FAMILY } from './font.ts';
 import { LABEL_FONT } from './label.ts';
 import type { Scene } from './scene.ts';
 
 const ARROW = 'M0 0 L0 17 L4.5 12.8 L7.6 19.6 L10.4 18.4 L7.4 11.7 L13.2 11.7 Z';
 
-const MARKER_FONT = "'Marker Felt', 'Chalkboard SE', 'Comic Sans MS', sans-serif";
+const MARKER_FONT = `'${MARKER_FAMILY}', 'Marker Felt', cursive`;
 
 export function renderScene({ cursor, strokes, bubbles = [] }: Scene, accent: string): string {
   const f = (n: number) => Number(n.toFixed(3));

@@ -1,8 +1,8 @@
-import { execFile } from 'node:child_process';
 import { createReadStream, existsSync } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
+import { fileManagerName, revealFile } from '../desktop/desktop.ts';
 import type { Storage } from '../tour/paths.ts';
 import { clean } from './clean.ts';
 import { listPreviews, listVideos, sizeOf, trashVideo } from './library.ts';
@@ -16,6 +16,11 @@ export function resolveVideo(videosRoot: string, relative: unknown): string | nu
   if (typeof relative !== 'string' || !relative.endsWith('.mp4')) return null;
   const file = path.resolve(videosRoot, relative);
   return file.startsWith(path.resolve(videosRoot) + path.sep) ? file : null;
+}
+
+// The page names videos by this key, so it is the same on every system.
+export function libraryKey(videosRoot: string, file: string): string {
+  return path.relative(videosRoot, file).split(path.sep).join('/');
 }
 
 export function resolvePreview(workRoot: string, key: unknown): string | null {
@@ -58,9 +63,9 @@ export function startGallery(storage: Storage, port = GALLERY_PORT): Promise<htt
 }
 
 async function sendPage(storage: Storage, response: http.ServerResponse) {
-  const videos = (await listVideos(storage.videos)).map(v => ({ ...v, relative: path.relative(storage.videos, v.file) }));
+  const videos = (await listVideos(storage.videos)).map(v => ({ ...v, relative: libraryKey(storage.videos, v.file) }));
   const previews = await listPreviews(storage.work);
-  const page = galleryPage({ videos, previews, cacheBytes: await sizeOf(path.join(storage.work, 'tours')), videosRoot: storage.videos });
+  const page = galleryPage({ videos, previews, cacheBytes: await sizeOf(path.join(storage.work, 'tours')), videosRoot: storage.videos, fileManager: fileManagerName() });
   response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
   response.end(page);
 }
@@ -98,7 +103,7 @@ async function sendPoster(storage: Storage, url: URL, response: http.ServerRespo
   const at = Number(url.searchParams.get('t') ?? 0);
   if (!file || !existsSync(file) || !Number.isFinite(at) || at < 0 || at > 3600) return reply(response, 404, 'not found');
   const preview = url.searchParams.get('preview');
-  const poster = posterFile(storage.work, preview ? { preview } : { file: path.relative(storage.videos, file) });
+  const poster = posterFile(storage.work, preview ? { preview } : { file: libraryKey(storage.videos, file) });
   await ensurePoster(file, poster, at);
   response.writeHead(200, { 'Content-Type': 'image/jpeg', 'Cache-Control': 'no-cache' });
   createReadStream(poster).pipe(response);
@@ -112,7 +117,7 @@ async function act(storage: Storage, action: string, body: { file?: unknown }, r
   const file = resolveVideo(storage.videos, body.file);
   if (!file || !existsSync(file)) return reply(response, 404, 'video not found');
   if (action === '/reveal') {
-    execFile('open', ['-R', file]);
+    revealFile(file);
     return reply(response, 200, 'ok');
   }
   if (action === '/trash') {

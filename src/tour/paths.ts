@@ -6,13 +6,26 @@ export interface Storage {
   videos: string;
 }
 
-// Nothing generated lives in the repo: working files are a disposable cache and finished
-// videos are the user's, next to their other movies.
-export function defaultStorage(env: NodeJS.ProcessEnv = process.env, home = os.homedir()): Storage {
+// Nothing generated lives in the repo: working files go to the system's cache folder and
+// finished videos are the user's, next to their other videos.
+export function defaultStorage(env: NodeJS.ProcessEnv = process.env, home = os.homedir(), platform = process.platform): Storage {
+  const fallback = platformStorage(env, home, platform);
   return {
-    work: env.WALKTHROUGH_WORK ?? path.join(home, 'Library', 'Caches', 'walkthrough'),
-    videos: env.WALKTHROUGH_VIDEOS ?? path.join(home, 'Movies', 'walkthrough'),
+    work: env.WALKTHROUGH_WORK ?? fallback.work,
+    videos: env.WALKTHROUGH_VIDEOS ?? fallback.videos,
   };
+}
+
+function platformStorage(env: NodeJS.ProcessEnv, home: string, platform: NodeJS.Platform): Storage {
+  if (platform === 'darwin') {
+    return { work: path.posix.join(home, 'Library', 'Caches', 'walkthrough'), videos: path.posix.join(home, 'Movies', 'walkthrough') };
+  }
+  if (platform === 'win32') {
+    const local = env.LOCALAPPDATA ?? path.win32.join(home, 'AppData', 'Local');
+    return { work: path.win32.join(local, 'walkthrough'), videos: path.win32.join(home, 'Videos', 'walkthrough') };
+  }
+  const cache = env.XDG_CACHE_HOME ?? path.posix.join(home, '.cache');
+  return { work: path.posix.join(cache, 'walkthrough'), videos: path.posix.join(home, 'Videos', 'walkthrough') };
 }
 
 export interface TourPaths {

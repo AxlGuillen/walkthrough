@@ -18,13 +18,13 @@
   .cork .grain { position: absolute; inset: 0; opacity: 0.75; mix-blend-mode: multiply; background-size: 90px 90px; }
   .label {
     position: absolute; translate: -50% -50%; padding: 0.5em 1.2em; white-space: nowrap; line-height: 1;
-    font-family: "Marker Felt", "Noteworthy", cursive; font-weight: 700; color: #1d1d1d;
+    font-family: var(--marker); color: #1d1d1d;
     background: linear-gradient(180deg, #fffdf6, #f1ece0); box-shadow: 0 0.6vmin 1.2vmin rgba(0, 0, 0, 0.35);
   }
   .note {
     position: absolute; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; align-items: stretch;
     gap: 0.25em; text-align: center; color: #262421;
-    font-family: "Noteworthy", "Marker Felt", cursive; font-weight: 700; line-height: 1.15;
+    font-family: var(--hand); font-weight: 700; line-height: 1.15;
   }
   .note .paper { position: absolute; inset: 0; z-index: -1; border-radius: 0.3vmin; }
   .note .text { overflow-wrap: anywhere; }

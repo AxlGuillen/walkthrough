@@ -22,7 +22,7 @@ const USAGE = `usage:
       --session=<name>                use a saved login
       --device=mobile                 inspect with the phone viewport
   walkthrough render <tour.yaml>      voice, timeline, capture, overlays and compose
-      --preview                       half size at 15 fps, kept out of ~/Movies, shown in the gallery
+      --preview                       half size at 15 fps, kept out of the videos folder, shown in the gallery
       --open                          open the gallery on the new video when done
       --from=overlays                 reuse the capture; re-render overlays and compose
       --from=compose                  reuse capture and overlays; only rebuild the final video

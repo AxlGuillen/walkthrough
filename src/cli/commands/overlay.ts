@@ -1,4 +1,4 @@
-import { execFile, execFileSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from 'yaml';
@@ -9,6 +9,7 @@ import { resourceFor } from '../../resources/registry.ts';
 import { lookFrom } from '../../brands/look.ts';
 import { backdropArgs } from '../../overlays/catalog.ts';
 import { renderOverlays } from '../../overlays/render.ts';
+import { openPath } from '../../desktop/desktop.ts';
 import { STORAGE } from '../context.ts';
 
 // Flags as parseArgs hands them over: any of them may be missing.
@@ -59,5 +60,5 @@ export async function overlay(options: OverlayCommand): Promise<void> {
   const video = path.join(outDir, 'probe.mp4');
   execFileSync('ffmpeg', backdropArgs([timed], output, FPS, timed.end, video), { cwd: outDir });
   console.log(`✓ ${video} (${((Date.now() - started) / 1000).toFixed(1)}s)`);
-  if (options.open) execFile('open', [video]);
+  if (options.open) openPath(video);
 }

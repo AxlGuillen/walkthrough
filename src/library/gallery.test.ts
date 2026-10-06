@@ -3,14 +3,14 @@ import type http from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parseRange, resolvePreview, resolveVideo, startGallery } from './gallery.ts';
+import { libraryKey, parseRange, resolvePreview, resolveVideo, startGallery } from './gallery.ts';
 import { publishVideo } from './library.ts';
 import { isGallery } from './launch.ts';
-import { escapeHtml, formatBytes, formatDuration, formatWhen, galleryPage, previewAnchor, stillAt, summarize, videoAnchor } from './page.ts';
+import { escapeHtml, formatBytes, formatDuration, formatWhen, galleryPage, previewAnchor, shortenHome, stillAt, summarize, videoAnchor } from './page.ts';
 
 describe('resolveVideo', () => {
   it('accepts only mp4 files inside the library', () => {
-    expect(resolveVideo('/v', 'uws/tablero/a.mp4')).toBe('/v/uws/tablero/a.mp4');
+    expect(resolveVideo('/v', 'uws/tablero/a.mp4')).toBe(path.resolve('/v/uws/tablero/a.mp4'));
     expect(resolveVideo('/v', '../etc/passwd.mp4')).toBeNull();
     expect(resolveVideo('/v', '/v/../x.mp4')).toBeNull();
     expect(resolveVideo('/v', 'uws/a.json')).toBeNull();
@@ -18,9 +18,15 @@ describe('resolveVideo', () => {
   });
 });
 
+describe('libraryKey', () => {
+  it('names a video with forward slashes on every system', () => {
+    expect(libraryKey(path.resolve('/v'), path.resolve('/v/uws/tablero/a.mp4'))).toBe('uws/tablero/a.mp4');
+  });
+});
+
 describe('resolvePreview', () => {
   it('maps project/tour to its preview and nothing else', () => {
-    expect(resolvePreview('/w', 'uws-tasks/tablero')).toBe('/w/tours/uws-tasks/tablero/preview/video.mp4');
+    expect(resolvePreview('/w', 'uws-tasks/tablero')).toBe(path.join('/w/tours/uws-tasks/tablero/preview/video.mp4'));
     expect(resolvePreview('/w', '../etc')).toBeNull();
     expect(resolvePreview('/w', 'a/../b')).toBeNull();
     expect(resolvePreview('/w', 'a/b/c')).toBeNull();
@@ -76,6 +82,19 @@ describe('galleryPage', () => {
     expect(page).toContain('<span>9:16</span>');
     expect(page).toContain('~/Movies/walkthrough');
     expect(page).toContain('rel="icon" type="image/svg+xml"');
+  });
+
+  it("names the system's file manager on the reveal button", () => {
+    const video = { title: 'A', project: 'p', tour: 't', device: 'desktop' as const, duration: 10, bytes: 1, createdAt: '2026-09-28T18:00:00.000Z', file: '/v/p/t/a.mp4', relative: 'p/t/a.mp4' };
+    expect(galleryPage({ videos: [video], cacheBytes: 0, videosRoot: '/v' })).toContain('Finder</button>');
+    expect(galleryPage({ videos: [video], cacheBytes: 0, videosRoot: '/v', fileManager: 'Explorador' })).toContain('Explorador</button>');
+  });
+
+  it('shortens the home folder on every system', () => {
+    expect(shortenHome('/Users/someone/Movies/walkthrough')).toBe('~/Movies/walkthrough');
+    expect(shortenHome('C:\\Users\\someone\\Videos\\walkthrough')).toBe('~\\Videos\\walkthrough');
+    expect(shortenHome('/home/someone/Videos/walkthrough')).toBe('~/Videos/walkthrough');
+    expect(shortenHome('/srv/videos')).toBe('/srv/videos');
   });
 
   it('gives every card a stable anchor and focuses the one in the URL hash', () => {

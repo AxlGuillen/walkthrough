@@ -38,7 +38,7 @@ Un recurso dice algo que la app no muestra por sí sola. Uno por frase, y no má
   bun run walkthrough overlay opening.html --params="title=Sunset Shores,style=brand" --beats="mark=0.3,title=1" --open
   ```
 
-- **El catálogo completo** (`tours/examples/catalogo.yaml`, sin voz): todos los recursos y sus variantes en una pasada, con un video y una hoja de contacto (un cuadro por recurso) en `~/Library/Caches/walkthrough/catalog/`. Tarda unos 4 minutos por formato.
+- **El catálogo completo** (`tours/examples/catalogo.yaml`, sin voz): todos los recursos y sus variantes en una pasada, con un video y una hoja de contacto (un cuadro por recurso) en `<caché>/catalog/` (ver `docs/arquitectura.md`). Tarda unos 4 minutos por formato.
 
   ```bash
   bun run walkthrough catalog --device=both --open
@@ -270,7 +270,7 @@ El pizarrón y el corcho no son tarjetas planas: cuelgan en una pared con el fon
 
 - **Una por sección, como interludio.** Tapan la app, como una gráfica a pantalla completa.
 - **Cuestan render:** unas dos o tres veces lo de una tabla por segundo en pantalla.
-- **Letras de macOS** (Chalkduster, Marker Felt, Noteworthy): no hay archivos que bajar, pero el render necesita una Mac.
+- **Letras vendorizadas:** Permanent Marker (plumón: pizarrón blanco, título del corcho) y Kalam (a mano: gis, con su filtro, y notas), en `templates/overlays/vendor/fonts/`. Se ven igual en macOS y Windows; las plantillas las piden con `var(--marker)` y `var(--hand)`.
 
 Ejemplos de los tres en `tours/examples/catalogo.yaml`.
 

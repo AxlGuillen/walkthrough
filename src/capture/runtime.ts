@@ -65,8 +65,15 @@ export function animationSync(): void {
 
 // A stateless layer: Node computes each frame's SVG, so effects survive navigations.
 // It lives in the top layer, above the app's own dialogs, and never takes pointer events.
-export function effectsLayer(): void {
+// Its font arrives as bytes: the app's own CSP governs font URLs, not FontFace data.
+export function effectsLayer(font?: { family: string; data: string }): void {
   const ID = '__walkthrough-effects';
+  if (font) {
+    const bytes = Uint8Array.from(atob(font.data), char => char.charCodeAt(0));
+    const face = new FontFace(font.family, bytes, { weight: '400 700' });
+    document.fonts.add(face);
+    void face.load();
+  }
   window.__walkthrough = {
     ...window.__walkthrough,
     draw(markup) {

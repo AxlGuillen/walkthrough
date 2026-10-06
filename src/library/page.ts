@@ -8,6 +8,7 @@ export interface GalleryData {
   previews?: readonly Preview[];
   cacheBytes: number;
   videosRoot: string;
+  fileManager?: string;
   now?: Date;
 }
 
@@ -54,6 +55,10 @@ export function summarize(videos: readonly Video[]): LibrarySummary {
 }
 
 // Stable ids for gallery cards, so a link can land on one video: /#v-uws-tasks-tablero-…
+export function shortenHome(dir: string): string {
+  return dir.replace(/^(\/Users\/[^/]+|\/home\/[^/]+|[A-Za-z]:\\Users\\[^\\]+)/, '~');
+}
+
 export function videoAnchor(relative: string): string {
   return `v-${relative.replace(/\.mp4$/, '').replace(/[^a-zA-Z0-9]+/g, '-')}`;
 }
@@ -100,7 +105,7 @@ function frame(query: string, entry: VideoEntry, isNew: boolean): string {
 
 const format = (entry: VideoEntry) => (entry.device === 'mobile' ? '9:16' : '16:9');
 
-function videoCard(video: Video, isNew: boolean, now: Date): string {
+function videoCard(video: Video, isNew: boolean, now: Date, fileManager: string): string {
   return `
       <article class="card ${video.device}" id="${videoAnchor(video.relative)}">
         ${frame(`file=${encodeURIComponent(video.relative)}`, video, isNew)}
@@ -111,7 +116,7 @@ function videoCard(video: Video, isNew: boolean, now: Date): string {
         <div class="foot">
           <div class="chips mono"><span>${format(video)}</span><span>${formatBytes(video.bytes)}</span></div>
           <div class="actions">
-            <button type="button" class="pill" data-action="reveal" data-file="${escapeHtml(video.relative)}">${ICON.folder}Finder</button>
+            <button type="button" class="pill" data-action="reveal" data-file="${escapeHtml(video.relative)}">${ICON.folder}${escapeHtml(fileManager)}</button>
             <button type="button" class="ghost" data-action="trash" data-file="${escapeHtml(video.relative)}" aria-label="Mandar ${escapeHtml(video.title)} a la Papelera">${ICON.trash}</button>
           </div>
         </div>
@@ -163,7 +168,7 @@ function sectionHead(id: string, title: string, note: string): string {
   return `<div class="head"><h2 id="${id}">${escapeHtml(title)}</h2><span class="mono muted">${escapeHtml(note)}</span></div>`;
 }
 
-export function galleryPage({ videos, previews = [], cacheBytes, videosRoot, now = new Date() }: GalleryData): string {
+export function galleryPage({ videos, previews = [], cacheBytes, videosRoot, fileManager = 'Finder', now = new Date() }: GalleryData): string {
   const summary = summarize(videos);
   const projects = new Map<string, Video[]>();
   for (const video of videos) projects.set(video.project, [...(projects.get(video.project) ?? []), video]);
@@ -172,7 +177,7 @@ export function galleryPage({ videos, previews = [], cacheBytes, videosRoot, now
   const sections = [...projects].map(([project, list], i) => `
   <section aria-labelledby="project-${i}">
     ${sectionHead(`project-${i}`, project, count(list.length))}
-    <div class="grid">${list.map(video => videoCard(video, video === summary.latest, now)).join('')}
+    <div class="grid">${list.map(video => videoCard(video, video === summary.latest, now, fileManager)).join('')}
     </div>
   </section>`).join('');
 
@@ -200,7 +205,7 @@ export function galleryPage({ videos, previews = [], cacheBytes, videosRoot, now
   <header>
     <div class="brand">
       <span class="logo"><svg width="30" height="30" viewBox="0 0 120 120" aria-hidden="true"><g transform="translate(8,14)">${LOGO_PATHS}</g></svg></span>
-      <span class="name">Walkthrough<code class="mono muted">${escapeHtml(videosRoot.replace(/^\/Users\/[^/]+/, '~'))}</code></span>
+      <span class="name">Walkthrough<code class="mono muted">${escapeHtml(shortenHome(videosRoot))}</code></span>
     </div>
     <nav aria-label="Secciones"><a href="#videos" class="on">Videos</a><a href="#previews">Vistas previas</a></nav>
     <div class="actions">

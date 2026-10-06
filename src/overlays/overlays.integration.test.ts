@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { composeTour } from '../compose/compose.ts';
 import { buildTimeline } from '../timeline/build.ts';
@@ -38,8 +39,8 @@ afterAll(async () => { await rm(dir, { recursive: true, force: true }); });
 describe('overlayUrl', () => {
   it('carries the tour folder, its accent and the params as a query string', () => {
     const url = new URL(overlayUrl('/repo/templates/overlays/title.html', '/repo/tours/x', { title: 'Hola mundo' }, { accent: '#FF3B5C' }));
-    expect(url.pathname).toBe('/repo/templates/overlays/title.html');
-    expect(Object.fromEntries(url.searchParams)).toEqual({ base: 'file:///repo/tours/x/', accent: '#FF3B5C', title: 'Hola mundo' });
+    expect(url.pathname).toBe(pathToFileURL('/repo/templates/overlays/title.html').pathname);
+    expect(Object.fromEntries(url.searchParams)).toEqual({ base: `${pathToFileURL('/repo/tours/x').href}/`, accent: '#FF3B5C', title: 'Hola mundo' });
   });
 
   it('lets params override the automatic ones', () => {

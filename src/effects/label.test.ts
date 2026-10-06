@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { arrowPaths, layoutLabel, wrapText } from './label.ts';
+import { arrowPaths, layoutLabel, lineWidth, wrapText } from './label.ts';
 
 const viewport = { width: 1600, height: 900 };
 const inside = (r: { x: number; y: number; width: number; height: number }) =>
@@ -11,6 +11,15 @@ describe('wrapText', () => {
     expect(wrapText('uno dos tres cuatro', 8)).toEqual(['uno dos', 'tres', 'cuatro']);
     expect(wrapText('a b c d e f g h', 3, 2)).toHaveLength(2);
     expect(wrapText('a b c d e f g h', 3, 2).at(-1)!.endsWith('…')).toBe(true);
+  });
+});
+
+describe('lineWidth', () => {
+  it('gives capitals more room than lowercase, accented ones included', () => {
+    expect(lineWidth('pdf')).toBe(34.5);
+    expect(lineWidth('PDF')).toBe(45);
+    expect(lineWidth('Él')).toBe(26.5);
+    expect(lineWidth('a 1')).toBe(34.5);
   });
 });
 

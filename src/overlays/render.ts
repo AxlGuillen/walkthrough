@@ -20,7 +20,7 @@ declare global {
 }
 
 export function overlayFile(index: number): string {
-  return path.join('overlays', `${String(index + 1).padStart(2, '0')}.mov`);
+  return `overlays/${String(index + 1).padStart(2, '0')}.mov`;
 }
 
 export const TEMPLATES_DIR = path.resolve(import.meta.dirname, '../../templates/overlays');

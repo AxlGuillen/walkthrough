@@ -64,7 +64,8 @@ segments:
     const timeline = buildTimeline(tour, [{ duration: 1, words: [{ text: 'Hola', start: 0, end: 0.4 }, { text: 'mundo', start: 0.5, end: 1 }] }]);
     const started = Date.now();
     await composeTour(tour, timeline, dir, dir);
-    expect(Date.now() - started).toBeLessThan(20_000);
+    // A hung amix spins until compose kills it (120 s); a busy machine takes a while, not that.
+    expect(Date.now() - started).toBeLessThan(45_000);
     expect(Number(probe('video.mp4', 'format=duration'))).toBeCloseTo(3, 1);
   }, 60_000);
 

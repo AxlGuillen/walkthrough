@@ -147,16 +147,25 @@ async function waitFor({ page, clock, tour }: Stage, selector: string): Promise<
   });
 }
 
-// Marks are looked up every frame; an element that went away must not stall the capture.
-const MARK_LOOKUP = 150;
+// Marks are looked up every frame; an element that went away must not stall the capture, so
+// whether it is there is asked without waiting (count). Once it is, the lookup may take as long
+// as a busy machine needs: a short wall-clock limit would retire marks only on a loaded Mac.
+const MARK_LOOKUP = 10_000;
+
+async function present(page: Stage['page'], selector: string) {
+  const all = page.locator(selector);
+  return (await all.count().catch(() => 0)) > 0 ? all.first() : null;
+}
 
 type Presence = 'shown' | 'covered' | 'gone';
 
 // Whether the viewer can still see a marked element: at least half of it (or of the
 // screen, for a huge one) on screen, and most of five points across that part hitting the
 // element itself. The effects and dissolve layers ignore pointer events, so they are not hit.
-async function presence(page: Stage['page'], selector: string): Promise<Presence> {
-  return page.locator(selector).first().evaluate((el): Presence => {
+export async function presence(page: Stage['page'], selector: string): Promise<Presence> {
+  const target = await present(page, selector);
+  if (!target) return 'gone';
+  return target.evaluate((el): Presence => {
     const r = el.getBoundingClientRect();
     const [left, top] = [Math.max(r.left, 0), Math.max(r.top, 0)];
     const [right, bottom] = [Math.min(r.right, innerWidth), Math.min(r.bottom, innerHeight)];
@@ -191,17 +200,17 @@ export async function fadeHiddenMarks({ page, time, effects, log }: Stage): Prom
 export async function retrackMarks({ page, time, effects }: Stage): Promise<void> {
   for (const ring of effects.rings) {
     if (!ring.track || !ringVisible(time, ring)) continue;
-    const box = await page.locator(ring.track).first().boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
+    const box = await (await present(page, ring.track))?.boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
     if (box) ring.rect = box;
   }
   for (const label of effects.labels) {
     if (!label.track || !labelVisible(time, label)) continue;
-    const box = await page.locator(label.track).first().boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
+    const box = await (await present(page, label.track))?.boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
     if (box) label.rect = box;
   }
   for (const click of effects.clicks) {
     if (!click.track || !clickVisible(time, click)) continue;
-    const box = await page.locator(click.track.selector).first().boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
+    const box = await (await present(page, click.track.selector))?.boundingBox({ timeout: MARK_LOOKUP }).catch(() => null);
     // A click that navigated leaves its mark where it happened; no need to look again.
     if (box) click.at = { x: box.x + click.track.offset.x, y: box.y + click.track.offset.y };
     else delete click.track;

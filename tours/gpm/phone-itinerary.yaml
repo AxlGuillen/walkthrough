@@ -1,0 +1,23 @@
+title: GPM itinerary on a phone
+url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA/itinerary
+session: gpm
+device: mobile
+language: en
+sfx: false
+waitTimeout: 90
+setup:
+  origins:
+    # The phone's own remembered view; cards show every booking with its photo.
+    https://uat.booketing.com:
+      gpm:itinerary-view:phone: cards
+# The clip the itinerary card in global.yaml plays beside the desktop recording: the guest's
+# stay as cards on a phone. No voice. Render it, then copy the video to
+# tours/gpm/assets/phone-itinerary.mp4. The first 1.5 s stay still, behind the phone's entrance.
+segments:
+  - hold: 1.5
+    do:
+      - goto: /g/fbsdemo/FKOPZWIYXBOFKURAA/itinerary
+      - wait: ':text("Castello Italiana Standard Seating") >> nth=0'
+  - hold: 5.5
+    do:
+      - scroll: { to: ':text("Castello Italiana Standard Seating") >> nth=0', at: 0.3, duration: 2.5 }

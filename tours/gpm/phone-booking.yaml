@@ -1,0 +1,29 @@
+title: GPM booking on a phone
+url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA
+session: gpm
+device: mobile
+language: en
+sfx: false
+waitTimeout: 90
+# The clip the booking card in global.yaml plays beside the desktop recording: the same
+# booking, on a phone, up to "Agree & Book" (never pressed). No voice. Render it, then copy
+# the video to tours/gpm/assets/phone-booking.mp4. The first 1.2 s stay still: they play
+# behind the phone's entrance.
+segments:
+  # #experiences opens on the catalog, a short scroll above the card.
+  - hold: 1.2
+    do:
+      - goto: /g/fbsdemo/FKOPZWIYXBOFKURAA#experiences
+      - wait: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]'
+  - hold: 2.8
+    do:
+      - scroll: { to: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: 0, duration: 2.4 }
+  - hold: 8
+    do:
+      - click: { on: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: 0, wait: '[role=dialog] button:has-text("Select a time")' }
+      - click: { on: '[role=dialog] button:has-text("SAT")', at: 1.1 }
+      - click: { on: '[role=dialog] button:text-is("+")', at: 2 }
+      - click: { on: '[role=dialog] button:has-text("Select a time")', at: 2.9 }
+      - click: { on: 'button:has-text("08:30 PM")', at: 3.9 }
+      - click: { on: '[role=dialog] button:text-is("Continue")', at: 4.9, wait: '[role=dialog] :text("Who is this for")' }
+      - click: { on: '[role=dialog] button:text-is("Continue")', at: 6, wait: '[role=dialog] button:has-text("Agree & Book")' }

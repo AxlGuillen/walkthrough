@@ -1,4 +1,4 @@
-title: UrVenue Studio · Guest Portal Microsite
+title: GPM Studio · Guest Portal Microsite
 # Studio's origin, so setup.storage reaches it; the guest portal is visited by its full address.
 url: https://uat-studio.urvenue.me/
 session: gpm
@@ -19,99 +19,114 @@ setup:
     https://uat.booketing.com:
       gpm:itinerary-view:desktop: calendar
 #
-# The global GPM video (DM-03, script approved with Aldo on 2026-10-05), on the fbsdemo test
-# portal and its Studio project. Narration rule: the voice carries the argument; the only text
-# on screen is the device card, the channel list, the four boxes, the last line and the wordmark.
+# The global GPM video (DM-03), on the fbsdemo test portal and its Studio project. The script
+# approved with Aldo on 2026-10-05 is the base; its lines stay, with three added for the phone,
+# the itinerary's cards and the preview. Narration carries the argument; the text on screen is
+# the two device cards, the channel list, the four boxes, the last line and the wordmark.
 #
-# Nothing is saved: the booking stops at "Before you book" (no "Agree & Book") and cuts to the
-# itinerary, which already holds Castello Italiana; in Studio the section is turned off and
-# previewed, never saved or published, so every render starts from the same state.
+# Nothing reaches a guest: the booking stops at "Before you book" (no "Agree & Book"), and in
+# Studio a section's title is saved as a draft, previewed, and put back under the diagram,
+# never published. Every render starts from the same state.
 #
 # Before rendering:
 # 1. The guest's stay runs Oct 5–11, 2026: after it, the reserve panel offers no dates.
 #    Extend the stay in the test data, or render before then.
-# 2. Render tours/gpm/phone.yaml and copy its video to tours/gpm/assets/phone.mp4 (the card
-#    with the portal on a phone plays it).
+# 2. Render tours/gpm/phone-booking.yaml and phone-itinerary.yaml and copy their videos to
+#    tours/gpm/assets/ under the same names (the device cards play them).
 
 segments:
-  # Each block lasts what the script gives it (in brackets); the voice reads faster, so holds
-  # leave the screen time to be seen, with one gentle move in the room after each line.
-
-  # 0:00 · Open (8 s): the portal, still for a beat before it moves.
+  # 0:00 · Open: the portal pulled back for a beat, then full screen on "Not anymore".
   - say: On a laptop, a guest portal has always lived in a narrow column.
     do:
       - goto: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA
       - wait: 'h2:has-text("Reserve an experience")'
+      - shot: { to: wide, at: 0.3, duration: 1.6 }
 
   - say: Not anymore.
-    hold: 2.7
+    hold: 2.2
+    do:
+      - shot: { to: flat, at: 0, duration: 1 }
 
-  # 0:08 · The walkthrough (18 s): down into the categories, cursor visible.
+  # 0:08 · The walkthrough: down into the categories, cursor visible.
   - say: Considered on every screen. Type, spacing, imagery, motion.
-    hold: 9
+    hold: 8
     do:
       - scroll: { to: 'h2:has-text("Experiences for every stay")', at: Type }
       - highlight: { on: 'h2:has-text("Experiences for every stay")', at: motion, style: underline }
 
   - say: Designed, not assembled.
-    hold: 9
+    hold: 7
     do:
       - scroll: { to: 'h2:has-text("Curated for Fairmont Banff Springs")', at: Designed }
-      - hover: { on: 'h2:has-text("Curated for Fairmont Banff Springs") >> xpath=ancestor::section[1] >> h3 >> nth=0', at: 4.5 }
+      - hover: { on: 'h2:has-text("Curated for Fairmont Banff Springs") >> xpath=ancestor::section[1] >> h3 >> nth=0', at: 3.5 }
 
-  # 0:26 · Full screen (14 s): the whole catalog, its filters, and what they open.
+  # 0:24 · Full screen: the whole catalog, its filters, and what they open.
   - say: The full screen changes what this can be.
-    hold: 6
+    hold: 5
     do:
       - scroll: { to: 'h2:has-text("Reserve an experience")', at: full }
 
   - say: Not a form to get through. An experience to move through.
-    hold: 8
+    hold: 7.5
     do:
       - click: { on: 'button:has-text("Show 5 more")', at: form }
       - click: { on: 'button:text-is("Food & Drink") >> nth=0', at: experience }
-      - scroll: { to: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: 6 }
+      - scroll: { to: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: 5.6 }
 
-  # 0:40 · Booking (10 s): date, party, time, Continue; checkout for a beat, then a cut.
+  # 0:37 · Booking on desktop, close on the panel: date, party, time, Continue, up to checkout.
   - say: From looking to booked, without leaving the page.
     hold: 10
     do:
       - click: { on: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: looking, wait: '[role=dialog] button:has-text("Select a time")' }
-      - click: { on: '[role=dialog] button:has-text("SAT")', at: 2.6 }
-      - click: { on: '[role=dialog] button:text-is("+")', at: 3.6 }
+      # The panel is the right 600 px, full height: close on it, following the cursor down it.
+      - zoom: { to: '[role=dialog]', scale: 1.5, follow: true, at: 1.5 }
+      - click: { on: '[role=dialog] button:has-text("SAT")', at: 2.8 }
+      - click: { on: '[role=dialog] button:text-is("+")', at: 3.7 }
       - click: { on: '[role=dialog] button:has-text("Select a time")', at: 4.6 }
-      - click: { on: 'button:has-text("08:30 PM")', at: 5.8 }
-      - click: { on: '[role=dialog] button:text-is("Continue")', at: 6.9, wait: '[role=dialog] :text("Who is this for")' }
-      - click: { on: '[role=dialog] button:text-is("Continue")', at: 8.1, wait: '[role=dialog] button:has-text("Agree & Book")' }
+      - click: { on: 'button:has-text("08:30 PM")', at: 5.6 }
+      - click: { on: '[role=dialog] button:text-is("Continue")', at: 6.6, wait: '[role=dialog] :text("Who is this for")' }
+      - click: { on: '[role=dialog] button:text-is("Continue")', at: 7.7, wait: '[role=dialog] button:has-text("Agree & Book")' }
+      - zoom: { to: out, at: 9.1 }
 
-  # 0:50 · The itinerary (14 s), with the booking in it.
+  # 0:47 · Card: the desktop recording aside, the same booking on a phone beside it. The phone
+  # leaves first and the screen comes back to full before the cut.
+  - say: Now on desktop. Without giving up anything on the phone. The same booking, in a few taps.
+    hold: 12
+    do:
+      - shot: { to: aside-left, at: desktop }
+      - shot: { to: flat, at: 11, duration: 0.9 }
+    overlays:
+      - src: overlays/phone.html
+        to: 11.2
+        params: { title: Desktop. And the phone., clip: assets/phone-booking.mp4 }
+        beats: { title: 0.6, phone: 1 }
+
+  # 0:59 · The itinerary, with the booking in it: close on it, then the cards, then the phone.
   - say: The entire stay in one place.
-    hold: 6.5
+    hold: 6
     transition: cut
     do:
       - goto: { url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA/itinerary, at: 0 }
       - wait: 'button:has-text("Calendar")'
-      - highlight: { on: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: place, style: circle }
+      - zoom: { to: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', scale: 1.6, at: entire }
+      - highlight: { on: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: 2.6, style: circle }
 
-  - say: As a calendar, or as a list, however the guest wants to see it.
-    hold: 7.5
+  # Desktop offers a calendar and a list; cards are the phone's.
+  - say: As a calendar, a list, or cards, on whatever screen the guest has in hand.
+    hold: 11
     do:
+      - zoom: { to: out, at: 0 }
       - click: { on: 'button:has-text("List")', at: list }
-
-  # 1:04 · Card (8 s): the desktop recording aside, the same portal on a phone beside it. As
-  # with aside:, the phone leaves first and the screen comes back to full before Studio.
-  - say: Now on desktop. Without giving up anything on the phone.
-    hold: 8
-    do:
-      - shot: { to: aside-left, at: desktop }
-      - shot: { to: flat, at: 6.8, duration: 1 }
+      - shot: { to: aside-left, at: 2.8 }
+      - shot: { to: flat, at: 10, duration: 0.9 }
     overlays:
       - src: overlays/phone.html
-        to: 7
-        params: { title: Desktop. And the phone. }
-        beats: { title: desktop, phone: phone }
+        from: 2.8
+        to: 10.2
+        params: { title: The same stay. Any screen., clip: assets/phone-itinerary.mp4 }
+        beats: { title: 3, phone: 3.3 }
 
-  # 1:12 · Control (18 s): Studio, a section turned off and moved, previewed, never saved.
+  # 1:16 · Control: Studio, a section renamed, saved as a draft and previewed. Never published.
   - say: A change takes minutes, and anyone on the property can make it.
     hold: 9
     transition: push
@@ -119,35 +134,44 @@ segments:
       - goto: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/pages/experiences
       - wait: 'button:has-text("Add section")'
       - click: { on: 'button:has-text("Configure") >> nth=1', at: change }
-      - click: { on: '[role=switch] >> nth=0', at: anyone }
+      - zoom: { to: ':text-is("Title") >> xpath=following::input[1]', scale: 1.6, at: anyone }
+      - type: { into: ':text-is("Title") >> xpath=following::input[1]', text: 'Your Banff, your way.', at: make }
 
-  - say: So can our team, in the same console.
-    hold: 9
+  - say: So can our team, in the same console. Save it, and see it exactly as a guest will.
+    hold: 11
     do:
-      - click: { on: 'button[aria-label="Move section down"] >> nth=2', at: team }
-      - click: { on: 'button:has-text("Preview changes") >> nth=0', at: console, tab: true, wait: 'h2:has-text("Reserve an experience")' }
+      - zoom: { to: out, at: 0 }
+      - click: { on: 'button:has-text("Save changes") >> nth=0', at: Save, wait: 'button:has-text("Publish changes")' }
+      - click: { on: 'button:has-text("Preview changes") >> nth=0', at: 5, tab: true, wait: 'h2:has-text("Your Banff, your way.")' }
+      - scroll: { to: 'h2:has-text("Your Banff, your way.")', at: 6.4 }
+      - highlight: { on: 'h2:has-text("Your Banff, your way.")', at: 8.4, style: underline }
 
-  # 1:30 · Analytics (12 s), with live data.
+  # 1:36 · Analytics, with live data: close on the numbers, then what sells most.
   - say: You see what sells. Nobody had to set that up.
     hold: 12
     do:
       - goto: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/analytics
       - wait: ':text("Most booked items")'
-      - highlight: { on: ':text("Revenue collected") >> xpath=ancestor::div[2]', at: sells, style: box }
-      - scroll: { to: ':text("Most booked items")', at: Nobody }
+      - zoom: { to: ':text("Revenue collected") >> xpath=ancestor::div[2]', at: sells }
+      - highlight: { on: ':text("Revenue collected") >> xpath=ancestor::div[2]', at: 2.4, style: box }
+      - zoom: { to: out, at: 6 }
+      - scroll: { to: ':text("Most booked items")', at: 7.2 }
 
-  # 1:42 · Channels (10 s): every project type in one console.
+  # 1:48 · Channels: every project type in one console, the screen turned a little.
   - say: One console for every channel a property sells through.
     hold: 10
     do:
       - goto: /
       - wait: 'h2:has-text("Guest portals")'
+      - shot: { to: left, at: 0.6, angle: 6 }
+      - shot: { to: flat, at: 8.6, duration: 1 }
     overlays:
       - src: lower-third.html
         from: console
         params: { title: Guest Portals · Microsites · Kiosks }
 
-  # 1:52 · The diagram (18 s with the last line): four steps, each on its word.
+  # 1:58 · The diagram: four steps, each on its word. Under it, out of sight and out of
+  # earshot, Studio gets its section title back and saves, so the next render starts the same.
   - say: Create it, [break] make it yours, [break] see it, [break] publish it.
     hold: 10
     flow:
@@ -157,6 +181,12 @@ segments:
         - { text: Make it yours, detail: "Logo, colours, sections", at: make }
         - { text: Preview, detail: See it before anyone else does, at: see }
         - { text: Publish, detail: Live on its own address, at: publish }
+    do:
+      - goto: { url: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/pages/experiences, at: 0.8 }
+      - wait: { until: 'button:has-text("Add section")', at: 0.8 }
+      - click: { on: 'button:has-text("Configure") >> nth=1', at: 3 }
+      - type: { into: ':text-is("Title") >> xpath=following::input[1]', text: 'Experiences for every stay.', at: 4.5 }
+      - click: { on: 'button:has-text("Save changes") >> nth=0', at: 7.5, wait: 'button:has-text("Publish changes")' }
 
   # The beat of silence before the real argument of the piece; Studio comes back under it.
   - hold: 1.5
@@ -169,9 +199,9 @@ segments:
       - src: title-card.html
         params: { title: Minutes., subtitle: "No ticket, no back and forth, no waiting on analytics." }
 
-  # 2:10 · Close (6 s): the last Studio screen holds, the wordmark comes in. On screen only.
+  # Close: the last Studio screen holds, the wordmark comes in. On screen only.
   - hold: 6
     overlays:
       - src: closing.html
         from: 0.3
-        params: { style: over-app, title: UrVenue Studio }
+        params: { style: over-app, title: GPM Studio }

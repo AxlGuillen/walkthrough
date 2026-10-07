@@ -91,4 +91,33 @@ segments:
     expect(isBlue(pixel(2.5, 960, 540))).toBe(true);
     expect(isBlue(pixel(2.5, 20, 20))).toBe(false);
   }, 120_000);
+
+  it('renders the same frames whatever the number of jobs', async () => {
+    const tour = parseTour(`
+title: Fixture
+url: https://example.com
+segments:
+  - hold: 0.5
+    do:
+      - shot: { to: left, duration: 0.4 }
+  - hold: 1
+    do:
+      - shot: { to: flat, duration: 0.4 }
+  - hold: 1
+    do:
+      - shot: { to: wide, duration: 0.4 }
+  - hold: 1.5
+    do:
+      - shot: { to: flat, duration: 0.4 }
+`);
+    const plan = stagePlan(buildTimeline(tour, []));
+    expect(plan.spans.length).toBeGreaterThan(1);
+    const frames = async (jobs: number) => {
+      const outDir = path.join(dir, `jobs-${jobs}`);
+      await renderStage({ plan, capture: path.join(dir, 'capture.mp4'), tourDir: dir, outDir, canvas: output, output, fps: 30, jobs });
+      return plan.spans.map((_, i) => execFileSync('ffmpeg', ['-v', 'error', '-i', path.join(outDir, stageFile(i)), '-f', 'framemd5', '-'])
+        .toString().split('\n').filter(line => !line.startsWith('#')).join('\n'));
+    };
+    expect(await frames(2)).toEqual(await frames(1));
+  }, 180_000);
 });

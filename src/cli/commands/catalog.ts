@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, rm } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { lookFrom } from '../../brands/look.ts';
 import { deviceProfile, FPS, type Device } from '../../capture/devices.ts';
@@ -8,6 +9,7 @@ import { renderOverlays } from '../../overlays/render.ts';
 import { buildTimeline } from '../../timeline/build.ts';
 import { parseTour } from '../../tour/load.ts';
 import { openPath } from '../../desktop/desktop.ts';
+import { defaultJobs } from '../parallel.ts';
 import { ROOT, STORAGE } from '../context.ts';
 
 export const CATALOG_TOUR = path.join(ROOT, 'tours/examples/catalogo.yaml');
@@ -44,7 +46,7 @@ export async function catalog({ device: devices, theme, texture, brand, emojiSty
     await renderOverlays({
       overlays: timeline.overlays, tourDir: path.dirname(CATALOG_TOUR), outDir,
       canvas: deviceProfile(device).output, output, fps: FPS.preview,
-      look,
+      look, jobs: defaultJobs(os.totalmem(), os.availableParallelism()),
       onFrame: (overlay, frame, total) => process.stderr.write(`\r  ${device} ${overlay}/${timeline.overlays.length}: ${frame}/${total}   `),
     });
     process.stderr.write('\n');

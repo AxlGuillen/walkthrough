@@ -2,7 +2,7 @@ import type { CaptureEvent } from '../capture/events.ts';
 import { TYPING_RATE } from '../capture/schedule.ts';
 import { random } from '../effects/sketch.ts';
 import { TIMING } from '../effects/scene.ts';
-import type { Timeline, TimedOverlay } from '../timeline/build.ts';
+import { coversApp, type Timeline, type TimedOverlay } from '../timeline/build.ts';
 import type { Sound } from './sounds.ts';
 
 export type { Sound } from './sounds.ts';
@@ -68,7 +68,10 @@ export function soundEvents(
   captured: readonly CaptureEvent[], overlays: readonly TimedOverlay[], { mute }: Pick<SfxSettings, 'mute'> = { mute: [] },
 ): SoundEvent[] {
   const events: SoundEvent[] = [];
-  for (const event of captured) {
+  // What the app does under an overlay that hides it is out of sight, and out of earshot.
+  const hidden = overlays.filter(coversApp);
+  const heard = captured.filter(event => !hidden.some(o => event.time >= o.start && event.time <= o.end));
+  for (const event of heard) {
     switch (event.kind) {
       case 'click':
         events.push({ sound: 'click', time: event.time, variant: variantFor(event.time, CLICKS.length) });

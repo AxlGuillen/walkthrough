@@ -46,6 +46,12 @@ describe('soundEvents', () => {
     expect(soundEvents([], [overlay(1), overlay(2)]).map(e => e.variant)).toEqual([0, 1]);
   });
 
+  it('keeps quiet what the app does under an overlay that hides it', () => {
+    const card = { ...overlay(2), src: 'title-card.html', end: 6 };
+    const sounds = soundEvents([{ kind: 'click', time: 1 }, { kind: 'click', time: 3 }, { kind: 'type', time: 4, chars: 2 }], [card]);
+    expect(sounds.map(e => [e.sound, e.time])).toEqual([['click', 1], ['pop', 2]]);
+  });
+
   it('drops muted sounds', () => {
     const sounds = soundEvents(captured, [overlay(0)], { mute: ['keys', 'pop', 'scroll'] }).map(e => e.sound);
     expect(sounds).not.toContain('keys');

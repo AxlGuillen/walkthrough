@@ -4,7 +4,7 @@ import { chromium, type Page } from 'playwright-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
-import { continueTyping, perform, retrackMarks } from './actions.ts';
+import { continueTyping, leftPage, perform, retrackMarks } from './actions.ts';
 import { installClock } from './clock.ts';
 import { deviceProfile } from './devices.ts';
 import { prepareTargets } from './prep.ts';
@@ -138,6 +138,36 @@ describe('waiting for the next screen', () => {
     // frame of the click, not 1.2s of video later.
     expect(samples[Math.round(0.5 * 30)]).toBe(1);
     expect(samples[Math.round(0.5 * 30) - 1]).toBe(0);
+    await page.close();
+  }, 60_000);
+
+  it('lets a step inside the same page play out without a change of screen', async () => {
+    const { stage, page } = await run(`segments:
+  - hold: 2
+    do:
+      - goto: ${waitUrl}
+      - click: { on: "#load", at: 0.5, wait: "#loaded" }
+`, loaded, waitUrl);
+    expect(stage.log.map(e => e.kind)).toEqual(['click']);
+    expect(leftPage(new URL('https://app.test/a?step=1'), new URL('https://app.test/a?step=2#x'))).toBe(false);
+    expect(leftPage(new URL('https://app.test/a'), new URL('https://app.test/b'))).toBe(true);
+    await page.close();
+  }, 60_000);
+
+  it('makes a cut silent: it is no change the viewer hears', async () => {
+    const { stage, page } = await run(`segments:
+  - hold: 1
+    do:
+      - goto: ${waitUrl}
+  - hold: 1
+    transition: cut
+    do:
+      - goto: ${waitUrl}
+  - hold: 1
+    do:
+      - goto: ${waitUrl}
+`, loaded, waitUrl);
+    expect(stage.log.filter(e => e.kind === 'navigate').map(e => Math.round(e.time))).toEqual([2]);
     await page.close();
   }, 60_000);
 

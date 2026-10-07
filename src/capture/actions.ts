@@ -16,7 +16,7 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
     case 'goto': {
       // The opening load is the start of the video, not a change of screen.
       const opening = stage.time === 0;
-      if (!opening) log.push({ kind: 'navigate', time: stage.time });
+      if (!opening && transition !== 'cut') log.push({ kind: 'navigate', time: stage.time });
       // A cut, or a stage transition that draws the change itself after capture.
       const still = opening || transition ? null : await snapshot(page);
       const requested = new URL(action.url, tour.url);
@@ -30,7 +30,7 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
     }
     case 'click': {
       const before = new URL(page.url());
-      // A click that waits for another screen dissolves into it, like a goto.
+      // A click that waits may lead to another page, which dissolves in like a goto.
       const still = (action.wait || action.tab) && !transition ? await snapshot(page) : null;
       if (action.tab) {
         // The other tab's address is loaded here instead: one page is recorded, and the
@@ -53,9 +53,13 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
       }
       await clickWithMark(stage, action.on, seed);
       if (action.wait) {
-        log.push({ kind: 'navigate', time: stage.time });
         await waitFor(stage, action.wait);
         await assertSignedIn(page, tour, before);
+        // A panel or a step inside the same page plays the app's own animation; only another
+        // page is a change of screen.
+        const changed = transition ? transition !== 'cut' : leftPage(before, new URL(page.url()));
+        if (!changed) return;
+        log.push({ kind: 'navigate', time: stage.time });
         if (still) await dissolveFrom(page, still);
       }
       return;
@@ -134,6 +138,10 @@ async function textLineBoxes(page: Stage['page'], selector: string): Promise<{ x
     }
     return lines.map(l => ({ x: l.x - box.x, y: l.y - box.y, width: l.right - l.x, height: l.bottom - l.y }));
   }).catch(() => []);
+}
+
+export function leftPage(before: URL, after: URL): boolean {
+  return before.origin !== after.origin || before.pathname !== after.pathname;
 }
 
 // The page as the viewer last saw it, without the effects layer: the marks carry on live

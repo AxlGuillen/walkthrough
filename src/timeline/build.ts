@@ -29,6 +29,11 @@ export function navigates(action: Action, time: number): boolean {
   return (action.kind === 'goto' && time > 0) || (action.kind === 'click' && (action.wait !== undefined || action.tab === true));
 }
 
+// Overlays that hide the app entirely: a full-screen flow, or a title card.
+export function coversApp(overlay: Pick<TimedOverlay, 'src' | 'flow'>): boolean {
+  return overlay.flow ? overlay.flow.mode === 'full' : overlay.src === 'title-card.html';
+}
+
 export interface TimedShot {
   time: number;
   segment: number;

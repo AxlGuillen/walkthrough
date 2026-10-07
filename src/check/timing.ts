@@ -2,7 +2,7 @@ import { TRANSITION } from '../capture/schedule.ts';
 import type { CaptureEvent } from '../capture/events.ts';
 import { TIMING } from '../effects/scene.ts';
 import { CHANGE_LENGTH } from '../stage/plan.ts';
-import type { Timeline } from '../timeline/build.ts';
+import { coversApp, type Timeline } from '../timeline/build.ts';
 
 export interface TimingNote {
   time: number;
@@ -21,16 +21,11 @@ export const PACE = {
   clicks: 0.8,
 };
 
-// Overlays that cover the app: a full-screen flow, or a title card.
-function covers(overlay: Timeline['overlays'][number]): boolean {
-  return overlay.flow ? overlay.flow.mode === 'full' : overlay.src === 'title-card.html';
-}
-
 export function auditTiming(events: readonly CaptureEvent[], timeline: Pick<Timeline, 'overlays'> & Partial<Pick<Timeline, 'actions'>>): TimingNote[] {
   const notes: TimingNote[] = [];
   const scrolls = events.filter(e => e.kind === 'scroll');
   const navigations = events.filter(e => e.kind === 'navigate');
-  const covering = timeline.overlays.filter(covers).map(o => o.start);
+  const covering = timeline.overlays.filter(coversApp).map(o => o.start);
   // A change the stage draws takes longer than the page's dissolve.
   const changed = (timeline.actions ?? []).filter(a => a.transition);
   const at = (time: number) => changed.find(a => Math.abs(a.time - time) < 0.1)?.transition;

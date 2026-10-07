@@ -12,9 +12,9 @@ accent: "#1A588E"
 watermark: true
 transition: push
 music: { track: ../uws-tasks/assets/music/corporate-calm-background.mp3, volume: 0.022 }
-# Only the sounds that land on their exact frame: clicks, typing and marks being drawn, and the
-# turn of a stage transition. Pops sound at an overlay's start but its entrance comes later.
-sfx: { volume: 0.8, mute: [pop, scroll, whoosh] }
+# Voice and music carry the sound; the only effect left is the turn of a page transition, which
+# the stage draws on its exact frame. Clicks and marks stay silent, so nothing can drift.
+sfx: { volume: 0.8, mute: [pop, scroll, whoosh, click, draw, keys] }
 waitTimeout: 90
 setup:
   storage:
@@ -79,7 +79,9 @@ segments:
   - say: From looking to booked, without leaving the page. Pick a day, set the party, choose a time, and review every detail before anything is confirmed.
     do:
       - click: { on: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: looking, wait: '[role=dialog] button:has-text("Select a time")' }
-      - zoom: { to: '[role=dialog]', scale: 1.5, follow: true, at: page }
+      # One still zoom on the panel, done before the screen moves aside: nothing moves inside the
+      # screen while the steps build beside it.
+      - zoom: { to: '[role=dialog]', scale: 1.4, at: without }
       - click: { on: '[role=dialog] button:has-text("SAT")', at: day }
       - click: { on: '[role=dialog] button:text-is("+")', at: party }
       - click: { on: '[role=dialog] button:has-text("Select a time")', at: choose }
@@ -89,7 +91,7 @@ segments:
       - zoom: { to: out, at: confirmed }
     flow:
       mode: aside
-      from: Pick
+      from: page
       title: Booking an experience
       steps:
         - { text: Pick a day, emoji: calendar, at: day }

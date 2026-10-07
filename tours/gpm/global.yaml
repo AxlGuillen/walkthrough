@@ -91,20 +91,23 @@ segments:
     do:
       - goto: { url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA/itinerary, at: 0 }
       - wait: 'button:has-text("Calendar")'
-      - highlight: { on: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: stay, style: circle }
+      - highlight: { on: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: place, style: circle }
 
   - say: As a calendar, or as a list, however the guest wants to see it.
     hold: 7.5
     do:
       - click: { on: 'button:has-text("List")', at: list }
 
-  # 1:04 · Card (8 s): the desktop recording aside, the same portal on a phone beside it.
+  # 1:04 · Card (8 s): the desktop recording aside, the same portal on a phone beside it. As
+  # with aside:, the phone leaves first and the screen comes back to full before Studio.
   - say: Now on desktop. Without giving up anything on the phone.
     hold: 8
     do:
       - shot: { to: aside-left, at: desktop }
+      - shot: { to: flat, at: 6.8, duration: 1 }
     overlays:
       - src: overlays/phone.html
+        to: 7
         params: { title: Desktop. And the phone. }
         beats: { title: desktop, phone: phone }
 
@@ -122,7 +125,7 @@ segments:
     hold: 9
     do:
       - click: { on: 'button[aria-label="Move section down"] >> nth=2', at: team }
-      - click: { on: 'button:has-text("Preview changes") >> nth=0', at: console, tab: true, wait: ':text("Preview · Draft configuration")' }
+      - click: { on: 'button:has-text("Preview changes") >> nth=0', at: console, tab: true, wait: 'h2:has-text("Reserve an experience")' }
 
   # 1:30 · Analytics (12 s), with live data.
   - say: You see what sells. Nobody had to set that up.

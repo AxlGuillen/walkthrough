@@ -53,6 +53,8 @@ export interface TimedFlowStep {
 export interface TimedFlow {
   shape: Flow['shape'];
   mode: Flow['mode'];
+  // Where an aside flow sets the screen.
+  layout?: 'aside-left' | 'aside-right';
   title?: string;
   steps: TimedFlowStep[];
   // A decision's branch labels, or a comparison's side labels (before, after).
@@ -211,10 +213,17 @@ export function buildTimeline(
         throw new TimelineError(`${label}: the flow's loop must come after its last step and before the flow ends`);
       }
 
+      const layout = flow.mode === 'aside' ? flow.layout ?? 'aside-left' : undefined;
+      if (layout) {
+        const still = { angle: undefined, duration: undefined, at: undefined };
+        timeline.shots.push({ time: from, segment: index, shot: { kind: 'shot', to: layout, ...still } });
+        timeline.shots.push({ time: Math.max(from, to - ASIDE_RETURN), segment: index, shot: { kind: 'shot', to: 'flat', ...still } });
+      }
+
       timeline.overlays.push({
         src: FLOW_TEMPLATE, params: {}, start: from, end: to, fade: flow.fade, segment: index, beats: {},
         flow: {
-          shape: flow.shape, mode: flow.mode, ...(flow.title ? { title: flow.title } : {}),
+          shape: flow.shape, mode: flow.mode, ...(layout ? { layout } : {}), ...(flow.title ? { title: flow.title } : {}),
           steps: steps.map(({ text, detail, branch, lane, emoji }, i) => ({
             text, ...(detail ? { detail } : {}), ...(emoji ? { emoji } : {}), time: times[i]!, ...(branch === undefined ? {} : { branch }),
             ...(lane === undefined || !flow.lanes ? {} : { lane: flow.lanes.indexOf(lane) }),

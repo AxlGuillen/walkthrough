@@ -102,6 +102,23 @@ segments:
     expect(tabbed.actions.map(a => [a.action.kind, a.transition])).toEqual([['goto', undefined], ['click', 'cut']]);
   });
 
+  it('sets the screen aside for an aside flow and brings it back as the flow ends', () => {
+    const timeline = buildTimeline(parseTour(`
+title: Board
+url: https://example.com
+segments:
+  - hold: 6
+    flow:
+      mode: aside
+      layout: aside-right
+      from: 1
+      steps: [{ text: One, at: 2 }, { text: Two, at: 3 }]
+`), [], options);
+    expect(timeline.shots.map(s => [s.time, s.shot.to])).toEqual([[1, 'aside-right'], [5.65, 'flat']]);
+    expect(timeline.overlays[0]!.flow).toMatchObject({ mode: 'aside', layout: 'aside-right' });
+    expect(() => parseTour('title: x\nurl: https://example.com\nsegments:\n  - hold: 2\n    flow: { layout: aside-left, steps: [{ text: a }, { text: b }] }\n')).toThrow(/only an aside flow/);
+  });
+
   it('marks the changes of screen the stage draws, by tour and by segment', () => {
     const staged = buildTimeline(parseTour(`
 title: Board

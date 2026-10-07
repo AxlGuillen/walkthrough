@@ -58,6 +58,7 @@
       return node;
     };
     const place = (node, { x, y, width, height }) => Object.assign(node.style, { left: px(x), top: px(y), width: px(width), height: px(height) });
+    const ASIDE_SETTLE = 0.9;
     document.body.classList.add(layout.mode);
 
     if (layout.panel) {
@@ -68,6 +69,8 @@
       const title = el('div', 'abs title');
       Object.assign(title.style, { left: px(layout.title.x), top: px(layout.title.y), fontSize: px(layout.title.size) });
       title.textContent = layout.title.text;
+      // Beside the screen, the title waits for the screen to finish moving aside.
+      if (layout.mode === 'aside') title.style.animation = `rise 450ms var(--ease) ${s(ASIDE_SETTLE)} both`;
     }
 
     layout.groups.forEach((group, i) => {

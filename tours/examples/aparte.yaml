@@ -5,7 +5,8 @@ typeface: editorial
 language: en
 # La pantalla deja sitio a un texto (docs/recursos.md, «Aparte»): entra desde fuera del cuadro
 # bajo un título (inset), se corre a un lado con puntos (aside-left) y al otro mientras se
-# resalta algo (aside-right). Sin voz; aquí nada hace clic.
+# resalta algo (aside-right), y un flujo a un lado de la pantalla (flow con mode: aside). Sin
+# voz; aquí nada hace clic.
 segments:
   - hold: 5
     do:
@@ -36,4 +37,15 @@ segments:
       until: 5.7
       eyebrow: Read it here
       title: The screen stays *readable*
+  - hold: 7.5
+    do:
+      - highlight: { on: 'a:has-text("Check availability") >> nth=0', at: 5.2, style: box }
+    flow:
+      mode: aside
+      from: 0.4
+      title: Booking a room
+      steps:
+        - { text: Pick your dates, emoji: calendar, at: 2 }
+        - { text: Choose a room, emoji: hotel, at: 3.2 }
+        - { text: Review and confirm, emoji: check-mark-button, at: 4.4 }
   - hold: 2

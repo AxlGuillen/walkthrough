@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Rect } from '../timeline/camera.ts';
+import { room } from '../stage/plan.ts';
 import { CHAR_EM, layoutFlow } from './layout.ts';
 
 const desktop = { width: 1920, height: 1080 };
@@ -162,5 +163,29 @@ describe('layoutFlow', () => {
     const half = layoutFlow({ shape: 'linear', mode: 'card', title: 'Booking', steps: steps(4) }, { width: 960, height: 540 });
     expect(half.boxes[2]!.rect.x).toBeCloseTo(full.boxes[2]!.rect.x / 2);
     expect(half.boxes[2]!.lines).toEqual(full.boxes[2]!.lines);
+  });
+});
+
+describe('aside flows', () => {
+  const within = (outer: Rect, inner: Rect) => inner.x >= outer.x - 0.5 && inner.y >= outer.y - 0.5
+    && inner.x + inner.width <= outer.x + outer.width + 0.5 && inner.y + inner.height <= outer.y + outer.height + 0.5;
+
+  for (const [name, canvas] of [['16:9', desktop], ['9:16', mobile]] as const) {
+    for (const layout of ['aside-left', 'aside-right'] as const) {
+      it(`${layout} in ${name}: every step sits in the room the screen leaves, without a panel`, () => {
+        const flow = layoutFlow({ shape: 'linear', mode: 'aside', layout, title: 'Booking', steps: steps(4) }, canvas);
+        const free = canvas.width > canvas.height ? { ...room(layout, canvas), y: 0, height: canvas.height } : room(layout, canvas);
+        expect(flow.panel).toBeUndefined();
+        for (const box of flow.boxes) expect(within(free, box.rect)).toBe(true);
+        expect(flow.title!.y).toBeGreaterThanOrEqual(free.y);
+      });
+    }
+  }
+
+  it('stacks the steps in the tall room beside a wide screen', () => {
+    const flow = layoutFlow({ shape: 'linear', mode: 'aside', steps: steps(4) }, desktop);
+    expect(flow.direction).toBe('column');
+    const ys = flow.boxes.map(b => b.rect.y);
+    expect(ys).toEqual([...ys].sort((a, b) => a - b));
   });
 });

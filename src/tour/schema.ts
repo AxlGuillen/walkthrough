@@ -169,8 +169,10 @@ const flowSide = z.strictObject({
 const flow = z.strictObject({
   shape: z.enum(FLOW_SHAPES).default('linear'),
   title: z.string().trim().min(1).max(60).optional(),
-  // full covers the app, as an interlude; card is a panel over the bottom of the app.
-  mode: z.enum(['full', 'card']).default('full'),
+  // full covers the app, as an interlude; card is a panel over the bottom of the app; aside
+  // sets the screen to one side (`layout`) and draws the flow in the room it leaves.
+  mode: z.enum(['full', 'card', 'aside']).default('full'),
+  layout: z.enum(['aside-left', 'aside-right']).optional(),
   steps: z.array(flowStep).max(6).default([]),
   branches: z.tuple([flowBranch, flowBranch]).optional(),
   // Who does each step: every step of a lanes flow names one of these in `lane`.
@@ -209,6 +211,7 @@ const flow = z.strictObject({
   if (flow.shape === 'linear' && flow.steps.length < 2) issue('a linear flow needs at least 2 steps', 'steps');
   if (flow.shape === 'cycle' && flow.steps.length < 3) issue('a cycle needs at least 3 steps', 'steps');
   if (flow.loop !== undefined && flow.shape !== 'cycle') issue('only a cycle has a loop', 'loop');
+  if (flow.layout !== undefined && flow.mode !== 'aside') issue('only an aside flow has a layout', 'layout');
 });
 export type Flow = z.infer<typeof flow>;
 
@@ -284,7 +287,7 @@ export const tourSchema = z.strictObject({
   segments: z.array(segment).min(1),
 }).superRefine((tour, ctx) => {
   // The stage tilts the bare recording; a device frame is composed after it, flat.
-  if (tour.frame !== 'none' && tour.segments.some(s => s.aside || s.do.some(step => step.kind === 'shot'))) {
+  if (tour.frame !== 'none' && tour.segments.some(s => s.aside || s.flow?.mode === 'aside' || s.do.some(step => step.kind === 'shot'))) {
     ctx.addIssue({ code: 'custom', message: 'shots do not work with a device frame yet; drop frame or the shots', path: ['frame'] });
   }
   const staged = isStageTransition(tour.transition) || tour.segments.some(s => s.transition && isStageTransition(s.transition));

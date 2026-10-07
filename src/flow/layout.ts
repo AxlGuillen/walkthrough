@@ -1,5 +1,6 @@
 import { arrowPaths, wrapText } from '../effects/label.ts';
 import { sketchRect, type Point } from '../effects/sketch.ts';
+import { room as roomFor } from '../stage/plan.ts';
 import type { Rect, Size } from '../timeline/camera.ts';
 import type { TimedFlow } from '../timeline/build.ts';
 import { badgeTexts, flowEdges, mainLength, type FlowEdge } from './graph.ts';
@@ -49,7 +50,7 @@ export interface FlowLayout {
   rings: string[];
 }
 
-type Input = Pick<TimedFlow, 'shape' | 'mode' | 'title' | 'steps' | 'branches' | 'lanes'>;
+type Input = Pick<TimedFlow, 'shape' | 'mode' | 'layout' | 'title' | 'steps' | 'branches' | 'lanes'>;
 type Font = FlowLayout['font'];
 
 // Rough advance of a semibold sans glyph, in ems: layout happens in Node, before any text
@@ -61,18 +62,22 @@ const MAX_LINES = 3;
 // and 9:16 and in a half-size preview.
 export function layoutFlow(flow: Input, canvas: Size): FlowLayout {
   const u = Math.min(canvas.width, canvas.height) / 100;
-  const direction = canvas.width >= canvas.height ? 'row' : 'column';
+  // An aside flow lives beside the screen, stacked when that side is tall. It takes the side's
+  // whole height, not just the screen's: steps need more room than a title.
+  const room = flow.mode === 'aside' ? sideOf(roomFor(flow.layout ?? 'aside-left', canvas), canvas) : undefined;
+  const direction = room ? (room.width >= room.height ? 'row' : 'column') : canvas.width >= canvas.height ? 'row' : 'column';
   const card = flow.mode === 'card';
   const edge = 4 * u;
-  const inset = card ? 3 * u : 0;
+  const inset = flow.mode === 'card' ? 3 * u : 0;
   const pad = (card ? 1.8 : 2.2) * u;
   const radius = 1.6 * u;
-  const titleSize = card ? 2.4 * u : 4.6 * u;
+  const titleSize = card ? 2.4 * u : room ? 3.4 * u : 4.6 * u;
   const titleSpace = flow.title ? titleSize * 1.2 + (card ? 2 : 6) * u : 0;
-  const outer = card ? { x: edge, width: canvas.width - 2 * edge } : { x: canvas.width * 0.07, width: canvas.width * 0.86 };
+  const outer = room ? { x: room.x, width: room.width }
+    : card ? { x: edge, width: canvas.width - 2 * edge } : { x: canvas.width * 0.07, width: canvas.width * 0.86 };
   const space = {
     width: outer.width - 2 * inset,
-    height: card ? canvas.height * 0.5 : canvas.height - 12 * u - titleSpace,
+    height: room ? room.height - titleSpace : card ? canvas.height * 0.5 : canvas.height - 12 * u - titleSpace,
   };
   const ctx: Context = { u, direction, card, pad, space, inline: direction === 'column', gap: (card ? 5 : direction === 'row' ? 8 : 6) * u };
 
@@ -80,7 +85,9 @@ export function layoutFlow(flow: Input, canvas: Size): FlowLayout {
   const left = outer.x + (outer.width - placed.width) / 2;
   let panel: Rect | undefined;
   let top: number;
-  if (card) {
+  if (room) {
+    top = room.y + (room.height - (titleSpace + placed.height)) / 2 + titleSpace;
+  } else if (card) {
     // As wide as its steps, not the screen: the title lines up with the first box.
     const height = 2 * inset + titleSpace + placed.height;
     panel = { x: left - inset, y: canvas.height - edge - height, width: placed.width + 2 * inset, height };
@@ -118,6 +125,11 @@ export function layoutFlow(flow: Input, canvas: Size): FlowLayout {
     ...(flow.title ? { title: { text: flow.title, x: left, y: top - titleSpace, size: titleSize } } : {}),
     font: placed.font, pad, radius, stroke: 0.35 * u, groups, boxes, arrows, rings,
   };
+}
+
+function sideOf(room: Rect, canvas: Size): Rect {
+  const edge = Math.min(canvas.width, canvas.height) * 0.06;
+  return canvas.width >= canvas.height ? { ...room, y: edge, height: canvas.height - 2 * edge } : room;
 }
 
 interface Context {

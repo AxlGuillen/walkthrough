@@ -91,15 +91,17 @@ segments:
   # 0:47 · Card: the desktop recording aside, the same booking on a phone beside it. The phone
   # leaves first and the screen comes back to full before the cut.
   - say: Now on desktop. Without giving up anything on the phone. The same booking, in a few taps.
-    hold: 12
+    hold: 13.5
     do:
       - shot: { to: aside-left, at: desktop }
-      - shot: { to: flat, at: 11, duration: 0.9 }
+      - shot: { to: flat, at: 12.4, duration: 0.9 }
+    # The phone comes in once the screen has moved aside; its clip starts with it.
     overlays:
       - src: overlays/phone.html
-        to: 11.2
+        from: 1.8
+        to: 12.6
         params: { title: Desktop. And the phone., clip: assets/phone-booking.mp4 }
-        beats: { title: 0.6, phone: 1 }
+        beats: { title: 1.9, phone: 2.2 }
 
   # 0:59 · The itinerary, with the booking in it: close on it, then the cards, then the phone.
   - say: The entire stay in one place.
@@ -108,23 +110,24 @@ segments:
     do:
       - goto: { url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA/itinerary, at: 0 }
       - wait: 'button:has-text("Calendar")'
-      - zoom: { to: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', scale: 1.6, at: entire }
-      - highlight: { on: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: 2.6, style: circle }
+      - scroll: { to: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: 0.3, duration: 1.4 }
+      - zoom: { to: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', scale: 1.6, at: 2 }
+      - highlight: { on: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: 3.3, style: circle }
 
   # Desktop offers a calendar and a list; cards are the phone's.
   - say: As a calendar, a list, or cards, on whatever screen the guest has in hand.
-    hold: 11
+    hold: 11.5
     do:
       - zoom: { to: out, at: 0 }
       - click: { on: 'button:has-text("List")', at: list }
-      - shot: { to: aside-left, at: 2.8 }
-      - shot: { to: flat, at: 10, duration: 0.9 }
+      - shot: { to: aside-left, at: 2.6 }
+      - shot: { to: flat, at: 10.5, duration: 0.9 }
     overlays:
       - src: overlays/phone.html
-        from: 2.8
-        to: 10.2
+        from: 3.6
+        to: 10.7
         params: { title: The same stay. Any screen., clip: assets/phone-itinerary.mp4 }
-        beats: { title: 3, phone: 3.3 }
+        beats: { title: 3.7, phone: 4 }
 
   # 1:16 · Control: Studio, a section renamed, saved as a draft and previewed. Never published.
   - say: A change takes minutes, and anyone on the property can make it.
@@ -136,11 +139,11 @@ segments:
       - click: { on: 'button:has-text("Configure") >> nth=1', at: change }
       - zoom: { to: ':text-is("Title") >> xpath=following::input[1]', scale: 1.6, at: anyone }
       - type: { into: ':text-is("Title") >> xpath=following::input[1]', text: 'Your Banff, your way.', at: make }
+      - zoom: { to: out, at: 6.6 }
 
   - say: So can our team, in the same console. Save it, and see it exactly as a guest will.
     hold: 11
     do:
-      - zoom: { to: out, at: 0 }
       - click: { on: 'button:has-text("Save changes") >> nth=0', at: Save, wait: 'button:has-text("Publish changes")' }
       - click: { on: 'button:has-text("Preview changes") >> nth=0', at: 5, tab: true, wait: 'h2:has-text("Your Banff, your way.")' }
       - scroll: { to: 'h2:has-text("Your Banff, your way.")', at: 6.4 }
@@ -152,7 +155,7 @@ segments:
     do:
       - goto: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/analytics
       - wait: ':text("Most booked items")'
-      - zoom: { to: ':text("Revenue collected") >> xpath=ancestor::div[2]', at: sells }
+      - zoom: { to: ':text("Revenue collected") >> xpath=ancestor::div[2]', scale: 1.7, at: sells }
       - highlight: { on: ':text("Revenue collected") >> xpath=ancestor::div[2]', at: 2.4, style: box }
       - zoom: { to: out, at: 6 }
       - scroll: { to: ':text("Most booked items")', at: 7.2 }

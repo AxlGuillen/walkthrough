@@ -24,6 +24,16 @@ describe('routesToVisit', () => {
     expect(routesToVisit('/tickets', snapshot({ links }), 10)).toEqual(['/tickets', '/workload']);
     expect(routesToVisit('/tickets', snapshot({ links }), 1)).toEqual(['/tickets']);
   });
+
+  it('never follows a link that would end the session or act on data', () => {
+    const links = [
+      { href: 'https://app.test/projects', text: 'Projects', inNav: true },
+      { href: 'https://app.test/auth/logout', text: 'Log out', inNav: true },
+      { href: 'https://app.test/sign-out?next=/', text: 'Sign out', inNav: true },
+      { href: 'https://app.test/projects/7/delete', text: 'Delete', inNav: true },
+    ];
+    expect(routesToVisit('https://app.test/', snapshot({ links }), 10)).toEqual(['https://app.test/', 'https://app.test/projects']);
+  });
 });
 
 describe('anchorsOf', () => {

@@ -11,9 +11,13 @@ const MAX_ANCHORS = 40;
 
 // Only navigation links are followed, one per path: content links (every ticket, every
 // row) would turn a look around into a crawl, and ?range=… variants are the same screen.
+// Links that end the session or act on data when visited: a read-only crawl never follows them.
+const UNSAFE = /log-?out|sign-?out|logoff|delete|remove|destroy/i;
+
 export function routesToVisit(start: string, snapshot: PageSnapshot, limit: number): string[] {
   const byPath = new Map<string, string>();
-  for (const route of [start, ...snapshot.links.filter(link => link.inNav).map(link => link.href)]) {
+  const safe = snapshot.links.filter(link => link.inNav && !UNSAFE.test(link.href.split(/[?#]/)[0]!));
+  for (const route of [start, ...safe.map(link => link.href)]) {
     const pathname = route.split('?')[0]!;
     if (!byPath.has(pathname)) byPath.set(pathname, route);
   }

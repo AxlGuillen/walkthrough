@@ -1,0 +1,18 @@
+title: GPM portal top on a phone
+url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA
+session: gpm
+device: mobile
+language: en
+sfx: false
+waitTimeout: 90
+# The narrow column global-v2.yaml opens on: the top of the portal on a phone, still for a
+# beat, then a slow scroll. No voice. Render it, then copy the video to
+# tours/gpm/assets/phone-hero.mp4.
+segments:
+  - hold: 3
+    do:
+      - goto: /g/fbsdemo/FKOPZWIYXBOFKURAA
+      - wait: 'h2:has-text("Reserve an experience")'
+  - hold: 5
+    do:
+      - scroll: { to: 'h2:has-text("Experiences for every stay")', at: 0, duration: 3.5 }

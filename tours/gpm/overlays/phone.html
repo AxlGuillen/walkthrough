@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <!-- A phone playing a clip (rendered from a phone-*.yaml tour) in the room an aside-left shot
-     leaves, under one line of text. params: title, clip. beats: title, phone. -->
+     leaves, under one line of text. params: title, clip, and clip2 to fade to on the `swap`
+     beat. beats: title, phone, swap. -->
 <link rel="stylesheet" href="../../../templates/overlays/base.css">
 <style>
   body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: transparent; font-family: var(--display, var(--font)); }
@@ -19,6 +20,8 @@
   .status { flex: 1.3; display: grid; place-items: center; }
   .island { width: 30%; height: 2.6vmin; border-radius: 2vmin; background: #000; }
   .screen video { width: 100%; aspect-ratio: 9 / 16; display: block; background: #fff; }
+  .clips { position: relative; }
+  .clips video + video { position: absolute; inset: 0; opacity: 0; }
   .home { flex: 1; display: grid; place-items: center; }
   .home::after { content: ''; width: 36%; height: 0.55vmin; border-radius: 1vmin; background: #111; }
 </style>
@@ -26,7 +29,7 @@
 <body>
 <div class="room">
   <div class="title" data-param="title"></div>
-  <div class="phone"><div class="screen"><div class="status"><div class="island"></div></div><video muted playsinline preload="auto"></video><div class="home"></div></div></div>
+  <div class="phone"><div class="screen"><div class="status"><div class="island"></div></div><div class="clips"><video muted playsinline preload="auto"></video></div><div class="home"></div></div></div>
 </div>
 <script src="../../../templates/overlays/params.js"></script>
 <script src="../../../templates/overlays/vendor/gsap/gsap.min.js"></script>
@@ -34,6 +37,12 @@
 <script>
   document.querySelector('video').src = asset(param('clip', 'assets/phone-booking.mp4'));
   const tl = kit.timeline();
+  if (param('clip2')) {
+    const second = document.createElement('video');
+    Object.assign(second, { muted: true, playsInline: true, preload: 'auto', src: asset(param('clip2')) });
+    document.querySelector('.clips').append(second);
+    tl.to(second, { opacity: 1, duration: 0.5, ease: 'none' }, kit.beat('swap', 6));
+  }
   tl.fromTo('.title', { opacity: 0, y: '0.5em' }, { opacity: 1, y: 0 }, kit.beat('title', 0.2));
   tl.fromTo('.phone', { opacity: 0, y: '6vh', scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.8 }, kit.beat('phone', 0.6));
 </script>

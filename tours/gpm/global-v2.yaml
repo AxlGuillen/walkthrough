@@ -1,0 +1,199 @@
+title: UrVenue Studio · Guest Portal Microsite
+# Studio's origin, so setup.storage reaches it; the guest portal is visited by its full address.
+url: https://uat-studio.urvenue.me/
+session: gpm
+device: desktop
+language: en
+voice: 933563129e564b19a115bedd57b7406a  # "Sarah", the English voice of the other demos
+brand: urvenue
+theme: light  # the brief: never a black screen, stay in the product's light world
+# UrVenue's stage, with Fairmont's blue (its "Reserve Experience" button) for every mark and flow.
+accent: "#1A588E"
+watermark: true
+transition: push
+music: { track: ../uws-tasks/assets/music/corporate-calm-background.mp3, volume: 0.022 }
+# Only the sounds that land on their exact frame: clicks, typing and marks being drawn, and the
+# turn of a stage transition. Pops sound at an overlay's start but its entrance comes later.
+sfx: { volume: 0.8, mute: [pop, scroll, whoosh] }
+waitTimeout: 90
+setup:
+  storage:
+    # Studio asks for an account first and lists every client's property; this opens it on
+    # Fairmont Banff Springs straight away, so that list never shows.
+    gpm-studio.active-account.v1: acc-fairmontbanff
+  origins:
+    # The itinerary remembers its last view; every render starts on the calendar.
+    https://uat.booketing.com:
+      gpm:itinerary-view:desktop: calendar
+#
+# Version 2 of the global GPM video (UWS-10576), on the fbsdemo test portal and its Studio
+# project. The script approved with Aldo is the base, enriched and approved by Axl on
+# 2026-10-07. Narration carries the argument; the text on screen is the device card, the
+# channel list, the booking steps, the four boxes, the last line and the wordmark.
+#
+# Nothing reaches a guest: the booking stops at "Before you book" (no "Agree & Book"), and in
+# Studio the changes are saved as a draft, previewed, and put back under the diagram, never
+# published. Every render starts from the same state.
+#
+# Before rendering:
+# 1. The guest's stay runs Oct 5–11, 2026: after it, the reserve panel offers no dates.
+# 2. Render phone-hero.yaml, phone-booking.yaml and phone-itinerary.yaml and copy their videos
+#    to tours/gpm/assets/ under the same names. The device card plays them cut to its 7.8 s,
+#    the booking from its first tap and the stay from the word "stay" (4.96 s in):
+#      ffmpeg -ss 3 -i phone-booking.mp4 -c:v libx264 -pix_fmt yuv420p -crf 16 -an phone-booking-v2.mp4
+#      ffmpeg -i phone-itinerary.mp4 -vf "trim=start=1.2,setpts=PTS-STARTPTS,tpad=start_mode=clone:start_duration=4.96" \
+#        -c:v libx264 -pix_fmt yuv420p -crf 16 -an phone-itinerary-v2.mp4
+
+segments:
+  # Open: the portal as a narrow column, which opens into the desktop on "Not anymore".
+  - say: On a laptop, a guest portal has always lived in a narrow column. Not anymore. Now the whole screen belongs to the property.
+    do:
+      - goto: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA
+      - wait: 'h2:has-text("Reserve an experience")'
+    overlays:
+      - src: overlays/column.html
+        to: whole
+        fade: 0
+        params: { clip: assets/phone-hero.mp4 }
+        beats: { open: Not }
+
+  # The walkthrough: down into the categories, the camera turned a little.
+  - say: Considered on every screen. Type, spacing, imagery, motion. Every section speaks for the property, from the first photograph to the last detail. Designed, not assembled.
+    do:
+      - shot: { to: left, angle: 6, at: Considered }
+      - scroll: { to: 'h2:has-text("Experiences for every stay")', at: Type }
+      - highlight: { on: 'h2:has-text("Experiences for every stay")', at: section, style: underline }
+      - scroll: { to: 'h2:has-text("Curated for Fairmont Banff Springs")', at: photograph }
+      - highlight: { on: 'h2:has-text("Curated for Fairmont Banff Springs")', at: Designed, style: marker }
+
+  # Full screen: every experience, the filters, the catalog opening up.
+  - say: The full screen changes what this can be. Guests see every experience at once, filter by what they're in the mood for, and open any of them without losing their place. Not a form to get through. An experience to move through.
+    do:
+      - shot: { to: wide, at: full }
+      - scroll: { to: 'h2:has-text("Reserve an experience")', at: changes }
+      - click: { on: 'button:has-text("Show 5 more")', at: every }
+      - click: { on: 'button:text-is("Food & Drink") >> nth=0', at: mood }
+      - scroll: { to: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: form }
+
+  # Booking: the screen aside, the steps on the other side, each on the click that does it.
+  - say: From looking to booked, without leaving the page. Pick a day, set the party, choose a time, and review every detail before anything is confirmed.
+    do:
+      - click: { on: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: looking, wait: '[role=dialog] button:has-text("Select a time")' }
+      - zoom: { to: '[role=dialog]', scale: 1.5, follow: true, at: page }
+      - click: { on: '[role=dialog] button:has-text("SAT")', at: day }
+      - click: { on: '[role=dialog] button:text-is("+")', at: party }
+      - click: { on: '[role=dialog] button:has-text("Select a time")', at: choose }
+      - click: { on: 'button:has-text("08:30 PM")', at: review }
+      - click: { on: '[role=dialog] button:text-is("Continue")', at: detail, wait: '[role=dialog] :text("Who is this for")' }
+      - click: { on: '[role=dialog] button:text-is("Continue")', at: anything, wait: '[role=dialog] button:has-text("Agree & Book")' }
+      - zoom: { to: out, at: confirmed }
+    flow:
+      mode: aside
+      from: Pick
+      title: Booking an experience
+      steps:
+        - { text: Pick a day, emoji: calendar, at: day }
+        - { text: Set the party, emoji: busts-in-silhouette, at: party }
+        - { text: Choose a time, emoji: stopwatch, at: time }
+        - { text: Review it, emoji: check-mark-button, at: detail }
+
+  # The itinerary, with the booking in it: calendar, then list.
+  - say: Every booking lands in one place. The entire stay, as a calendar or as a list, however the guest wants to see it.
+    transition: flip
+    do:
+      - goto: { url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA/itinerary, at: 0 }
+      - wait: 'button:has-text("Calendar")'
+      - scroll: { to: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: booking }
+      - highlight: { on: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: entire, style: circle }
+      - click: { on: 'button:has-text("List")', at: list }
+
+  # Desktop and the phone: the screen aside, the phone beside it, booking then the stay as cards.
+  - say: Now on desktop. Without giving up anything on the phone. The same booking takes a few taps, and the same stay is there as cards, with a photo for every plan.
+    do:
+      - shot: { to: aside-left, at: desktop }
+      - shot: { to: flat, at: plan, duration: 0.9 }
+    overlays:
+      - src: overlays/phone.html
+        from: Without
+        to: plan
+        params: { title: Desktop. And the phone., clip: assets/phone-booking-v2.mp4, clip2: assets/phone-itinerary-v2.mp4 }
+        beats: { title: Without, phone: giving, swap: stay }
+
+  # Studio: a section off, another one up, a new photo in the hero, previewed as a guest sees
+  # it. A draft, never published; all of it goes back under the diagram.
+  - say: Behind every portal is UrVenue Studio. A change takes minutes, and anyone on the property can make it.
+    do:
+      - goto: { url: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/pages/experiences, at: 0 }
+      - wait: 'button:has-text("Add section")'
+      - highlight: { on: 'svg[aria-label^="Page anatomy"]', at: minutes, style: brackets }
+      - click: { on: 'button:has-text("Configure") >> nth=4', at: make }
+
+  - say: Turn a section off, [break] move another one up, [break] swap an image, and preview it exactly as a guest will. So can our team, in the same console.
+    do:
+      - click: { on: ':text("Toggle to show or hide this section") >> nth=-1 >> xpath=preceding::button[1]', at: off }
+      - click: { on: 'button[aria-label="Move section up"] >> nth=2', at: up }
+      - click: { on: 'button[aria-label="Configure Hero header"]', at: swap }
+      # Studio opens a crop on every upload: Apply keeps its framing.
+      - upload: { on: 'button:has-text("Replace") >> nth=0', file: assets/banff-springs-hero.jpg, at: and, wait: 'button:text-is("Apply")' }
+      - click: { on: 'button:text-is("Apply")', at: exactly }
+      - click: { on: 'button:has-text("Save changes") >> nth=0', at: guest, wait: 'button:has-text("Publish changes")' }
+      - click: { on: 'button:has-text("Preview changes") >> nth=0', at: team, tab: true, wait: 'h2:has-text("Curated for Fairmont Banff Springs")' }
+      - highlight: { on: 'h1:has-text("Your Guest Experience in the Rockies")', at: console, style: underline }
+
+  # Analytics, with live data.
+  - say: You see what sells. Bookings, revenue, and the experiences guests look at most, in one view. Nobody had to set that up.
+    do:
+      - goto: { url: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/analytics, at: 0 }
+      - wait: ':text("Most booked items")'
+      - highlight: { on: ':text("Revenue collected") >> xpath=ancestor::div[2]', at: revenue, style: box }
+      - scroll: { to: ':text("Most booked items")', at: most }
+      - highlight: { on: ':text("Most booked items")', at: Nobody, style: marker }
+
+  # Channels: every project type in one console, the names beside the screen.
+  - say: One console for every channel a property sells through. The guest portal, a microsite, a kiosk in the lobby, all run the same way.
+    do:
+      - goto: { url: /, at: 0 }
+      - wait: 'h2:has-text("Guest portals")'
+    aside:
+      layout: aside-right
+      at: channel
+      title: Guest Portals, Microsites, Kiosks.
+
+  # The diagram: four steps, each on its word. Under it, out of sight and earshot, Studio puts
+  # the moved section back down, the original hero photo back, the promo banner back on, and saves.
+  - say: Create it, [break] make it yours, [break] see it, [break] publish it.
+    hold: 8
+    flow:
+      title: From idea to live
+      steps:
+        - { text: Create, detail: Pick the venues, at: Create }
+        - { text: Make it yours, detail: "Logo, colours, sections", at: make }
+        - { text: Preview, detail: See it before anyone else does, at: see }
+        - { text: Publish, detail: Live on its own address, at: publish }
+    do:
+      - goto: { url: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/pages/experiences, at: 0.6 }
+      - wait: { until: 'button:has-text("Add section")', at: 0.6 }
+      - click: { on: 'button[aria-label="Move section down"] >> nth=1', at: 1.6 }
+      - click: { on: 'button:has-text("Configure") >> nth=0', at: 2.2 }
+      - upload: { on: 'button:has-text("Replace") >> nth=0', file: assets/hero-original.jpg, at: 3, wait: 'button:has-text("Use original")' }
+      - click: { on: 'button:has-text("Use original")', at: 3.7 }
+      - click: { on: 'button[aria-label="Configure Promo banner"]', at: 4.4 }
+      - click: { on: ':text("Toggle to show or hide this section") >> nth=-1 >> xpath=preceding::button[1]', at: 5.2 }
+      - click: { on: 'button:has-text("Save changes") >> nth=0', at: 6.4, wait: 'button:has-text("Publish changes")' }
+
+  # The beat of silence before the real argument of the piece; Studio comes back under it.
+  - hold: 1.5
+    do:
+      - goto: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8
+
+  - say: Minutes. No ticket, no back and forth, no waiting on analytics.
+    overlays:
+      - src: title-card.html
+        params: { title: Minutes., subtitle: "No ticket, no back and forth, no waiting on analytics." }
+
+  # Close: the last Studio screen holds, the wordmark comes in. On screen only.
+  - hold: 5
+    overlays:
+      - src: closing.html
+        from: 0.3
+        params: { style: over-app, title: UrVenue Studio }

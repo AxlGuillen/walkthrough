@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- The opening: the portal as a narrow column in the middle of a laptop screen, playing a
+     phone clip (phone-hero.yaml) over the tour's stage. On `open` it widens to the whole frame
+     and fades, handing over to the desktop recording under it. params: clip. beats: open. -->
+<link rel="stylesheet" href="../../../templates/overlays/base.css">
+<style>
+  body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: transparent; }
+  .stage { position: absolute; inset: 0; background: var(--stage); }
+  .column { position: absolute; top: 0; bottom: 0; left: 50%; width: 56.25vh; translate: -50% 0; overflow: hidden;
+    background: #fff; box-shadow: 0 0 6vmin rgba(16, 32, 51, 0.18); }
+  .column video { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+</style>
+</head>
+<body>
+<div class="stage"></div>
+<div class="column"><video muted playsinline preload="auto"></video></div>
+<script src="../../../templates/overlays/params.js"></script>
+<script src="../../../templates/overlays/vendor/gsap/gsap.min.js"></script>
+<script src="../../../templates/overlays/kit.js"></script>
+<script>
+  document.querySelector('video').src = asset(param('clip', 'assets/phone-hero.mp4'));
+  const tl = kit.timeline();
+  const open = kit.beat('open', 2.5);
+  // Wider and wider until it is the whole screen, then gone: the desktop is underneath.
+  tl.to('.column', { width: '100vw', duration: 1.1, ease: kit.ease.inOut }, open);
+  tl.to('.column video', { opacity: 0, duration: 0.5, ease: 'none' }, open + 0.15);
+  tl.to(['.stage', '.column'], { opacity: 0, duration: 0.55, ease: 'none' }, open + 0.75);
+</script>
+</body>
+</html>

@@ -4,6 +4,8 @@ session: gpm
 device: mobile
 language: en
 sfx: false
+# The phone shows taps as they are, without a drawn mark.
+clickStyle: none
 waitTimeout: 90
 # The clip the booking card in global.yaml plays beside the desktop recording: the same
 # booking, on a phone, up to "Agree & Book" (never pressed). No voice. Render it, then copy

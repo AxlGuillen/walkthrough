@@ -15,6 +15,8 @@ music: { track: ../uws-tasks/assets/music/corporate-calm-background.mp3, volume:
 # Voice and music carry the sound; the only effect left is the turn of a page transition, which
 # the stage draws on its exact frame. Clicks and marks stay silent, so nothing can drift.
 sfx: { volume: 0.8, mute: [pop, scroll, whoosh, click, draw, keys] }
+# A click shows as a thin wave that opens and fades, not a drawn circle.
+clickStyle: ripple
 waitTimeout: 90
 setup:
   storage:
@@ -79,16 +81,12 @@ segments:
   - say: From looking to booked, without leaving the page. Pick a day, set the party, choose a time, and review every detail before anything is confirmed.
     do:
       - click: { on: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: looking, wait: '[role=dialog] button:has-text("Select a time")' }
-      # One still zoom on the panel, done before the screen moves aside: nothing moves inside the
-      # screen while the steps build beside it.
-      - zoom: { to: '[role=dialog]', scale: 1.4, at: without }
       - click: { on: '[role=dialog] button:has-text("SAT")', at: day }
       - click: { on: '[role=dialog] button:text-is("+")', at: party }
       - click: { on: '[role=dialog] button:has-text("Select a time")', at: choose }
       - click: { on: 'button:has-text("08:30 PM")', at: review }
       - click: { on: '[role=dialog] button:text-is("Continue")', at: detail, wait: '[role=dialog] :text("Who is this for")' }
       - click: { on: '[role=dialog] button:text-is("Continue")', at: anything, wait: '[role=dialog] button:has-text("Agree & Book")' }
-      - zoom: { to: out, at: confirmed }
     flow:
       mode: aside
       from: page
@@ -136,9 +134,12 @@ segments:
       - click: { on: 'button[aria-label="Move section up"] >> nth=2', at: up }
       - click: { on: 'button[aria-label="Configure Hero header"]', at: swap }
       # Studio opens a crop on every upload: Apply keeps its framing.
+      # A gentle zoom on the photo while it changes, back out before saving.
+      - zoom: { to: 'button:has-text("Replace") >> nth=0', scale: 1.3, at: image }
       - upload: { on: 'button:has-text("Replace") >> nth=0', file: assets/banff-springs-hero.jpg, at: and, wait: 'button:text-is("Apply")' }
       - click: { on: 'button:text-is("Apply")', at: exactly }
-      - click: { on: 'button:has-text("Save changes") >> nth=0', at: guest, wait: 'button:has-text("Publish changes")' }
+      - zoom: { to: out, at: as }
+      - click: { on: 'button:has-text("Save changes") >> nth=0', at: will, wait: 'button:has-text("Publish changes")' }
       - click: { on: 'button:has-text("Preview changes") >> nth=0', at: team, tab: true, wait: 'h2:has-text("Curated for Fairmont Banff Springs")' }
       - highlight: { on: 'h1:has-text("Your Guest Experience in the Rockies")', at: console, style: underline }
 

@@ -385,6 +385,7 @@ En 9:16, `aside-left` y `aside-right` ponen la pantalla arriba y el texto abajo.
 | `transition` | Cómo se ve |
 |---|---|
 | `dissolve` (por defecto) | La pantalla vieja se desvanece sobre la nueva, 0,5 s |
+| `cut` | Corte seco, sin transición: para cuando el guion pide cortar |
 | `push` | La vieja sale por la izquierda y la nueva entra por la derecha, un poco más chicas a medio camino |
 | `flip` | Gira como una tarjeta y aterriza en la nueva |
 | `fly` | La vieja se aleja y se apaga; la nueva llega de más cerca |

@@ -101,6 +101,10 @@ segments:
 
 **Duración de un segmento:** margen previo + voz + margen posterior, o `hold` si es mayor. Sin `say`, `hold` es obligatorio.
 
+**Apps lentas y pestañas:**
+- **`waitTimeout`** (segundos, 15 por defecto): cuánto puede tardar una espera (`wait:`, el `wait` de un clic o una pestaña nueva) antes de que el render se rinda. Corre fuera del tiempo del video, así que subirlo para un servidor de pruebas lento no alarga el video. `check` usa el mismo límite.
+- **`click: { on, tab: true }`:** para un botón que abre otra pestaña (una vista previa). El tour espera la pestaña, toma su dirección, la cierra y la carga en la misma página: se graba una sola, y el cambio de pantalla lleva su disolvencia, su corte o su transición como cualquier otro.
+
 ## Timeline
 
 Es el corazón: una función pura `buildTimeline(tour, voices)` que devuelve todos los tiempos absolutos:
@@ -165,6 +169,8 @@ La prueba 10.1 (`docs/plan.md`) midió unos 0,16 s por cuadro a 1080p; por eso e
 `click: { on, wait: <selector> }` y la acción `wait: { until: <selector> }` esperan a que la siguiente pantalla muestre ese elemento con el reloj corriendo, fuera del tiempo del video, como `goto`. En el video, el elemento ya está en el cuadro del clic: no se ven estados de carga a medias.
 
 **Disolvencia en vez de corte** (`TRANSITION`, 0,5 s): antes de un `goto` o de un clic con `wait`, se toma una captura de la página sin la capa de efectos. Ya cargada la nueva, esa imagen se pone encima en el top layer (`transitionLayer`) y se desvanece con una animación que la sincronía congela cuadro a cuadro. La capa de efectos se vuelve a subir en cada cuadro, así las marcas siguen vivas encima de la disolvencia.
+
+**Corte seco** (`transition: cut`): ni disolvencia en la página ni escenario; la pantalla nueva aparece en el cuadro del cambio. Para cuando el guion pide un corte, como de un checkout a su confirmación.
 
 **Transiciones del escenario** (`transition: push | flip | fly` en el tour o en el segmento; `dissolve` es la de arriba y la de siempre): la timeline marca esas navegaciones (`TimedAction.transition`) y la captura no hace su disolvencia, corta. El escenario dibuja el cambio en 0,8 s (`CHANGE_LENGTH`): la pantalla vieja es un segundo `<video>` detenido en el último cuadro antes del corte, y la nueva corre en vivo. Dónde va cada una en cada momento lo calcula `changeLayers()` (puro), dentro de la pose de la cámara; ver «Escenario y planos».
 

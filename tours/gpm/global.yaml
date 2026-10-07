@@ -1,0 +1,174 @@
+title: UrVenue Studio · Guest Portal Microsite
+# Studio's origin, so setup.storage reaches it; the guest portal is visited by its full address.
+url: https://uat-studio.urvenue.me/
+session: gpm
+device: desktop
+language: en
+voice: 933563129e564b19a115bedd57b7406a  # "Sarah", the English voice of the other demos
+brand: urvenue
+theme: light  # the brief: never a black screen, stay in the product's light world
+# The UAT inventory takes ~30 s to answer; the wait happens off the video's clock.
+waitTimeout: 90
+setup:
+  storage:
+    # Studio asks for an account first and lists every client's property; this opens it on
+    # Fairmont Banff Springs straight away, so that list never shows.
+    gpm-studio.active-account.v1: acc-fairmontbanff
+  origins:
+    # The itinerary remembers its last view; every render starts on the calendar.
+    https://uat.booketing.com:
+      gpm:itinerary-view:desktop: calendar
+#
+# The global GPM video (DM-03, script approved with Aldo on 2026-10-05), on the fbsdemo test
+# portal and its Studio project. Narration rule: the voice carries the argument; the only text
+# on screen is the device card, the channel list, the four boxes, the last line and the wordmark.
+#
+# Nothing is saved: the booking stops at "Before you book" (no "Agree & Book") and cuts to the
+# itinerary, which already holds Castello Italiana; in Studio the section is turned off and
+# previewed, never saved or published, so every render starts from the same state.
+#
+# Before rendering:
+# 1. The guest's stay runs Oct 5–11, 2026: after it, the reserve panel offers no dates.
+#    Extend the stay in the test data, or render before then.
+# 2. Render tours/gpm/phone.yaml and copy its video to tours/gpm/assets/phone.mp4 (the card
+#    with the portal on a phone plays it).
+
+segments:
+  # Each block lasts what the script gives it (in brackets); the voice reads faster, so holds
+  # leave the screen time to be seen, with one gentle move in the room after each line.
+
+  # 0:00 · Open (8 s): the portal, still for a beat before it moves.
+  - say: On a laptop, a guest portal has always lived in a narrow column.
+    do:
+      - goto: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA
+      - wait: 'h2:has-text("Reserve an experience")'
+
+  - say: Not anymore.
+    hold: 2.7
+
+  # 0:08 · The walkthrough (18 s): down into the categories, cursor visible.
+  - say: Considered on every screen. Type, spacing, imagery, motion.
+    hold: 9
+    do:
+      - scroll: { to: 'h2:has-text("Experiences for every stay")', at: Type }
+      - highlight: { on: 'h2:has-text("Experiences for every stay")', at: motion, style: underline }
+
+  - say: Designed, not assembled.
+    hold: 9
+    do:
+      - scroll: { to: 'h2:has-text("Curated for Fairmont Banff Springs")', at: Designed }
+      - hover: { on: 'h2:has-text("Curated for Fairmont Banff Springs") >> xpath=ancestor::section[1] >> h3 >> nth=0', at: 4.5 }
+
+  # 0:26 · Full screen (14 s): the whole catalog, its filters, and what they open.
+  - say: The full screen changes what this can be.
+    hold: 6
+    do:
+      - scroll: { to: 'h2:has-text("Reserve an experience")', at: full }
+
+  - say: Not a form to get through. An experience to move through.
+    hold: 8
+    do:
+      - click: { on: 'button:has-text("Show 5 more")', at: form }
+      - click: { on: 'button:text-is("Food & Drink") >> nth=0', at: experience }
+      - scroll: { to: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: 6 }
+
+  # 0:40 · Booking (10 s): date, party, time, Continue; checkout for a beat, then a cut.
+  - say: From looking to booked, without leaving the page.
+    hold: 10
+    do:
+      - click: { on: 'button[aria-label^="Reserve Castello Italiana Standard Seating"]', at: looking, wait: '[role=dialog] button:has-text("Select a time")' }
+      - click: { on: '[role=dialog] button:has-text("SAT")', at: 2.6 }
+      - click: { on: '[role=dialog] button:text-is("+")', at: 3.6 }
+      - click: { on: '[role=dialog] button:has-text("Select a time")', at: 4.6 }
+      - click: { on: 'button:has-text("08:30 PM")', at: 5.8 }
+      - click: { on: '[role=dialog] button:text-is("Continue")', at: 6.9, wait: '[role=dialog] :text("Who is this for")' }
+      - click: { on: '[role=dialog] button:text-is("Continue")', at: 8.1, wait: '[role=dialog] button:has-text("Agree & Book")' }
+
+  # 0:50 · The itinerary (14 s), with the booking in it.
+  - say: The entire stay in one place.
+    hold: 6.5
+    transition: cut
+    do:
+      - goto: { url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA/itinerary, at: 0 }
+      - wait: 'button:has-text("Calendar")'
+      - highlight: { on: 'button:has-text("Castello Italiana Standard Seating") >> nth=0', at: stay, style: circle }
+
+  - say: As a calendar, or as a list, however the guest wants to see it.
+    hold: 7.5
+    do:
+      - click: { on: 'button:has-text("List")', at: list }
+
+  # 1:04 · Card (8 s): the desktop recording aside, the same portal on a phone beside it.
+  - say: Now on desktop. Without giving up anything on the phone.
+    hold: 8
+    do:
+      - shot: { to: aside-left, at: desktop }
+    overlays:
+      - src: overlays/phone.html
+        params: { title: Desktop. And the phone. }
+        beats: { title: desktop, phone: phone }
+
+  # 1:12 · Control (18 s): Studio, a section turned off and moved, previewed, never saved.
+  - say: A change takes minutes, and anyone on the property can make it.
+    hold: 9
+    transition: push
+    do:
+      - goto: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/pages/experiences
+      - wait: 'button:has-text("Add section")'
+      - click: { on: 'button:has-text("Configure") >> nth=1', at: change }
+      - click: { on: '[role=switch] >> nth=0', at: anyone }
+
+  - say: So can our team, in the same console.
+    hold: 9
+    do:
+      - click: { on: 'button[aria-label="Move section down"] >> nth=2', at: team }
+      - click: { on: 'button:has-text("Preview changes") >> nth=0', at: console, tab: true, wait: ':text("Preview · Draft configuration")' }
+
+  # 1:30 · Analytics (12 s), with live data.
+  - say: You see what sells. Nobody had to set that up.
+    hold: 12
+    do:
+      - goto: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8/analytics
+      - wait: ':text("Most booked items")'
+      - highlight: { on: ':text("Revenue collected") >> xpath=ancestor::div[2]', at: sells, style: box }
+      - scroll: { to: ':text("Most booked items")', at: Nobody }
+
+  # 1:42 · Channels (10 s): every project type in one console.
+  - say: One console for every channel a property sells through.
+    hold: 10
+    do:
+      - goto: /
+      - wait: 'h2:has-text("Guest portals")'
+    overlays:
+      - src: lower-third.html
+        from: console
+        params: { title: Guest Portals · Microsites · Kiosks }
+
+  # 1:52 · The diagram (18 s with the last line): four steps, each on its word.
+  - say: Create it, [break] make it yours, [break] see it, [break] publish it.
+    hold: 10
+    flow:
+      title: From idea to live
+      steps:
+        - { text: Create, detail: Pick the venues, at: Create }
+        - { text: Make it yours, detail: "Logo, colours, sections", at: make }
+        - { text: Preview, detail: See it before anyone else does, at: see }
+        - { text: Publish, detail: Live on its own address, at: publish }
+
+  # The beat of silence before the real argument of the piece; Studio comes back under it.
+  - hold: 1.5
+    do:
+      - goto: /projects/124bf4f9-45ee-4d07-937c-fb45468088e8
+
+  - say: Minutes. No ticket, no back and forth, no waiting on analytics.
+    hold: 6.5
+    overlays:
+      - src: title-card.html
+        params: { title: Minutes., subtitle: "No ticket, no back and forth, no waiting on analytics." }
+
+  # 2:10 · Close (6 s): the last Studio screen holds, the wordmark comes in. On screen only.
+  - hold: 6
+    overlays:
+      - src: closing.html
+        from: 0.3
+        params: { style: over-app, title: UrVenue Studio }

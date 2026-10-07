@@ -1,0 +1,21 @@
+title: GPM on a phone
+url: https://uat.booketing.com/g/fbsdemo/FKOPZWIYXBOFKURAA
+session: gpm
+device: mobile
+language: en
+sfx: false
+waitTimeout: 90
+# The clip the device card in global.yaml plays beside the desktop recording: the same portal,
+# on a phone, scrolled gently. No voice. Render it, then copy the video to
+# tours/gpm/assets/phone.mp4.
+segments:
+  - hold: 1.5
+    do:
+      - goto: /g/fbsdemo/FKOPZWIYXBOFKURAA
+      - wait: 'h2:has-text("Reserve an experience")'
+  - hold: 3
+    do:
+      - scroll: { to: 'h2:has-text("Experiences for every stay")', at: 0.2 }
+  - hold: 3.5
+    do:
+      - scroll: { to: 'h2:has-text("Curated for Fairmont Banff Springs")', at: 0.2 }

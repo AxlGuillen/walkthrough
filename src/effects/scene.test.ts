@@ -131,3 +131,27 @@ describe('ending a mark early', () => {
     expect(labelVisible(1.5 + TIMING.fade + 0.01, label)).toBe(false);
   });
 });
+
+describe('click styles', () => {
+  const planWith = (clickStyle: 'circle' | 'ripple' | 'none') => {
+    const plan = emptyPlan('mouse', { width: 1600, height: 900 }, clickStyle);
+    plan.clicks.push({ time: 1, at: { x: 400, y: 300 }, seed: 3 });
+    return plan;
+  };
+
+  it('opens a ripple of thin waves that fade out within a little over half a second', () => {
+    const early = sceneAt(1.05, planWith('ripple')).strokes;
+    const later = sceneAt(1.3, planWith('ripple')).strokes;
+    expect(early).toHaveLength(1);
+    expect(later).toHaveLength(2);
+    expect(later[0]!.opacity).toBeLessThan(early[0]!.opacity);
+    expect(later.every(s => s.progress === 1 && (s.width ?? 0) <= 2)).toBe(true);
+    expect(sceneAt(1.8, planWith('ripple')).strokes).toEqual([]);
+  });
+
+  it('draws the hand circle by default and nothing with none', () => {
+    expect(sceneAt(1.3, planWith('circle')).strokes).toHaveLength(1);
+    expect(sceneAt(1.3, planWith('none')).strokes).toEqual([]);
+    expect(emptyPlan('touch', { width: 405, height: 720 }).clickStyle).toBe('circle');
+  });
+});

@@ -187,6 +187,7 @@ Cursor, circulito de clic y anillo de resaltado.
 - **Trazos a mano:** círculo con 1,1 vueltas y rectángulo redondeado con ruido suave y sembrado por acción (siempre igual en cada render). Se dibujan con `pathLength` + `stroke-dashoffset`.
 - **Estilos de resaltado** (`src/effects/marks.ts`, puro): `markPieces` vuelve un estilo (`ring`, `circle`, `underline`, `marker`, `box`, `brackets`, `spotlight`, `arrow`) en piezas: trazos que se revelan a lo largo, cada uno en su tramo del tiempo de dibujo (la punta de una flecha después del asta), o un relleno `evenodd` que aparece con opacidad (el oscurecido de `spotlight`). `underline` y `marker` siguen cada línea del texto: la captura mide los rectángulos de un `Range` sobre el elemento y los junta por línea. La flecha llega del primer lado con espacio (izquierda, abajo, derecha, arriba) o del que pida `side`.
 - **Mobile:** sin cursor; solo el circulito en cada toque.
+- **Estilo del clic** (`clickStyle` en el tour): `circle` (por defecto), el circulito a mano; `ripple`, una onda fina de dos anillos que se abre y se apaga en ~0,7 s, para videos sobrios; `none`, sin marca, para clips que se ven dentro de otro video (el teléfono de una tarjeta).
 - **Tecleo visible:** `type` escribe a 14 caracteres por segundo, repartidos entre cuadros.
 - **Color:** `accent` del tour (`#FF3B5C` por defecto); un resaltado puede llevar uno propio (`markColor`), y `marker` es amarillo por defecto.
 

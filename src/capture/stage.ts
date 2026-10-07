@@ -27,7 +27,7 @@ export interface Stage {
 export function createStage(page: Page, clock: VirtualClock, tour: Tour, device: DeviceProfile, timeline: Timeline): Stage {
   return {
     page, clock, tour, device, time: 0, camera: [], typing: null, scrolls: [], log: [],
-    effects: emptyPlan(device.isMobile ? 'touch' : 'mouse', device.viewport),
+    effects: emptyPlan(device.isMobile ? 'touch' : 'mouse', device.viewport, tour.clickStyle),
     pending: prepSchedule(timeline.actions),
   };
 }

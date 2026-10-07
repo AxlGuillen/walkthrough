@@ -22,6 +22,12 @@ export const TIMING = {
 
 const CIRCLE_RADIUS = 24;
 
+// How a click is shown: a hand-drawn circle, a thin wave that opens and fades, or nothing.
+export const CLICK_STYLES = ['circle', 'ripple', 'none'] as const;
+export type ClickStyle = (typeof CLICK_STYLES)[number];
+// Two waves, the second a beat behind and smaller: radius from, radius to, delay.
+const RIPPLE = { length: 0.55, waves: [[6, 30, 0], [4, 20, 0.12]] as const, width: 2, opacity: 0.55 };
+
 export interface CursorMove {
   start: number;
   end: number;
@@ -82,6 +88,7 @@ export interface Label {
 
 export interface EffectsPlan {
   pointer: 'mouse' | 'touch';
+  clickStyle: ClickStyle;
   viewport: Size;
   home: Point;
   moves: CursorMove[];
@@ -114,9 +121,9 @@ export interface Scene {
   bubbles: Bubble[];
 }
 
-export function emptyPlan(pointer: EffectsPlan['pointer'], viewport: Size): EffectsPlan {
+export function emptyPlan(pointer: EffectsPlan['pointer'], viewport: Size, clickStyle: ClickStyle = 'circle'): EffectsPlan {
   const home = { x: viewport.width / 2, y: viewport.height / 2 };
-  return { pointer, viewport, home, moves: [], clicks: [], rings: [], labels: [] };
+  return { pointer, clickStyle, viewport, home, moves: [], clicks: [], rings: [], labels: [] };
 }
 
 export function cursorPosition(time: number, { moves, home }: EffectsPlan): Point {
@@ -144,8 +151,11 @@ function curve({ from, to, bend }: CursorMove, t: number): Point {
 export function sceneAt(time: number, plan: EffectsPlan): Scene {
   const strokes: Stroke[] = [];
   for (const click of plan.clicks) {
-    const phase = strokePhase(time, click.time, TIMING.circleDraw, TIMING.circleHold);
-    if (phase) strokes.push({ d: sketchCircle(click.at, CIRCLE_RADIUS, click.seed), ...phase });
+    if (plan.clickStyle === 'ripple') strokes.push(...ripple(time, click));
+    else if (plan.clickStyle === 'circle') {
+      const phase = strokePhase(time, click.time, TIMING.circleDraw, TIMING.circleHold);
+      if (phase) strokes.push({ d: sketchCircle(click.at, CIRCLE_RADIUS, click.seed), ...phase });
+    }
   }
   for (const ring of plan.rings) {
     const phase = strokePhase(time, ring.time, TIMING.ringDraw, ring.hold);
@@ -207,6 +217,21 @@ function cursorAt(time: number, plan: EffectsPlan): Scene['cursor'] {
 
 export function clickVisible(time: number, click: ClickMark): boolean {
   return strokePhase(time, click.time, TIMING.circleDraw, TIMING.circleHold) !== null;
+}
+
+// Each wave opens fast and slows down, thinning out as it goes.
+function ripple(time: number, { time: start, at }: ClickMark): Stroke[] {
+  return RIPPLE.waves.flatMap(([from, to, delay]) => {
+    const k = (time - start - delay) / RIPPLE.length;
+    if (k < 0 || k >= 1) return [];
+    const r = from + (to - from) * easeOutCubic(k);
+    return [{ d: circlePath(at, r), progress: 1, opacity: RIPPLE.opacity * (1 - k), width: RIPPLE.width * (1 - 0.5 * k) }];
+  });
+}
+
+function circlePath({ x, y }: Point, r: number): string {
+  const f = (n: number) => n.toFixed(2);
+  return `M${f(x - r)} ${f(y)} A${f(r)} ${f(r)} 0 1 0 ${f(x + r)} ${f(y)} A${f(r)} ${f(r)} 0 1 0 ${f(x - r)} ${f(y)}`;
 }
 
 // A mark whose element got covered (a menu opened over it) or went away (a navigation)

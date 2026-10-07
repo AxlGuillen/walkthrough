@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { TEXTURES } from '../brands/brand.ts';
 import { SOUNDS } from '../compose/sounds.ts';
 import { emojiName } from '../emoji/emoji.ts';
+import { CLICK_STYLES } from '../effects/scene.ts';
 import { FRAMES } from '../frame/layout.ts';
 import { HIGHLIGHT_STYLES, MARK_COLORS } from '../effects/marks.ts';
 
@@ -267,6 +268,8 @@ export const tourSchema = z.strictObject({
   emojiStyle: z.enum(['color', '3d']).default('color'),
   // The recording inside a browser window, a laptop or a phone, over the tour's stage.
   frame: z.enum(FRAMES).default('none'),
+  // How a click shows: a hand-drawn circle, a subtle wave, or nothing.
+  clickStyle: z.enum(CLICK_STYLES).default('circle'),
   // How this tour's highlights are drawn unless one says otherwise.
   highlightStyle: z.enum(HIGHLIGHT_STYLES).default('ring'),
   // How every change of screen (a goto after the start, a click that waits) gives way.

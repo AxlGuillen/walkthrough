@@ -59,7 +59,7 @@ export async function render(
           progress.log(`${frames} frames in ${((Date.now() - started) / 1000).toFixed(1)}s`);
         }
         await renderStage({
-          plan, capture, tourDir: paths.dir, outDir, draft: preview, canvas, output, fps, look, signal,
+          plan, capture, tourDir: paths.dir, outDir, draft: preview, canvas, output, fps, look, jobs, signal,
           onFrame: (span, frame) => progress('stage', frame, span),
         });
       },

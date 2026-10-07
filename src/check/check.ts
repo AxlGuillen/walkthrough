@@ -151,6 +151,8 @@ async function act(page: Page, tour: Tour, action: TimedAction['action'], select
     await tab.close();
     await page.goto(url);
   } else if (action.kind === 'click') await target.click({ timeout: ACTION_TIMEOUT });
+  // An upload writes to the app: check only finds what opens the picker, never answers it.
+  else if (action.kind === 'upload') await target.waitFor({ state: 'attached', timeout: ACTION_TIMEOUT });
   else if (action.kind === 'hover') await target.hover({ timeout: ACTION_TIMEOUT });
   else if (action.kind === 'type') await target.fill(action.text, { timeout: ACTION_TIMEOUT });
   if (action.kind === 'click') await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});

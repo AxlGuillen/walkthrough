@@ -64,6 +64,14 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
       }
       return;
     }
+    case 'upload': {
+      // The picker opens on the click and is answered at once; the upload runs off the clock.
+      const picker = page.waitForEvent('filechooser', { timeout: tour.waitTimeout * 1000 });
+      await clickWithMark(stage, action.on, seed);
+      await clock.settle(async () => { await (await picker).setFiles(action.file); });
+      if (action.wait) await waitFor(stage, action.wait);
+      return;
+    }
     case 'wait':
       return waitFor(stage, action.until);
     case 'scroll': {

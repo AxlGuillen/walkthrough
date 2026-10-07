@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { parse } from 'yaml';
 import { z } from 'zod';
 import { BrandError, BRANDS_DIR, loadBrand } from '../brands/brand.ts';
@@ -19,6 +21,17 @@ export function parseTour(source: string, brandsDir = BRANDS_DIR): Tour {
   const result = tourSchema.safeParse(withBrand(raw, brandsDir));
   if (!result.success) throw new TourError(z.prettifyError(result.error));
   return withResources(withAsides(result.data));
+}
+
+// An upload's file, relative to the tour's folder in the YAML, becomes an absolute path here,
+// so a missing file fails on load instead of mid-capture.
+export function resolveFiles(tour: Tour, dir: string): Tour {
+  tour.segments.forEach((segment, s) => segment.do.forEach(step => {
+    if (step.kind !== 'upload') return;
+    step.file = path.resolve(dir, step.file);
+    if (!existsSync(step.file)) throw new TourError(`segments[${s}] upload: ${step.file} does not exist`);
+  }));
+  return tour;
 }
 
 export const ASIDE_TEMPLATE = 'aside.html';

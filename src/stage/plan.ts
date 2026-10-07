@@ -124,7 +124,7 @@ export function poseAt(moves: readonly Move[], time: number): Pose {
 }
 
 // What a viewer must read with the camera square: marks, and the clicks and typing they watch.
-const READ = new Set(['highlight', 'label', 'click', 'type']);
+const READ = new Set(['highlight', 'label', 'click', 'upload', 'type']);
 
 // Shots move the camera; before anything to read, it straightens on its own and stays flat
 // until the next shot. A move cut short by the next one starts from wherever it got to.

@@ -66,8 +66,9 @@ describe('eventsFromTimeline', () => {
     const actions: TimedAction[] = [
       { time: 1, segment: 0, action: { kind: 'click', on: '.a', wait: undefined, at: undefined } },
       { time: 2, segment: 0, action: { kind: 'zoom', to: 'out', padding: undefined, scale: undefined, follow: undefined, duration: undefined, at: undefined } },
+      { time: 3, segment: 0, action: { kind: 'upload', on: '.b', file: '/tmp/a.jpg', wait: undefined, at: undefined } },
     ];
-    expect(eventsFromTimeline({ actions })).toEqual([{ kind: 'click', time: 1 }, { kind: 'zoom', time: 2, direction: 'out' }]);
+    expect(eventsFromTimeline({ actions })).toEqual([{ kind: 'click', time: 1 }, { kind: 'zoom', time: 2, direction: 'out' }, { kind: 'click', time: 3 }]);
   });
 });
 

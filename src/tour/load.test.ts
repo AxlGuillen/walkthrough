@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { parseTour, TourError } from './load.ts';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseTour, resolveFiles, TourError } from './load.ts';
 
 const minimal = `
 title: Board
@@ -191,3 +193,25 @@ describe('emojis', () => {
   });
 });
 
+
+describe('uploads', () => {
+  const tour = (file: string) => parseTour(`
+title: Upload
+url: https://example.com
+segments:
+  - hold: 2
+    do:
+      - upload: { on: 'button:has-text("Replace")', file: ${file}, wait: '.cropper', at: 0.5 }
+`);
+
+  it('reads the picker, the file, an optional wait and its time', () => {
+    expect(tour('assets/photo.jpg').segments[0]!.do[0]).toEqual({ kind: 'upload', on: 'button:has-text("Replace")', file: 'assets/photo.jpg', wait: '.cropper', at: 0.5 });
+  });
+
+  it('resolves the file against the tour folder, and fails on load when it is missing', () => {
+    const dir = path.dirname(fileURLToPath(import.meta.url));
+    const resolved = resolveFiles(tour('load.test.ts'), dir).segments[0]!.do[0] as { file: string };
+    expect(resolved.file).toBe(path.join(dir, 'load.test.ts'));
+    expect(() => resolveFiles(tour('nowhere.jpg'), dir)).toThrow(/nowhere\.jpg does not exist/);
+  });
+});

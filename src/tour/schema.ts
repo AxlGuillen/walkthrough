@@ -31,6 +31,12 @@ const click = z.strictObject({
   ]),
 }).transform(({ click }) => ({ kind: 'click' as const, ...click }));
 
+// Clicks what opens the system's file picker and answers it with `file`, relative to the
+// tour's folder. wait, as on a click, holds until the app shows the upload.
+const upload = z.strictObject({
+  upload: z.strictObject({ on: selector, file: z.string().trim().min(1), wait: selector.optional(), ...timed }),
+}).transform(({ upload }) => ({ kind: 'upload' as const, ...upload }));
+
 const hover = z.strictObject({
   hover: z.union([
     selector.transform(on => ({ on, at: undefined })),
@@ -94,7 +100,7 @@ const wait = z.strictObject({
   ]),
 }).transform(({ wait }) => ({ kind: 'wait' as const, ...wait }));
 
-const action = z.union([goto, click, hover, type, zoom, highlight, label, scroll, wait]);
+const action = z.union([goto, click, upload, hover, type, zoom, highlight, label, scroll, wait]);
 export type Action = z.infer<typeof action>;
 
 export const SHOTS = ['flat', 'wide', 'left', 'right', 'top', 'aside-left', 'aside-right', 'inset', 'away'] as const;

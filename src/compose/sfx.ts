@@ -105,7 +105,8 @@ export function soundEvents(
 export function eventsFromTimeline({ actions }: Pick<Timeline, 'actions'>): CaptureEvent[] {
   return actions.flatMap(({ time, action }): CaptureEvent[] => {
     switch (action.kind) {
-      case 'click': return [{ kind: 'click', time }];
+      case 'click':
+      case 'upload': return [{ kind: 'click', time }];
       case 'type': return [{ kind: 'click', time }, { kind: 'type', time, chars: action.text.length }];
       case 'highlight': return [{ kind: 'ring', time }];
       case 'zoom': return [{ kind: 'zoom', time, direction: action.to === 'out' ? 'out' : 'in' }];

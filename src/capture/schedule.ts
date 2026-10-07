@@ -56,6 +56,7 @@ export function targetOf(timed: TimedAction): string | undefined {
 export function pointerTarget({ action }: TimedAction): string | undefined {
   switch (action.kind) {
     case 'click':
+    case 'upload':
     case 'hover':
       return action.on;
     case 'type':

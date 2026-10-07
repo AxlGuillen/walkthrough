@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TimedAction } from '../timeline/build.ts';
-import { charsDue, dueActions, frameCount, prepSchedule } from './schedule.ts';
+import { charsDue, dueActions, frameCount, pointerTarget, prepSchedule } from './schedule.ts';
 
 const at = (time: number): TimedAction => ({ time, segment: 0, action: { kind: 'click', on: '.a', wait: undefined, at: undefined } });
 const zoomAt = (time: number): TimedAction => ({
@@ -76,5 +76,12 @@ describe('charsDue', () => {
     expect(charsDue(5, 1, 1, 10)).toBe(1);
     expect(charsDue(5, 1, 1.25, 10)).toBe(3);
     expect(charsDue(5, 1, 9, 10)).toBe(5);
+  });
+});
+
+describe('pointerTarget', () => {
+  it('moves the cursor to what opens a file picker, as to a click', () => {
+    const upload: TimedAction = { time: 1, segment: 0, action: { kind: 'upload', on: 'button.replace', file: '/tmp/a.jpg', wait: undefined, at: undefined } };
+    expect(pointerTarget(upload)).toBe('button.replace');
   });
 });

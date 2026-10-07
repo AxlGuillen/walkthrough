@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { buildTimeline } from '../../timeline/build.ts';
-import { parseTour } from '../../tour/load.ts';
+import { parseTour, resolveFiles } from '../../tour/load.ts';
 import { tourPaths, voiceCacheDir } from '../../tour/paths.ts';
 import { withCache } from '../../voice/cache.ts';
 import { createFishProvider } from '../../voice/fish/provider.ts';
@@ -10,7 +10,7 @@ import { ROOT, STORAGE } from '../context.ts';
 
 export async function voice(tourFile: string) {
   const paths = tourPaths(tourFile, ROOT, STORAGE);
-  const tour = parseTour(await readFile(paths.file, 'utf8'));
+  const tour = resolveFiles(parseTour(await readFile(paths.file, 'utf8')), paths.dir);
 
   const apiKey = process.env.FISH_API_KEY;
   if (!apiKey) throw new Error('FISH_API_KEY is missing from .env');

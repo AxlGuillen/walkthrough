@@ -8,7 +8,7 @@ import { dataDependent, suggest } from '../inspect/selectors.ts';
 import { snapshotPage } from '../inspect/snapshot.ts';
 import { layoutFlow } from '../flow/layout.ts';
 import { resourceFor } from '../resources/registry.ts';
-import { stagePlan } from '../stage/plan.ts';
+import { CAMERA, stagePlan } from '../stage/plan.ts';
 import { resolveOverlay } from '../overlays/render.ts';
 import type { Size } from '../timeline/camera.ts';
 import type { Timeline, TimedAction } from '../timeline/build.ts';
@@ -41,6 +41,11 @@ export function checkFlows(timeline: Timeline, canvas: Size): CheckItem[] {
       const gap = i > 0 ? step.time - flow.steps[i - 1]!.time : Infinity;
       if (gap < MIN_STEP_GAP) notes.push(`"${step.text}" comes ${gap.toFixed(2)}s after the step before: too fast to read; say more between them`);
     });
+    // Beside the screen, a step that comes before the screen has moved aside lands on top of it.
+    const first = flow.steps[0];
+    if (flow.mode === 'aside' && first && first.time - start < CAMERA.move) {
+      notes.push(`"${first.text}" comes ${(first.time - start).toFixed(2)}s after the flow starts, while the screen is still moving aside (${CAMERA.move}s); start the flow on an earlier word`);
+    }
     layoutFlow(flow, canvas).boxes.forEach((box, i) => {
       if (box.truncated) notes.push(`"${flow.steps[i]!.text}" does not fit its box and gets cut; shorten it or move words to detail`);
     });

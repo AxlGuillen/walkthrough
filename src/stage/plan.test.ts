@@ -172,3 +172,17 @@ describe('room shots', () => {
     expect(screenOf('away', desktop).y).toBeGreaterThan(desktop.height);
   });
 });
+
+describe('stage changes and real navigations', () => {
+  const click = (time: number): TimedAction =>
+    ({ time, segment: 0, action: { kind: 'click', on: '.next', wait: '.done', tab: undefined, at: undefined }, transition: 'push' });
+
+  it('draws a change only where the capture saw the page change', () => {
+    const actions = [click(2), click(5)];
+    expect(stagePlan({ shots: [], actions, duration: 10 }).changes.map(c => c.time)).toEqual([2, 5]);
+    // The click at 2 only opened a panel; the one at 5 left the page, logged a frame later.
+    const real = stagePlan({ shots: [], actions, duration: 10 }, false, [5.03]);
+    expect(real.changes.map(c => c.time)).toEqual([5]);
+    expect(real.spans).toEqual([{ start: 5, end: 5 + CHANGE_LENGTH }]);
+  });
+});

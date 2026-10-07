@@ -58,8 +58,11 @@ export async function render(
           const { frames } = await captureTour({ root: ROOT, tour, timeline, file: capture, quality, signal, onFrame: frame => progress('capturing', frame) });
           progress.log(`${frames} frames in ${((Date.now() - started) / 1000).toFixed(1)}s`);
         }
+        // Only now is it known which clicks that wait really left their page.
+        const navigations = (JSON.parse(await readFile(path.join(outDir, EVENTS_FILE), 'utf8')) as CaptureEvent[])
+          .filter(e => e.kind === 'navigate').map(e => e.time);
         await renderStage({
-          plan, capture, tourDir: paths.dir, outDir, draft: preview, canvas, output, fps, look, jobs, signal,
+          plan: stagePlan(timeline, tour.device === 'mobile', navigations), capture, tourDir: paths.dir, outDir, draft: preview, canvas, output, fps, look, jobs, signal,
           onFrame: (span, frame) => progress('stage', frame, span),
         });
       },

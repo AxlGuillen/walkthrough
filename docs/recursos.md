@@ -395,6 +395,7 @@ Las tres del escenario duran 0,8 s, toman el fondo del tour y respetan el plano 
 
 - **Una por video, o una para las secciones.** `push` es la más tranquila para un recorrido; `flip` y `fly` marcan un cambio de tema (al entrar a un módulo). Todas iguales cansan menos que alternarlas.
 - **Nada de marcas en los 0,8 s después del cambio:** la auditoría lo avisa.
+- **Solo donde cambia la página.** Un clic con `wait` que abre un panel o avanza un paso en la misma página no lleva transición del escenario: el escenario solo dibuja las navegaciones que la captura registró.
 - **Sin `frame` por ahora,** como los planos.
 
 Ejemplo de las cuatro en `tours/examples/transiciones.yaml`.

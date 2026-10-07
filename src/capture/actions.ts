@@ -56,9 +56,9 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
         await waitFor(stage, action.wait);
         await assertSignedIn(page, tour, before);
         // A panel or a step inside the same page plays the app's own animation; only another
-        // page is a change of screen.
-        const changed = transition ? transition !== 'cut' : leftPage(before, new URL(page.url()));
-        if (!changed) return;
+        // page is a change of screen, and only that one is logged, so the stage draws no
+        // transition for a step that stayed on its page.
+        if (!leftPage(before, new URL(page.url())) || transition === 'cut') return;
         log.push({ kind: 'navigate', time: stage.time });
         if (still) await dissolveFrom(page, still);
       }

@@ -118,7 +118,10 @@ export async function composeTour(
   }
 
   const fps = FPS[quality];
-  const stage = stagePlan(timeline, tour.device === 'mobile').spans.map((span, i) => ({ file: stageFile(i), start: spanFrames(span, fps).first / fps }));
+  // Without the capture's own log, every change the timeline planned is assumed to happen.
+  const navigations = existsSync(path.join(outDir, EVENTS_FILE))
+    ? (await capturedEvents(outDir, timeline)).filter(e => e.kind === 'navigate').map(e => e.time) : undefined;
+  const stage = stagePlan(timeline, tour.device === 'mobile', navigations).spans.map((span, i) => ({ file: stageFile(i), start: spanFrames(span, fps).first / fps }));
   const absent = stage.find(clip => !existsSync(path.join(outDir, clip.file)));
   if (absent) throw new Error(`${absent.file} is missing; render without --from=compose first`);
 

@@ -46,6 +46,8 @@ export interface Layer {
 }
 
 export const CHANGE_LENGTH = 0.8;
+// The capture logs a navigation on the first frame at or after its action.
+const NAVIGATION_SLACK = 0.2;
 
 export const FLAT: Pose = { scale: 1, rotateX: 0, rotateY: 0, x: 0, y: 0, depth: 0 };
 
@@ -128,7 +130,9 @@ const READ = new Set(['highlight', 'label', 'click', 'upload', 'type']);
 
 // Shots move the camera; before anything to read, it straightens on its own and stays flat
 // until the next shot. A move cut short by the next one starts from wherever it got to.
-export function stagePlan(timeline: Pick<Timeline, 'shots' | 'actions' | 'duration'>, portrait = false): StagePlan {
+// `navigations`, when the capture is done, are the instants the page really changed: a click
+// that waits may only open a panel, and the stage draws a change only where one happened.
+export function stagePlan(timeline: Pick<Timeline, 'shots' | 'actions' | 'duration'>, portrait = false, navigations?: readonly number[]): StagePlan {
   const reads = timeline.actions.filter(a => READ.has(a.action.kind)).map(a => a.time);
   const moves: Move[] = [];
   const notes: StagePlan['notes'] = [];
@@ -169,7 +173,8 @@ export function stagePlan(timeline: Pick<Timeline, 'shots' | 'actions' | 'durati
     push(straighten, Math.max(straighten, flatBy), FLAT);
   });
 
-  const changes = timeline.actions.flatMap(({ time, transition }) => (transition && isStageTransition(transition) ? [{ time, kind: transition }] : []));
+  const happened = (time: number) => !navigations || navigations.some(n => n >= time - 1e-6 && n - time < NAVIGATION_SLACK);
+  const changes = timeline.actions.flatMap(({ time, transition }) => (transition && isStageTransition(transition) && happened(time) ? [{ time, kind: transition }] : []));
   const offFlat = moves.flatMap((move, i) => (isFlat(move.from) && isFlat(move.to) ? []
     : [{ start: move.start, end: isFlat(move.to) ? move.end : (moves[i + 1]?.start ?? timeline.duration) }]));
   const changing = changes.map(({ time }) => ({ start: time, end: Math.min(time + CHANGE_LENGTH, timeline.duration) }));

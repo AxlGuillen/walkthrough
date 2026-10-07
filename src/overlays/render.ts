@@ -2,7 +2,8 @@ import { existsSync } from 'node:fs';
 import { mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { chromium, type Page } from 'playwright-core';
+import type { Page } from 'playwright-core';
+import { headlessBrowsers } from '../capture/browsers.ts';
 import { installClock } from '../capture/clock.ts';
 import { startEncoder, type Encoder } from '../capture/encoder.ts';
 import { pool } from '../cli/parallel.ts';
@@ -102,10 +103,10 @@ export async function renderOverlays({
   if (overlays.length === 0) return;
   await mkdir(path.join(outDir, 'overlays'), { recursive: true });
 
-  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  const browsers = headlessBrowsers();
   const longestFirst = [...overlays.keys()].sort((a, b) => (overlays[b]!.end - overlays[b]!.start) - (overlays[a]!.end - overlays[a]!.start));
   try {
-    await pool(longestFirst, jobs, async index => {
+    await pool(longestFirst, jobs, index => browsers.use(async browser => {
       const overlay = overlays[index]!;
       const source = resolveOverlay(tourDir, overlay.src, templatesDir);
       if (!source) throw new Error(`overlay not found: ${overlay.src} (looked in ${tourDir} and ${templatesDir})`);
@@ -148,9 +149,9 @@ export async function renderOverlays({
       } finally {
         await context.close();
       }
-    });
+    }));
   } finally {
-    await browser.close();
+    await browsers.close();
   }
 }
 

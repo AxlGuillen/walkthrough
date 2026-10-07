@@ -111,6 +111,16 @@ segments:
 `)).toThrow(/device frame/);
   });
 
+  it('waits 15 s by default and takes a longer wait for a slow server', () => {
+    expect(parseTour(minimal).waitTimeout).toBe(15);
+    expect(parseTour(minimal.replace('segments:', 'waitTimeout: 60\nsegments:')).waitTimeout).toBe(60);
+    expect(() => parseTour(minimal.replace('segments:', 'waitTimeout: 0\nsegments:'))).toThrow(TourError);
+  });
+
+  it('allows a cut with a device frame: nothing is drawn on the stage', () => {
+    expect(parseTour(`title: Board\nurl: https://example.com\nframe: phone\ntransition: cut\nsegments:\n  - say: Hola\n`).transition).toBe('cut');
+  });
+
   it('rejects stage transitions with a device frame, but not the dissolve', () => {
     const tour = (transition: string) => `title: Board\nurl: https://example.com\nframe: phone\ntransition: ${transition}\nsegments:\n  - say: Hola\n`;
     expect(() => parseTour(tour('fly'))).toThrow(/device frame/);

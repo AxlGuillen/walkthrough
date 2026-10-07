@@ -25,8 +25,9 @@ const goto = z.strictObject({
 // so a navigation never shows half-loaded states.
 const click = z.strictObject({
   click: z.union([
-    selector.transform(on => ({ on, wait: undefined, at: undefined })),
-    z.strictObject({ on: selector, wait: selector.optional(), ...timed }),
+    selector.transform(on => ({ on, wait: undefined, tab: undefined, at: undefined })),
+    // tab: the click opens another tab (a preview); the tour loads it in place and goes on there.
+    z.strictObject({ on: selector, wait: selector.optional(), tab: z.boolean().optional(), ...timed }),
   ]),
 }).transform(({ click }) => ({ kind: 'click' as const, ...click }));
 
@@ -99,8 +100,12 @@ export type Action = z.infer<typeof action>;
 export const SHOTS = ['flat', 'wide', 'left', 'right', 'top', 'aside-left', 'aside-right', 'inset', 'away'] as const;
 
 // How one screen gives way to the next: dissolve happens in the page; the others on the stage.
-export const TRANSITIONS = ['dissolve', 'push', 'flip', 'fly'] as const;
+export const TRANSITIONS = ['dissolve', 'cut', 'push', 'flip', 'fly'] as const;
 export type Transition = (typeof TRANSITIONS)[number];
+// The ones the stage draws, after capture; dissolve happens in the page, and cut is no transition.
+export const STAGE_TRANSITIONS = ['push', 'flip', 'fly'] as const;
+export type StageTransition = (typeof STAGE_TRANSITIONS)[number];
+export const isStageTransition = (transition: Transition): transition is StageTransition => (STAGE_TRANSITIONS as readonly string[]).includes(transition);
 
 // A camera angle on the whole recording, drawn by the stage after capture; the page never
 // sees it. angle tilts left, right and top; duration is how long the move takes.
@@ -257,6 +262,9 @@ export const tourSchema = z.strictObject({
   highlightStyle: z.enum(HIGHLIGHT_STYLES).default('ring'),
   // How every change of screen (a goto after the start, a click that waits) gives way.
   transition: z.enum(TRANSITIONS).default('dissolve'),
+  // Seconds a wait (wait:, a click's wait or tab) may take, off the video's clock, before the
+  // render gives up: slow test servers need more than the default.
+  waitTimeout: z.number().min(1).max(300).default(15),
   // Gets the app past its own onboarding: storage is written before every page of the
   // tour's origin loads, and dismiss selectors are clicked after each navigation.
   setup: z.strictObject({
@@ -277,7 +285,7 @@ export const tourSchema = z.strictObject({
   if (tour.frame !== 'none' && tour.segments.some(s => s.aside || s.do.some(step => step.kind === 'shot'))) {
     ctx.addIssue({ code: 'custom', message: 'shots do not work with a device frame yet; drop frame or the shots', path: ['frame'] });
   }
-  const staged = tour.transition !== 'dissolve' || tour.segments.some(s => s.transition && s.transition !== 'dissolve');
+  const staged = isStageTransition(tour.transition) || tour.segments.some(s => s.transition && isStageTransition(s.transition));
   if (tour.frame !== 'none' && staged) {
     ctx.addIssue({ code: 'custom', message: 'stage transitions do not work with a device frame yet; use dissolve or drop frame', path: ['frame'] });
   }

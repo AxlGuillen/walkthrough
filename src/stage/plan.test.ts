@@ -87,6 +87,11 @@ describe('changes of screen', () => {
     expect(spans).toEqual([{ start: 3, end: 3 + CHANGE_LENGTH }]);
   });
 
+  it('leaves a cut to the capture: nothing to draw on the stage', () => {
+    const cut: TimedAction = { ...navigation(3), transition: 'cut' };
+    expect(plan([], [cut])).toMatchObject({ changes: [], spans: [] });
+  });
+
   it('merges a change into the camera stretch it falls in', () => {
     const { spans } = plan([shot(1, 'wide')], [navigation(4, 'fly')], 10);
     expect(spans).toEqual([{ start: 1, end: 10 }]);

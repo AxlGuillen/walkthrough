@@ -88,6 +88,20 @@ segments:
     expect(() => parseTour('title: x\nurl: https://example.com\nsegments:\n  - hold: 2\n    aside: { title: x, colour: red }\n')).toThrow(/aside.html[\s\S]*colour/);
   });
 
+  it('counts a click that opens another tab as a change of screen, and keeps a cut as one', () => {
+    const tabbed = buildTimeline(parseTour(`
+title: Board
+url: https://example.com
+transition: cut
+segments:
+  - hold: 2
+    do:
+      - goto: /
+      - click: { on: '.preview', tab: true, at: 1 }
+`), [], options);
+    expect(tabbed.actions.map(a => [a.action.kind, a.transition])).toEqual([['goto', undefined], ['click', 'cut']]);
+  });
+
   it('marks the changes of screen the stage draws, by tour and by segment', () => {
     const staged = buildTimeline(parseTour(`
 title: Board

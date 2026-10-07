@@ -1,6 +1,6 @@
 import type { Rect, Size } from '../timeline/camera.ts';
 import type { Timeline } from '../timeline/build.ts';
-import type { Shot, Transition } from '../tour/schema.ts';
+import { isStageTransition, type Shot, type StageTransition } from '../tour/schema.ts';
 
 // Where the recording sits on the stage. scale is of the full canvas; rotations in degrees
 // (rotateY > 0 brings the left edge closer); x and y shift it, as a share of the canvas;
@@ -25,7 +25,7 @@ export interface Move {
 // A change of screen the stage draws: the old screen, held at its last frame, gives way to the new one.
 export interface Change {
   time: number;
-  kind: Exclude<Transition, 'dissolve'>;
+  kind: StageTransition;
 }
 
 export interface StagePlan {
@@ -169,7 +169,7 @@ export function stagePlan(timeline: Pick<Timeline, 'shots' | 'actions' | 'durati
     push(straighten, Math.max(straighten, flatBy), FLAT);
   });
 
-  const changes = timeline.actions.flatMap(({ time, transition }) => (transition ? [{ time, kind: transition }] : []));
+  const changes = timeline.actions.flatMap(({ time, transition }) => (transition && isStageTransition(transition) ? [{ time, kind: transition }] : []));
   const offFlat = moves.flatMap((move, i) => (isFlat(move.from) && isFlat(move.to) ? []
     : [{ start: move.start, end: isFlat(move.to) ? move.end : (moves[i + 1]?.start ?? timeline.duration) }]));
   const changing = changes.map(({ time }) => ({ start: time, end: Math.min(time + CHANGE_LENGTH, timeline.duration) }));

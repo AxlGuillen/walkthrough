@@ -32,6 +32,12 @@ describe('auditTiming', () => {
     ]);
   });
 
+  it('expects no dissolve after a cut', () => {
+    const events = [{ kind: 'navigate' as const, time: 4 }, { kind: 'ring' as const, time: 4.1 }];
+    const goto = { time: 4, segment: 0, action: { kind: 'goto' as const, url: '/b', at: undefined }, transition: 'cut' as const };
+    expect(auditTiming(events, { overlays: [], actions: [goto] })).toEqual([]);
+  });
+
   it('gives a change the stage draws its longer length', () => {
     const events = [{ kind: 'navigate' as const, time: 4 }, { kind: 'ring' as const, time: 4.6 }];
     const goto = { time: 4, segment: 0, action: { kind: 'goto' as const, url: '/b', at: undefined } };

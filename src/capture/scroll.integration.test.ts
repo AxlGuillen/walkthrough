@@ -141,6 +141,30 @@ describe('waiting for the next screen', () => {
     await page.close();
   }, 60_000);
 
+  it('follows a click that opens another tab, inside the same recording', async () => {
+    const tabUrl = pathToFileURL(path.join(ROOT, 'tests/fixtures/tab/index.html')).href;
+    const { samples, page } = await run(`segments:
+  - hold: 2
+    do:
+      - goto: ${tabUrl}
+      - click: { on: "#open", at: 0.5, tab: true, wait: "#load" }
+`, async p => (p.url().includes('from=tab') ? 1 : 0), tabUrl);
+    expect(samples[Math.round(0.5 * 30)]).toBe(1);
+    expect(samples[Math.round(0.5 * 30) - 1]).toBe(0);
+    expect(page.context().pages()).toHaveLength(1);
+    await page.close();
+  }, 60_000);
+
+  it("gives up on a wait after the tour's waitTimeout", async () => {
+    await expect(run(`waitTimeout: 1
+segments:
+  - hold: 2
+    do:
+      - goto: ${waitUrl}
+      - click: { on: "#load", at: 0.5, wait: "#loaded" }
+`, loaded, waitUrl)).rejects.toThrow(/Timeout 1000ms/);
+  }, 60_000);
+
   it('waits the same way as an action of its own', async () => {
     const { samples, page } = await run(`segments:
   - hold: 2

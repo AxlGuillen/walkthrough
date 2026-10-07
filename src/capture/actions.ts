@@ -17,7 +17,7 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
       // The opening load is the start of the video, not a change of screen.
       const opening = stage.time === 0;
       if (!opening) log.push({ kind: 'navigate', time: stage.time });
-      // A stage transition cuts here and draws the change itself, after capture.
+      // A cut, or a stage transition that draws the change itself after capture.
       const still = opening || transition ? null : await snapshot(page);
       const requested = new URL(action.url, tour.url);
       await clock.settle(async () => {
@@ -31,7 +31,26 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
     case 'click': {
       const before = new URL(page.url());
       // A click that waits for another screen dissolves into it, like a goto.
-      const still = action.wait && !transition ? await snapshot(page) : null;
+      const still = (action.wait || action.tab) && !transition ? await snapshot(page) : null;
+      if (action.tab) {
+        // The other tab's address is loaded here instead: one page is recorded, and the
+        // viewer sees the click lead straight to it.
+        const opened = page.context().waitForEvent('page', { timeout: tour.waitTimeout * 1000 });
+        await clickWithMark(stage, action.on, seed);
+        log.push({ kind: 'navigate', time: stage.time });
+        await clock.settle(async () => {
+          const tab = await opened;
+          await tab.waitForURL(url => url.href !== 'about:blank', { timeout: tour.waitTimeout * 1000 });
+          const url = tab.url();
+          await tab.close();
+          await page.goto(url);
+          if (action.wait) await page.locator(action.wait).first().waitFor({ state: 'visible', timeout: tour.waitTimeout * 1000 });
+          await dismissDialogs(page, tour);
+        });
+        await assertSignedIn(page, tour, before);
+        if (still) await dissolveFrom(page, still);
+        return;
+      }
       await clickWithMark(stage, action.on, seed);
       if (action.wait) {
         log.push({ kind: 'navigate', time: stage.time });
@@ -138,11 +157,9 @@ async function clickWithMark({ page, time, effects, log }: Stage, selector: stri
   log.push({ kind: 'click', time });
 }
 
-const WAIT_TIMEOUT = 15_000;
-
 async function waitFor({ page, clock, tour }: Stage, selector: string): Promise<void> {
   await clock.settle(async () => {
-    await page.locator(selector).first().waitFor({ state: 'visible', timeout: WAIT_TIMEOUT });
+    await page.locator(selector).first().waitFor({ state: 'visible', timeout: tour.waitTimeout * 1000 });
     await dismissDialogs(page, tour);
   });
 }

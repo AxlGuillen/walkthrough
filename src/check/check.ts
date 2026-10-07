@@ -15,7 +15,6 @@ import type { Tour } from '../tour/schema.ts';
 import { selectorOf, worst, type CheckItem, type Status } from './report.ts';
 
 const ACTION_TIMEOUT = 5_000;
-const WAIT_TIMEOUT = 15_000;
 
 // Walks the tour with the page running freely and no frames captured: the same clicks as a
 // render, in seconds instead of minutes, stopping at nothing so every problem shows up.
@@ -114,7 +113,9 @@ async function checkAction(page: Page, tour: Tour, { time, action }: TimedAction
       const target = page.locator(selector);
       // Screens reached by a client-side click have no load event; give them the time a
       // render would, instead of reporting an element that is still on its way.
-      await target.first().waitFor({ state: 'attached', timeout: ACTION_TIMEOUT }).catch(() => {});
+      // A wait: may be on a slow server; it gets the tour's patience, like the render.
+      const patience = action.kind === 'wait' ? tour.waitTimeout * 1000 : ACTION_TIMEOUT;
+      await target.first().waitFor({ state: 'attached', timeout: patience }).catch(() => {});
       const count = await target.count();
       if (count === 0) {
         flag('fail', 'not found on this screen');
@@ -125,7 +126,7 @@ async function checkAction(page: Page, tour: Tour, { time, action }: TimedAction
       } else {
         if (count > 1) flag('warn', `${count} matches; the first one is used`);
         if (!(await target.first().isVisible())) flag('fail', 'exists but is not visible');
-        else await act(page, action, selector);
+        else await act(page, tour, action, selector);
       }
     }
 
@@ -137,14 +138,23 @@ async function checkAction(page: Page, tour: Tour, { time, action }: TimedAction
   return { time, label, status: worst(statuses), notes };
 }
 
-async function act(page: Page, action: TimedAction['action'], selector: string): Promise<void> {
+async function act(page: Page, tour: Tour, action: TimedAction['action'], selector: string): Promise<void> {
   const target = page.locator(selector).first();
-  if (action.kind === 'click') await target.click({ timeout: ACTION_TIMEOUT });
+  const patience = tour.waitTimeout * 1000;
+  if (action.kind === 'click' && action.tab) {
+    const opened = page.context().waitForEvent('page', { timeout: patience });
+    await target.click({ timeout: ACTION_TIMEOUT });
+    const tab = await opened.catch(() => { throw new Error('the click opened no tab'); });
+    await tab.waitForURL(url => url.href !== 'about:blank', { timeout: patience });
+    const url = tab.url();
+    await tab.close();
+    await page.goto(url);
+  } else if (action.kind === 'click') await target.click({ timeout: ACTION_TIMEOUT });
   else if (action.kind === 'hover') await target.hover({ timeout: ACTION_TIMEOUT });
   else if (action.kind === 'type') await target.fill(action.text, { timeout: ACTION_TIMEOUT });
   if (action.kind === 'click') await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
   if (action.kind === 'click' && action.wait) {
-    await page.locator(action.wait).first().waitFor({ state: 'visible', timeout: WAIT_TIMEOUT })
+    await page.locator(action.wait).first().waitFor({ state: 'visible', timeout: patience })
       .catch(() => { throw new Error(`${action.wait} did not show after the click`); });
   }
 }

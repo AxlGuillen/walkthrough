@@ -20,13 +20,13 @@ export interface TimedAction {
   time: number;
   segment: number;
   action: Action;
-  // A change of screen the stage draws, instead of the page's own dissolve.
+  // A change of screen without the page's own dissolve: a cut, or one the stage draws.
   transition?: Exclude<Transition, 'dissolve'>;
 }
 
 // A goto after the opening, or a click that waits for the next screen.
 export function navigates(action: Action, time: number): boolean {
-  return (action.kind === 'goto' && time > 0) || (action.kind === 'click' && action.wait !== undefined);
+  return (action.kind === 'goto' && time > 0) || (action.kind === 'click' && (action.wait !== undefined || action.tab === true));
 }
 
 export interface TimedShot {

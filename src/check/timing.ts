@@ -32,8 +32,9 @@ export function auditTiming(events: readonly CaptureEvent[], timeline: Pick<Time
   const navigations = events.filter(e => e.kind === 'navigate');
   const covering = timeline.overlays.filter(covers).map(o => o.start);
   // A change the stage draws takes longer than the page's dissolve.
-  const staged = (timeline.actions ?? []).filter(a => a.transition).map(a => a.time);
-  const changeLength = (time: number) => (staged.some(t => Math.abs(t - time) < 0.1) ? CHANGE_LENGTH : TRANSITION);
+  const changed = (timeline.actions ?? []).filter(a => a.transition);
+  const at = (time: number) => changed.find(a => Math.abs(a.time - time) < 0.1)?.transition;
+  const changeLength = (time: number) => { const kind = at(time); return kind === 'cut' ? 0 : kind ? CHANGE_LENGTH : TRANSITION; };
 
   for (const scroll of scrolls) {
     if (scroll.distance === undefined || scroll.duration <= 0) continue;

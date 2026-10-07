@@ -21,8 +21,12 @@ export const PACE = {
   clicks: 0.8,
 };
 
-export function auditTiming(events: readonly CaptureEvent[], timeline: Pick<Timeline, 'overlays'> & Partial<Pick<Timeline, 'actions'>>): TimingNote[] {
+export function auditTiming(captured: readonly CaptureEvent[], timeline: Pick<Timeline, 'overlays'> & Partial<Pick<Timeline, 'actions'>>): TimingNote[] {
   const notes: TimingNote[] = [];
+  // What the app does under an overlay that hides it is never seen: a tour may undo its own
+  // changes there, as fast as it likes.
+  const hidden = timeline.overlays.filter(coversApp);
+  const events = captured.filter(event => !hidden.some(o => event.time > o.start && event.time < o.end));
   const scrolls = events.filter(e => e.kind === 'scroll');
   const navigations = events.filter(e => e.kind === 'navigate');
   const covering = timeline.overlays.filter(coversApp).map(o => o.start);

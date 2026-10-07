@@ -8,6 +8,12 @@ const flow = (start: number, mode: 'full' | 'card' = 'full'): TimedOverlay => ({
 });
 
 describe('auditTiming', () => {
+  it('ignores what the app does under an overlay that hides it', () => {
+    const quick = [3, 3.4, 3.8].map(time => ({ kind: 'click' as const, time }));
+    expect(auditTiming(quick, { overlays: [flow(2)] })).toEqual([]);
+    expect(auditTiming(quick, { overlays: [flow(2, 'card')] })).toHaveLength(2);
+  });
+
   it('flags scrolls too fast to follow, not paced ones', () => {
     const notes = auditTiming([
       { kind: 'scroll', time: 1, duration: 1, distance: 2700 },

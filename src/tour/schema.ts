@@ -269,6 +269,8 @@ export const tourSchema = z.strictObject({
   // tour's origin loads, and dismiss selectors are clicked after each navigation.
   setup: z.strictObject({
     storage: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]).transform(String)).default({}),
+    // The same, for other sites the tour visits by their full address: { "https://host": { key: value } }.
+    origins: z.record(z.url(), z.record(z.string(), z.union([z.string(), z.number(), z.boolean()]).transform(String))).default({}),
     dismiss: z.array(selector).default([]),
   }).prefault({}),
   sfx: z.union([

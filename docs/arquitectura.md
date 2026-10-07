@@ -360,6 +360,7 @@ setup:
 ```
 
 - `storage` se escribe con un init script antes de que cargue cada documento del origen del tour. Se compara protocolo y host, no `origin`, porque para `file://` Node dice `"null"` y Chrome `"file://"`.
+- `origins` hace lo mismo para otros sitios que el tour visita con su dirección completa: `{ "https://portal.test": { clave: valor } }`. Sirve cuando un tour cruza dos apps (una consola y su portal) y la segunda recuerda una preferencia, como la última vista elegida.
 - `dismiss` se aplica dentro del `settle()` de cada navegación: el diálogo y su animación de cierre quedan fuera del tiempo del video.
 - `check` aplica el mismo `setup`, así que no reporta como abiertos los onboardings ya resueltos.
 - Con `storage` declarado, un tour funciona igual con un perfil recién creado.

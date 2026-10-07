@@ -10,17 +10,33 @@ export class SessionExpiredError extends Error {
   override name = 'SessionExpiredError';
 }
 
+export interface SiteStorage {
+  protocol: string;
+  host: string;
+  entries: [string, string][];
+}
+
+// What each site the tour visits gets in localStorage before its pages load. Protocol and host,
+// not origin: for file:// pages Node says "null" and Chrome "file://".
+export function storagePlan(tour: Pick<Tour, 'url' | 'setup'>): SiteStorage[] {
+  const sites = [[tour.url, tour.setup.storage] as const, ...Object.entries(tour.setup.origins)];
+  return sites.flatMap(([url, storage]) => {
+    const entries = Object.entries(storage);
+    const { protocol, host } = new URL(url);
+    return entries.length ? [{ protocol, host, entries }] : [];
+  });
+}
+
 export async function installSetup(page: Page, tour: Tour): Promise<void> {
-  const entries = Object.entries(tour.setup.storage);
-  if (entries.length === 0) return;
-  // Protocol and host, not origin: for file:// pages Node says "null" and Chrome "file://".
-  const { protocol, host } = new URL(tour.url);
-  await page.addInitScript(({ protocol, host, entries }) => {
-    if (location.protocol !== protocol || location.host !== host) return;
+  const sites = storagePlan(tour);
+  if (sites.length === 0) return;
+  await page.addInitScript(sites => {
+    const site = sites.find(s => s.protocol === location.protocol && s.host === location.host);
+    if (!site) return;
     try {
-      for (const [key, value] of entries) localStorage.setItem(key, value);
+      for (const [key, value] of site.entries) localStorage.setItem(key, value);
     } catch { /* storage can be blocked; the tour then just shows the onboarding */ }
-  }, { protocol, host, entries });
+  }, sites);
 }
 
 export async function dismissDialogs(page: Page, tour: Tour): Promise<void> {

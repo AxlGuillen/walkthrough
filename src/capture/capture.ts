@@ -1,5 +1,6 @@
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { localeOf } from '../charts/scale.ts';
 import { cursorPosition, sceneAt } from '../effects/scene.ts';
 import { markerFont } from '../effects/font.ts';
 import { renderScene } from '../effects/svg.ts';
@@ -40,7 +41,7 @@ export async function captureTour({
   root, tour, timeline, file, quality = 'final', fps = FPS[quality], headless = true, signal, onFrame,
 }: CaptureOptions): Promise<{ frames: number }> {
   const device = deviceProfile(captureDevice(tour.device, tour.frame), quality);
-  const context = await openContext(root, { headless, device, ...(tour.session ? { session: tour.session } : {}) });
+  const context = await openContext(root, { headless, device, locale: localeOf(tour.language), ...(tour.session ? { session: tour.session } : {}) });
   const encoder = startEncoder({ fps, output: device.output, file, draft: quality === 'preview' });
   const total = frameCount(timeline.duration, fps);
 

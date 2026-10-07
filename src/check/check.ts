@@ -1,4 +1,5 @@
 import type { Page } from 'playwright-core';
+import { localeOf } from '../charts/scale.ts';
 import { deviceProfile } from '../capture/devices.ts';
 import { looksLikeLogin, openContext } from '../capture/session.ts';
 import { dismissDialogs, installSetup } from '../capture/setup.ts';
@@ -68,7 +69,7 @@ export function checkShots(timeline: Timeline, portrait = false): CheckItem[] {
 
 export async function checkTour(root: string, tour: Tour, timeline: Timeline): Promise<CheckItem[]> {
   const context = await openContext(root, {
-    headless: true, device: { ...deviceProfile(captureDevice(tour.device, tour.frame)), deviceScaleFactor: 1 },
+    headless: true, device: { ...deviceProfile(captureDevice(tour.device, tour.frame)), deviceScaleFactor: 1 }, locale: localeOf(tour.language),
     ...(tour.session ? { session: tour.session } : {}),
   });
   const items: CheckItem[] = [];

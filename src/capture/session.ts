@@ -10,12 +10,13 @@ export interface ContextOptions {
   headless: boolean;
   session?: string;
   device?: DeviceProfile;
+  locale?: string;
 }
 
 // A persistent profile instead of a storageState snapshot: Supabase rotates refresh
 // tokens on use, so a snapshot goes stale after the first render.
-export async function openContext(root: string, { headless, session, device }: ContextOptions): Promise<BrowserContext> {
-  const options: BrowserContextOptions = { viewport: null };
+export async function openContext(root: string, { headless, session, device, locale }: ContextOptions): Promise<BrowserContext> {
+  const options: BrowserContextOptions = { viewport: null, ...(locale ? { locale } : {}) };
   if (device) {
     Object.assign(options, {
       viewport: device.viewport,

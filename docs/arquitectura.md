@@ -73,7 +73,7 @@ title: Tablero de uws-tasks
 url: https://uws-tasks.vercel.app
 session: uws-tasks          # .auth/uws-tasks.json
 device: desktop             # desktop | mobile
-language: es                # es | en
+language: es                # es | en; también el idioma del navegador (es-MX, en-US): fechas y números de la app
 voice: 35199d5438854f5d9157c500479ab684   # opcional
 music: { track: calm.mp3, volume: 0.15 }  # opcional
 subtitles: karaoke          # karaoke | none

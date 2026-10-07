@@ -16,6 +16,22 @@ Para elegir la forma: si el proceso siempre sigue el mismo camino, `linear`; si 
 
 - **`full`** (por defecto): tapa la app. Es un interludio, para dar el mapa antes de entrar o para resumir al salir.
 - **`card`**: un panel abajo, sobre la app. Sirve para acompañar lo que se ve, así que conviene sobre una pantalla quieta, sin clics en la franja inferior.
+- **`aside`**: la pantalla se corre a un lado (`layout: aside-left`, por defecto, o `aside-right`) y el flujo se arma en vertical del otro lado, sin tapar nada; al terminar, la pantalla vuelve sola. Es el modo para **explicar mientras la app lo hace**: si cada paso usa la misma palabra que el clic que lo hace en la app, el paso se enciende justo cuando el cursor lo hace. El título espera a que la pantalla termine de apartarse. Sin `frame`, como los planos.
+
+  ```yaml
+  - say: Pick a day, set the party, choose a time, and review it before anything is confirmed.
+    do:
+      - click: { on: '[role=dialog] button:has-text("SAT")', at: day }
+      - click: { on: '[role=dialog] button:text-is("+")', at: party }
+    flow:
+      mode: aside
+      title: Booking an experience
+      steps:
+        - { text: Pick a day, emoji: calendar, at: day }
+        - { text: Set the party, emoji: busts-in-silhouette, at: party }
+        - { text: Choose a time, emoji: stopwatch, at: time }
+        - { text: Review it, emoji: check-mark-button, at: review }
+  ```
 
 ## Formas
 

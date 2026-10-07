@@ -22,6 +22,7 @@ Piezas animadas que se declaran en el YAML con sus datos y sus palabras clave, y
 | Que la app se vea dentro de un navegador, una laptop o un teléfono | `frame:` en el tour (ver «Marco de dispositivo») |
 | Darle profundidad al recorrido, ver la app desde un ángulo | `shot:` en el segmento (ver «Planos») |
 | Explicar algo con texto junto a la app, sin taparla | `aside:` en el segmento (ver «Aparte») |
+| Un proceso explicado mientras la app lo hace | Un flujo con `mode: aside` (`docs/flujos.md`, «Modos») |
 | Títulos con más carácter | `typeface: editorial` en el tour (ver «Tipografía») |
 | Que los cambios de pantalla se vean distintos a la disolvencia | `transition:` en el tour o el segmento (ver «Transiciones») |
 | Un texto corto encima de la app | `lower-third.html`; un atajo de teclado, `shortcut.html`; dos capturas lado a lado, `compare.html` |

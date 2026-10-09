@@ -9,6 +9,7 @@ import { cameraAt, followCursor, fullFrame } from '../timeline/camera.ts';
 import type { Tour } from '../tour/schema.ts';
 import { continueTyping, fadeHiddenMarks, perform, retrackMarks } from './actions.ts';
 import { installClock } from './clock.ts';
+import { watchNetwork } from './network.ts';
 import { prepareTargets } from './prep.ts';
 import { captureDevice } from '../frame/layout.ts';
 import { deviceProfile, FPS, type Quality } from './devices.ts';
@@ -54,6 +55,7 @@ export async function captureTour({
     await page.addInitScript(hideCaret);
     await installSetup(page, tour);
     const camera = await shooter(page, device);
+    const network = watchNetwork(page);
     const stage = createStage(page, clock, tour, device, timeline);
     const home = fullFrame(device.viewport);
 
@@ -66,6 +68,8 @@ export async function captureTour({
         await perform(stage, action, timeline.actions.indexOf(action));
       }
       await continueTyping(stage);
+      // What the app asked the network for during the frame before is answered and painted now.
+      await network.settle();
       await applyScrolls(page, stage.scrolls, previous, stage.time);
       // Every frame, not only after our own scrolls: the app may move the page itself, as a
       // menu that scrolls to the top when it opens.

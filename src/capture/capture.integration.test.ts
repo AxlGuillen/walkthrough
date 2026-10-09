@@ -1,5 +1,8 @@
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -226,6 +229,57 @@ segments:
     expect(r3).toBeLessThan(60);
     expect(b3).toBeGreaterThan(200);
   }, 120_000);
+});
+
+describe('the app answering a click', () => {
+  // A click that asks the server for data; the answer paints the lower half green.
+  const app = `<!doctype html><body style="margin:0">
+<button id="ask" style="height:200px;width:100%;font-size:40px">Ask</button>
+<div id="answer" style="position:fixed;left:0;right:0;bottom:0;height:50vh;background:#fff"></div>
+<script>
+  document.getElementById('ask').onclick = () => fetch('/api' + location.search)
+    .then(r => r.text()).then(() => { document.getElementById('answer').style.background = 'rgb(0,160,0)'; });
+</script></body>`;
+
+  it('shows the answer on the same frame however slow the server is', async () => {
+    const server = createServer((request, response) => {
+      const url = new URL(request.url!, 'http://localhost');
+      if (url.pathname !== '/api') return void response.end(app);
+      setTimeout(() => response.end('ok'), Number(url.searchParams.get('delay')));
+    });
+    await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
+    const base = `http://127.0.0.1:${(server.address() as AddressInfo).port}/`;
+    try {
+      const firstGreen = async (delay: number) => {
+        const tour = parseTour(`
+title: Fixture
+url: ${base}
+sfx: false
+segments:
+  - hold: 1.5
+    do:
+      - goto: ${base}?delay=${delay}
+      - click: { on: "#ask", at: 0.5 }
+`);
+        const file = path.join(dir, `answer-${delay}.mp4`);
+        await captureTour({ root: ROOT, tour, timeline: buildTimeline(tour, []), file, fps: 30 });
+        const events = JSON.parse(readFileSync(path.join(dir, 'events.json'), 'utf8')) as { kind: string; time: number }[];
+        const click = Math.round(events.find(e => e.kind === 'click')!.time * 30);
+        for (let frame = 0; frame < 45; frame++) {
+          // -ss returns the first frame at or after the instant: a hair before this one's start.
+          const [r, g, b] = pixel(file, (frame - 0.25) / 30, 960, 900);
+          if (g > 120 && r < 60 && b < 60) return { click, green: frame };
+        }
+        return { click, green: -1 };
+      };
+      // The answer is painted before the click's own frame is shot, however long it took.
+      const fast = await firstGreen(300);
+      expect(fast.green).toBe(fast.click);
+      expect(await firstGreen(1500)).toEqual(fast);
+    } finally {
+      server.close();
+    }
+  }, 180_000);
 });
 
 async function layout(url: string, selectors: string[]) {

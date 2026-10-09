@@ -436,6 +436,47 @@ La captura en Windows solo se ha probado con fixtures locales.
 
 **Fecha a cuidar:** `global-v2.yaml` necesita la estancia del 5 al 11 de octubre. Si ese video se necesita antes de que exista 13.2, se renderiza en la Mac, donde están los clips hechos a mano.
 
+## Fase 14 — Sonido en su cuadro (9/oct/2026)
+
+Falla de todos los renders, no de un video: los efectos de sonido no siempre caen con lo que se ve. En GPM terminamos silenciando clics y marcas. Medido en la entrega de DYMMSA: el audio y el video arrancan juntos, y un clic suena en el cuadro en que se dibuja. Lo que se separa es el sonido de su animación:
+
+- **La app responde a destiempo.** Un clic sin `wait` no espera la red: si la app carga datos para abrir un menú o un panel, la respuesta llega en tiempo real mientras la captura avanza cuadro por cuadro, y cae en un cuadro distinto según lo rápida que sea la máquina. El clic suena a tiempo; la app reacciona tarde, o más tarde en una máquina más rápida.
+- **Los overlays hacen pop al empezar, no cuando aparece lo que se ve.** El título de un capítulo sube en su palabra, hasta 2 s después (DYMMSA: apertura +1,8 s, «Nómina» +1,95 s).
+- **Duraciones fijas.** El *whoosh* dura 0,5 s aunque el zoom dure otra cosa. Las transiciones del escenario (0,8 s) suenan con el mismo *swipe* de 0,3 s que una disolvencia de 0,5 s. Una marca retirada antes de tiempo suena completa.
+- **Sonidos sin imagen.** Los clics de una pantalla que un plano sacó del cuadro (`away`) se siguen oyendo.
+- **Medio cuadro de adelanto.** Una marca se empieza a ver en el cuadro siguiente al de su evento, y un zoom puede empezar entre cuadros; su sonido se adelanta.
+
+La regla de la fase: **cada sonido sale de la animación que acompaña, empieza en el primer cuadro en que esa animación se ve y dura lo que dura ella.** Si no se ve, no suena.
+
+### 14.1 La app responde en el siguiente cuadro, en cualquier máquina
+
+Después de cada interacción sin `wait` (clic, tecleo, `upload`), la captura espera, con el reloj de la página congelado, a que no quede ninguna petición de red en curso, con un tope. La respuesta llega y la app la pinta, así que su reacción sale en el cuadro siguiente, igual en una Mac cargada que en un Ryzen. Las animaciones de la app siguen en el reloj del video. Prueba: un fixture cuyo clic pide datos a un servidor lento (ruta simulada con 300 ms y con 1,5 s de retraso) muestra la respuesta en el mismo cuadro con los dos retrasos.
+
+### 14.2 Los overlays dicen cuándo suenan
+
+Las plantillas marcan en su propia línea de tiempo el momento en que entra lo que se ve (`walkthrough.cue(t)`, en el mismo segundo que el tween del título). El render de overlays recoge esas marcas y el montaje pone el pop ahí. Sigue siendo un pop por overlay; un overlay sin marca (los de un tour, como los de GPM) suena en su primer cuadro, como hoy.
+
+### 14.3 Cada sonido dura lo que su animación
+
+El *whoosh* se estira a la duración del zoom; la disolvencia suena 0,5 s y cada transición del escenario 0,8 s; la flecha de una etiqueta suena mientras se traza; una marca retirada corta su sonido cuando se va.
+
+### 14.4 En el cuadro, nunca antes
+
+Todo sonido empieza en el primer cuadro en que su efecto se ve, a los fps del render: el trazo de una marca, el cuadro siguiente al de su evento; el cursor que presiona, en el del clic.
+
+### 14.5 Si no se ve, no suena
+
+A los overlays que tapan la app se suman los planos que dejan la pantalla fuera del cuadro (menos de la mitad a la vista): lo que pasa ahí no se oye.
+
+### 14.6 Auditoría de sincronía
+
+- **En cada render,** junto a la de tiempos: para cada sonido, el primer cuadro en que su efecto se ve según el mismo código que lo dibuja (la escena de la capa de efectos, la cámara, el escenario, la marca del overlay). Avisa si se separan más de un cuadro y si un sonido no tiene imagen.
+- **Medido, en las pruebas:** un tour de fixture con clic, marca, zoom y overlay, renderizado de punta a punta; se decodifican el audio y los cuadros del video final y el inicio de cada sonido debe caer en el primer cuadro de su efecto, sin adelantarse.
+
+### Orden
+
+14.1 primero, que es la causa que más se nota y la única que depende de la máquina; luego 14.2 a 14.5, que comparten el armado de los sonidos; al final 14.6, que las comprueba juntas.
+
 ## Estimación
 
 | Fase | Tamaño |
@@ -453,3 +494,4 @@ La captura en Windows solo se ha probado con fixtures locales.
 | 10 | Grande: 10.1 chica, 10.2 y 10.3 medianas, 10.4 mediana por escena |
 | 12 | Mediana: cuatro cambios chicos, medidos uno por uno |
 | 13 | Mediana: 13.2 y 13.4 medianas, el resto chicas |
+| 14 | Mediana-grande: 14.1 y 14.6 medianas, el resto chicas |

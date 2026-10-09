@@ -13,7 +13,8 @@ import { audioGraph, type Loudness } from './audio.ts';
 import { EVENTS_FILE, type CaptureEvent } from '../capture/events.ts';
 import { eventsFromTimeline, soundEvents, type SoundEvent } from './sfx.ts';
 import { karaokeAss } from './subtitles.ts';
-import { stagePlan } from '../stage/plan.ts';
+import { poseAt, screenShare, stagePlan } from '../stage/plan.ts';
+import { readCues } from '../overlays/cues.ts';
 import { spanFrames, stageFile } from '../stage/render.ts';
 import { videoGraph } from './video.ts';
 
@@ -121,14 +122,17 @@ export async function composeTour(
   // Without the capture's own log, every change the timeline planned is assumed to happen.
   const navigations = existsSync(path.join(outDir, EVENTS_FILE))
     ? (await capturedEvents(outDir, timeline)).filter(e => e.kind === 'navigate').map(e => e.time) : undefined;
-  const stage = stagePlan(timeline, tour.device === 'mobile', navigations).spans.map((span, i) => ({ file: stageFile(i), start: spanFrames(span, fps).first / fps }));
+  const plan = stagePlan(timeline, tour.device === 'mobile', navigations);
+  const stage = plan.spans.map((span, i) => ({ file: stageFile(i), start: spanFrames(span, fps).first / fps }));
   const absent = stage.find(clip => !existsSync(path.join(outDir, clip.file)));
   if (absent) throw new Error(`${absent.file} is missing; render without --from=compose first`);
 
   const output = 'video.mp4';
   const inputs: ComposeInputs = {
     capture: 'capture.mp4', clips, overlays, duration: timeline.duration, output, draft: quality === 'preview',
-    sfx: tour.sfx.enabled ? soundEvents(await capturedEvents(outDir, timeline), timeline.overlays, tour.sfx) : [],
+    sfx: tour.sfx.enabled ? soundEvents(await capturedEvents(outDir, timeline), timeline.overlays, tour.sfx, {
+      fps, screen: time => screenShare(poseAt(plan.moves, time)), ...await readCues(outDir).then(cues => (cues ? { cues } : {})),
+    }) : [],
     sfxVolume: tour.sfx.volume,
     ...(subtitles ? { subtitles } : {}),
     ...(music ? { music } : {}),

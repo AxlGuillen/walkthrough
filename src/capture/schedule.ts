@@ -4,6 +4,8 @@ export const TYPING_RATE = 14;
 
 // How long a change of screen dissolves from the old page into the new one.
 export const TRANSITION = 0.5;
+// Seconds a zoom takes unless the tour says otherwise.
+export const ZOOM_DURATION = 0.8;
 
 export function frameCount(duration: number, fps: number): number {
   return Math.max(1, Math.ceil(duration * fps - 1e-9));

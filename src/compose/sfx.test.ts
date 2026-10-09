@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { CaptureEvent } from '../capture/events.ts';
 import type { TimedAction, TimedOverlay } from '../timeline/build.ts';
 import { audioGraph } from './audio.ts';
-import { eventsFromTimeline, sfxGraph, soundEvents } from './sfx.ts';
+import { afterFrame, atFrame, eventsFromTimeline, overlayOnset, sfxGraph, soundEvents } from './sfx.ts';
 
 const overlay = (start: number): TimedOverlay => ({ src: 'a.html', params: {}, start, end: start + 1, fade: 0, segment: 0, beats: {} });
 
@@ -19,12 +19,26 @@ describe('soundEvents', () => {
     { kind: 'navigate', time: 8 },
   ];
 
-  it('turns what happened into sounds, in time order', () => {
-    const sounds = soundEvents(captured, [overlay(0.5)]).map(e => [e.sound, e.time]);
-    expect(sounds).toEqual([
-      ['pop', 0.5], ['click', 1], ['keys', 2], ['keys', 2 + 1 / 14], ['keys', 2 + 2 / 14],
-      ['draw', 3], ['draw', 3.5], ['whoosh', 4], ['whoosh', 5], ['scroll', 6], ['swipe', 8],
-    ]);
+  it('turns what happened into sounds, in time order, each on the first frame its animation shows', () => {
+    const sounds = soundEvents(captured, [overlay(0.5)]);
+    const frame = (n: number) => n / 30;
+    // What is set on a frame (a press, a letter) sounds on it; what eases in from nothing (a pen
+    // stroke, the camera, a dissolve) sounds on the frame after; an overlay on its first frame shown.
+    expect(sounds.map(e => e.sound)).toEqual(['pop', 'click', 'keys', 'keys', 'keys', 'draw', 'draw', 'whoosh', 'whoosh', 'scroll', 'swipe']);
+    [frame(16), frame(30), frame(60), frame(63), frame(65), frame(91), frame(110), frame(121), frame(151), frame(181), frame(241)]
+      .forEach((time, i) => expect(sounds[i]!.time).toBeCloseTo(time, 9));
+  });
+
+  it('never starts a sound before its frame, and never more than a frame late', () => {
+    for (const fps of [15, 30]) {
+      for (let i = 0; i < 200; i++) {
+        const time = i * 0.0731;
+        for (const onset of [atFrame(time, fps), afterFrame(time, fps)]) {
+          expect(onset).toBeGreaterThanOrEqual(time - 1e-9);
+          expect(onset - time).toBeLessThanOrEqual(1 / fps + 1e-9);
+        }
+      }
+    }
   });
 
   it('gives zooms in and out their own sound and scrolls their length', () => {
@@ -35,7 +49,30 @@ describe('soundEvents', () => {
 
   it('gives a flow a single pop as it appears, not one per step', () => {
     const flow = { ...overlay(1), flow: { shape: 'linear' as const, mode: 'full' as const, steps: [0, 2, 4].map(time => ({ text: 'Step', time: 1 + time })) } };
-    expect(soundEvents([], [flow]).map(e => [e.sound, e.time])).toEqual([['pop', 1]]);
+    expect(soundEvents([], [flow]).map(e => e.sound)).toEqual(['pop']);
+  });
+
+  it("pops an overlay when what its cue marks comes in, not when it starts", () => {
+    const chapter = { ...overlay(85.03), end: 89 };
+    const [pop] = soundEvents([], [chapter], { mute: [] }, { fps: 30, cues: [[{ at: 1.95, sound: 'pop' }]] });
+    expect(pop!.time).toBeCloseTo(overlayOnset(85.03, 1.95, 30), 9);
+    expect(pop!.time).toBeGreaterThan(85.03 + 1.95);
+    expect(pop!.time - (85.03 + 1.95)).toBeLessThanOrEqual(2 / 30);
+  });
+
+  it('lets each sound last as long as its animation', () => {
+    const sounds = soundEvents([
+      { kind: 'zoom', time: 1, direction: 'in', duration: 1.4 }, { kind: 'zoom', time: 3, direction: 'out' },
+      { kind: 'navigate', time: 5 }, { kind: 'navigate', time: 7, transition: 'push' }, { kind: 'label', time: 9 },
+    ], []);
+    expect(sounds.map(e => [e.sound, e.duration])).toEqual([['whoosh', 1.4], ['whoosh', 0.8], ['swipe', 0.5], ['swipe', 0.8], ['draw', 0.4 + 0.12]]);
+    expect(sounds[2]!.variant).not.toBe(sounds[3]!.variant);
+  });
+
+  it('keeps quiet what happens while the stage holds the recording out of the frame', () => {
+    const away = (time: number) => (time >= 2 && time <= 3 ? 0 : 1);
+    const sounds = soundEvents([{ kind: 'click', time: 1 }, { kind: 'click', time: 2.5 }], [overlay(2.2)], { mute: [] }, { fps: 30, screen: away });
+    expect(sounds.map(e => e.sound)).toEqual(['click', 'pop']);
   });
 
   it('varies clicks and overlays, the same way on every render', () => {
@@ -49,7 +86,7 @@ describe('soundEvents', () => {
   it('keeps quiet what the app does under an overlay that hides it', () => {
     const card = { ...overlay(2), src: 'title-card.html', end: 6 };
     const sounds = soundEvents([{ kind: 'click', time: 1 }, { kind: 'click', time: 3 }, { kind: 'type', time: 4, chars: 2 }], [card]);
-    expect(sounds.map(e => [e.sound, e.time])).toEqual([['click', 1], ['pop', 2]]);
+    expect(sounds.map(e => e.sound)).toEqual(['click', 'pop']);
   });
 
   it('drops muted sounds', () => {
@@ -80,7 +117,8 @@ describe('sfxGraph', () => {
     const text = graph.parts.join(';');
     expect(text).not.toContain('asplit');
     expect(text.match(/aevalsrc/g)).toHaveLength(3);
-    expect(text).toContain('adelay=2500:all=1[fx1]');
+    // In samples, so a sound lands on its frame to the sample.
+    expect(text).toContain('adelay=120000S:all=1[fx1]');
     expect(text).toContain('[fx0][fx1][fx2]amix=inputs=3');
   });
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TimedAction, TimedShot } from '../timeline/build.ts';
 import type { Shot } from '../tour/schema.ts';
 import type { Rect } from '../timeline/camera.ts';
-import { CAMERA, CHANGE_LENGTH, changeAt, changeLayers, FLAT, pose, poseAt, room, ROOM_SHOTS, stagePlan } from './plan.ts';
+import { CAMERA, CHANGE_LENGTH, changeAt, changeLayers, FLAT, pose, poseAt, room, ROOM_SHOTS, screenShare, stagePlan } from './plan.ts';
 
 const shot = (time: number, to: Shot['to'], extra: Partial<Shot> = {}): TimedShot =>
   ({ time, segment: 0, shot: { kind: 'shot', to, angle: undefined, duration: undefined, at: undefined, ...extra } });
@@ -184,5 +184,18 @@ describe('stage changes and real navigations', () => {
     const real = stagePlan({ shots: [], actions, duration: 10 }, false, [5.03]);
     expect(real.changes.map(c => c.time)).toEqual([5]);
     expect(real.spans).toEqual([{ start: 5, end: 5 + CHANGE_LENGTH }]);
+  });
+});
+
+describe('screenShare', () => {
+  it('keeps the whole recording in view flat, aside and wide, and none of it away', () => {
+    expect(screenShare(FLAT)).toBe(1);
+    expect(screenShare(pose('aside-left'))).toBeCloseTo(1);
+    expect(screenShare(pose('wide'))).toBeCloseTo(1);
+    expect(screenShare(pose('away'))).toBe(0);
+  });
+
+  it('counts the part still in the frame while the screen leaves', () => {
+    expect(screenShare({ ...FLAT, y: 0.5 })).toBeCloseTo(0.5);
   });
 });

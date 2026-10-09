@@ -115,6 +115,14 @@ const mix = (a: Pose, b: Pose, k: number): Pose => ({
   depth: a.depth + (b.depth - a.depth) * k,
 });
 
+// How much of the recording a pose keeps inside the frame, from 0 to 1. The plane is the
+// canvas, scaled about its center and moved by x widths and y heights (stage.html); the tilt
+// is left out, it barely changes what is in view.
+export function screenShare({ scale, x, y }: Pose): number {
+  const inView = (offset: number) => Math.max(0, Math.min(0.5, offset + scale / 2) - Math.max(-0.5, offset - scale / 2)) / scale;
+  return inView(x) * inView(y);
+}
+
 export function poseAt(moves: readonly Move[], time: number): Pose {
   let current = FLAT;
   for (const move of moves) {

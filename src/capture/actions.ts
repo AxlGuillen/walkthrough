@@ -1,14 +1,14 @@
 import { markColor, type MarkColor } from '../effects/marks.ts';
 import { clickVisible, endLabelAt, endRingAt, labelVisible, ringVisible, TIMING } from '../effects/scene.ts';
 import type { TimedAction } from '../timeline/build.ts';
+import type { CaptureEvent } from './events.ts';
 import { fullFrame } from '../timeline/camera.ts';
-import { charsDue, TRANSITION } from './schedule.ts';
+import { charsDue, TRANSITION, ZOOM_DURATION } from './schedule.ts';
 import { assertSignedIn, dismissDialogs } from './setup.ts';
 import type { Stage } from './stage.ts';
 import { planScroll, queueScroll, scrollDistance, scrollDuration, type ScrollMode } from './scroll.ts';
 import { aimAt, visibleBox, zoomRect } from './targets.ts';
 
-const ZOOM_DURATION = 0.8;
 
 export async function perform(stage: Stage, { time, action, transition }: TimedAction, seed: number): Promise<void> {
   const { page, clock, tour, device, camera, effects, log } = stage;
@@ -16,7 +16,7 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
     case 'goto': {
       // The opening load is the start of the video, not a change of screen.
       const opening = stage.time === 0;
-      if (!opening && transition !== 'cut') log.push({ kind: 'navigate', time: stage.time });
+      if (!opening && transition !== 'cut') log.push(navigation(stage.time, transition));
       // A cut, or a stage transition that draws the change itself after capture.
       const still = opening || transition ? null : await snapshot(page);
       const requested = new URL(action.url, tour.url);
@@ -37,7 +37,7 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
         // viewer sees the click lead straight to it.
         const opened = page.context().waitForEvent('page', { timeout: tour.waitTimeout * 1000 });
         await clickWithMark(stage, action.on, seed);
-        log.push({ kind: 'navigate', time: stage.time });
+        if (transition !== 'cut') log.push(navigation(stage.time, transition));
         await clock.settle(async () => {
           const tab = await opened;
           await tab.waitForURL(url => url.href !== 'about:blank', { timeout: tour.waitTimeout * 1000 });
@@ -59,7 +59,7 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
         // page is a change of screen, and only that one is logged, so the stage draws no
         // transition for a step that stayed on its page.
         if (!leftPage(before, new URL(page.url())) || transition === 'cut') return;
-        log.push({ kind: 'navigate', time: stage.time });
+        log.push(navigation(stage.time, transition));
         if (still) await dissolveFrom(page, still);
       }
       return;
@@ -102,7 +102,7 @@ export async function perform(stage: Stage, { time, action, transition }: TimedA
       };
       const rect = action.to === 'out' ? fullFrame(device.viewport) : await zoomRect(page, action.to, device, fit);
       camera.push({ time, duration: action.duration ?? ZOOM_DURATION, rect, follow: action.follow ?? false });
-      log.push({ kind: 'zoom', time, direction: action.to === 'out' ? 'out' : 'in' });
+      log.push({ kind: 'zoom', time, direction: action.to === 'out' ? 'out' : 'in', duration: action.duration ?? ZOOM_DURATION });
       return;
     }
     case 'highlight': {
@@ -146,6 +146,10 @@ async function textLineBoxes(page: Stage['page'], selector: string): Promise<{ x
     }
     return lines.map(l => ({ x: l.x - box.x, y: l.y - box.y, width: l.right - l.x, height: l.bottom - l.y }));
   }).catch(() => []);
+}
+
+function navigation(time: number, transition: TimedAction['transition']): CaptureEvent {
+  return { kind: 'navigate', time, ...(transition && transition !== 'cut' ? { transition } : {}) };
 }
 
 export function leftPage(before: URL, after: URL): boolean {

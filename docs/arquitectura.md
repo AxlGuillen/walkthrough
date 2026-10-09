@@ -245,8 +245,19 @@ overlays:
   | `opening.html`, `chapter-card.html`, `closing.html` | Aperturas, capítulos y cierres en tres estilos (`kinetic`, `over-app`, `brand`), con `beats`; comparten `titles.css` y las coreografías de `titles.js`. Guía en `docs/recursos.md` |
 - **Render aparte** (`src/overlays/render.ts`): cada overlay se abre en su propia página, al tamaño de salida, con `deviceScaleFactor: 1` y fondo transparente. Se guarda como `overlays/NN.mov` en QuickTime Animation (`qtrle`), sin pérdida y con alfa. Varios se renderizan a la vez (`--jobs`), los más largos primero, cada trabajo en su propio Chrome (`src/capture/browsers.ts`): las páginas de un mismo navegador toman sus capturas una tras otra.
 - **Overlays fijos:** si la página no registró nada que se mueva (`walkthrough.still()` en `params.js`: ni timelines, ni animaciones CSS, ni `<video>`), se captura una vez y ffmpeg repite el cuadro (`loop`). Así sale la marca de agua. Una plantilla que cambie con el tiempo lo registra con `walkthrough.timeline()` o `walkthrough.gsap()`; si no, se renderiza como fija.
-- **Reloj propio que empieza en cero.** La página se carga con el reloj congelado, no vía `settle()`, así que sus animaciones de entrada arrancan justo cuando el overlay aparece en el video. Antes del primer cuadro se espera a las fuentes, imágenes y videos, por evento, porque los timers están congelados.
+- **Reloj propio que empieza en cero.** La página se carga con el reloj congelado, no vía `settle()`, así que sus animaciones de entrada arrancan justo cuando el overlay aparece en el video. Antes del primer cuadro se espera a las fuentes, imágenes y videos, por evento, porque los timers están congelados. Si una imagen o un `<video>` no carga, el render se detiene con el nombre del overlay y del archivo, en vez de dejar el hueco en blanco.
 - **`params`** reutiliza una plantilla con distintos textos: el HTML los lee con `URLSearchParams`.
+- **Clips de otro tour** (`clips:`, `src/clips/`): un video que un overlay reproduce y que sale del render de otro tour, como los teléfonos de GPM. El repo guarda el esquema y cada máquina corta los suyos; nada generado viaja de una computadora a otra.
+
+  ```yaml
+  clips:
+    booking: { tour: phone-booking.yaml, from: 3 }                    # relativo al tour
+    itinerary: { tour: phone-itinerary.yaml, from: 1.2, hold: 4.96 }  # hold: el primer cuadro, quieto, antes
+  ...
+        params: { clip: "clip:booking", clip2: "clip:itinerary" }
+  ```
+
+  Antes de los overlays, el render toma el render final más nuevo de cada tour de origen en `<videos>` (las vistas previas no cuentan), lo corta con ffmpeg (`trim`, `setpts` y `tpad`, sin sonido, CRF 16: los mismos cuadros que los comandos con los que se hicieron a mano) en `<caché>/tours/<project>/<tour>/clips/`, y cada `clip:<nombre>` llega al overlay como la dirección de ese archivo. Si falta el render de origen, se detiene con el comando exacto para hacerlo; si el YAML de origen cambió después de su último render, avisa. `walkthrough check` reporta las dos cosas, y el esquema rechaza un `clip:` que no esté declarado.
 - **Montaje:** `setpts` desplaza el overlay a su inicio, `fade` con `alpha=1` lo desvanece y `overlay=eof_action=pass` lo compone en el orden del tour. Los subtítulos van encima de todo.
 - **Lo que no le afecta:** el CSS de la app ni la cámara. Cambiar un overlay solo requiere `render --from=overlays`.
 - **El lienzo** es el video completo (1920×1080 o 1080×1920). La posición la decide el CSS del overlay; los subtítulos ocupan la franja inferior.

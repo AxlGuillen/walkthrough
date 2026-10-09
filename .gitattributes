@@ -1,0 +1,7 @@
+# The same working copy on macOS and Windows: text with LF, binaries as they are.
+* text=auto eol=lf
+*.ttf binary
+*.png binary
+*.jpg binary
+*.mp3 binary
+*.mp4 binary

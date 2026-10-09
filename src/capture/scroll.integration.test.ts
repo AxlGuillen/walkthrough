@@ -185,6 +185,21 @@ describe('waiting for the next screen', () => {
     await page.close();
   }, 60_000);
 
+  it('answers the system file picker that a click opens, off the clock, and the page gets the file', async () => {
+    const uploadUrl = pathToFileURL(path.join(ROOT, 'tests/fixtures/upload/index.html')).href;
+    const file = path.join(ROOT, 'tests/fixtures/upload/photo.txt');
+    const { samples, page } = await run(`segments:
+  - hold: 2
+    do:
+      - goto: ${uploadUrl}
+      - upload: { on: "#replace", file: ${JSON.stringify(file)}, at: 0.5, wait: "#chosen.done" }
+`, async p => ((await p.locator('#chosen').textContent()) ? 1 : 0), uploadUrl);
+    expect(samples[Math.round(0.5 * 30)]).toBe(1);
+    expect(samples[Math.round(0.5 * 30) - 1]).toBe(0);
+    expect(await page.locator('#chosen').textContent()).toBe('photo.txt: una foto de prueba');
+    await page.close();
+  }, 60_000);
+
   it("gives up on a wait after the tour's waitTimeout", async () => {
     await expect(run(`waitTimeout: 1
 segments:

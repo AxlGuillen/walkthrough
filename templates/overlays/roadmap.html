@@ -57,12 +57,15 @@
     const panel = el('abs panel');
     Object.assign(panel.style, { left: px(scene.panel.x), top: px(scene.panel.y), width: px(scene.panel.width), height: px(scene.panel.height) });
     tl.fromTo(panel, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5 }, 0);
+    // Without a title the card itself is what comes in.
+    if (!scene.title) walkthrough.cue(0);
   }
   if (scene.title) {
     const title = el('title');
     Object.assign(title.style, { left: px(scene.title.x), top: px(scene.title.y), fontSize: px(scene.title.size) });
     title.textContent = scene.title.text;
     tl.fromTo(title, { opacity: 0, y: '0.4em' }, { opacity: 1, y: 0 }, 0.1);
+    walkthrough.cue(0.1);
   }
 
   const svg = document.createElementNS(NS, 'svg');

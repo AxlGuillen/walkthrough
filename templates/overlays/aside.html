@@ -62,6 +62,7 @@
   });
   const words = kit.split(title, 'words', { mask: true });
   tl.fromTo(words, { yPercent: 110 }, { yPercent: 0, duration: 0.7, stagger: 0.06, ease: kit.ease.out }, scene.enter + 0.2);
+  walkthrough.cue(scene.enter + 0.2);
 
   if (scene.points.length) {
     const list = el('ul', 'points', box);

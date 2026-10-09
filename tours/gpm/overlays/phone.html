@@ -44,6 +44,7 @@
     tl.to(second, { opacity: 1, duration: 0.5, ease: 'none' }, kit.beat('swap', 6));
   }
   tl.fromTo('.title', { opacity: 0, y: '0.5em' }, { opacity: 1, y: 0 }, kit.beat('title', 0.2));
+  walkthrough.cue(kit.beat('title', 0.2));
   tl.fromTo('.phone', { opacity: 0, y: '6vh', scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.8 }, kit.beat('phone', 0.6));
 </script>
 </body>

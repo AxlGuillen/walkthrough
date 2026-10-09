@@ -47,6 +47,8 @@
 </head>
 <body>
   <script src="params.js"></script>
+  <!-- The overlay sounds when its CSS animation starts: the title rises 100 ms in. -->
+  <script>walkthrough.cue(0.1);</script>
   <script>
     const { layout, cues, groups } = JSON.parse(param('scene', '{}'));
     const px = n => `${n}px`;

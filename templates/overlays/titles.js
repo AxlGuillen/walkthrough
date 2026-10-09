@@ -79,6 +79,7 @@
   }
 
   function brandMark(tl, el, at) {
+    walkthrough.cue(at.mark);
     tl.fromTo(el.mark, { scale: 0.5, rotation: -10, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 0.8, ease: ease.pop }, at.mark);
     if (el.ring) tl.add(kit.draw(el.ring, { duration: 1.1 }), at.mark + 0.1);
   }
@@ -148,7 +149,10 @@
     play(role) {
       const el = stage(role);
       const tl = kit.timeline();
-      styles[el.style][role](tl, el, beats(role));
+      const at = beats(role);
+      // The brand style pops its mark (brandMark cues it); the others bring in the title.
+      if (el.style !== 'brand') walkthrough.cue(at.title);
+      styles[el.style][role](tl, el, at);
       return tl;
     },
   };

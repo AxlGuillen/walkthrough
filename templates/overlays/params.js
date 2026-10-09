@@ -41,6 +41,11 @@ window.walkthrough = {
   // An emoji of the vendored Fluent set by name, in the tour's style (color or 3d).
   emoji(name) { return new URL(`vendor/fluent-emoji/${name}${params.get('emojiStyle') === '3d' ? '.3d.png' : '.svg'}`, location.href).href; },
   timeline(seek) { seekers.push(seek); },
+  // When what the eye follows comes in, on the overlay's clock: the render plays the
+  // overlay's sound there instead of on its first frame. Put it on the same second as the
+  // tween that brings it in.
+  cues: [],
+  cue(at, sound = 'pop') { this.cues.push({ at: Math.max(0, at), sound }); },
   // Nothing on the page moves: no timeline registered, no CSS animation, no video. The render
   // shoots such a page once and repeats the frame. Anything that changes over time registers
   // here (timeline or gsap), or the page is shot as a still.

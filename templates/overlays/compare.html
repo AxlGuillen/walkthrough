@@ -20,6 +20,8 @@
     <figure class="panel"><img id="after" alt=""><figcaption data-param="afterLabel"></figcaption></figure>
   </div>
   <script src="params.js"></script>
+  <!-- The overlay sounds when its CSS animation starts: the first figure rises 120 ms in. -->
+  <script>walkthrough.cue(0.12);</script>
   <script>
     document.getElementById('before').src = asset(param('before'));
     document.getElementById('after').src = asset(param('after'));

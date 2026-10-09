@@ -15,6 +15,8 @@
 <body>
   <div class="wrap panel"><div class="keys"></div><div class="label" data-param="label"></div></div>
   <script src="params.js"></script>
+  <!-- The overlay sounds when its CSS animation starts: the keys pop 60 ms in. -->
+  <script>walkthrough.cue(0.06);</script>
   <script>
     const keys = document.querySelector('.keys');
     for (const key of param('keys').split('+').map(k => k.trim()).filter(Boolean)) keys.insertAdjacentHTML('beforeend', '<kbd></kbd>'), keys.lastElementChild.textContent = key;

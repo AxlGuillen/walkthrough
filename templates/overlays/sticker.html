@@ -35,6 +35,7 @@
   const start = kit.beat('in', 0.2);
   const end = Math.max(start + 1, walkthrough.duration - 0.45);
   tl.fromTo(sticker, { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.55, ease: 'back.out(2)' }, start);
+  walkthrough.cue(start);
   tl.fromTo(img, { rotation: -18 }, { rotation: 0, duration: 0.9, ease: 'elastic.out(1, 0.45)' }, start);
   // A slow bob while it stays, finite so the timeline has a known end.
   const bobs = Math.max(0, Math.floor((end - start - 0.6) / 1.2));

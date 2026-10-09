@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { Page } from 'playwright-core';
 import { headlessBrowsers } from '../capture/browsers.ts';
+import { validCues, writeCues, type Cue } from './cues.ts';
 import { installClock } from '../capture/clock.ts';
 import { startEncoder, type Encoder } from '../capture/encoder.ts';
 import { pool } from '../cli/parallel.ts';
@@ -18,7 +19,7 @@ declare global {
   interface Window {
     // Set by templates/overlays/params.js: places the template's paused animation at t seconds.
     __walkthroughSeek?(t: number): void;
-    walkthrough?: { beats: Record<string, number>; data: unknown; theme: string; duration: number; beat(name: string, fallback?: number): number; still?(): boolean };
+    walkthrough?: { beats: Record<string, number>; data: unknown; theme: string; duration: number; beat(name: string, fallback?: number): number; still?(): boolean; cues?: unknown };
   }
 }
 
@@ -104,6 +105,7 @@ export async function renderOverlays({
   await mkdir(path.join(outDir, 'overlays'), { recursive: true });
 
   const browsers = headlessBrowsers();
+  const cues: Cue[][] = overlays.map(() => []);
   const longestFirst = [...overlays.keys()].sort((a, b) => (overlays[b]!.end - overlays[b]!.start) - (overlays[a]!.end - overlays[a]!.start));
   try {
     await pool(longestFirst, jobs, index => browsers.use(async browser => {
@@ -119,6 +121,7 @@ export async function renderOverlays({
         // Loaded with the clock frozen, not through settle(): nothing may run before frame 0.
         await page.goto(overlayUrl(source, tourDir, overlayParams(overlay, canvas, look.lang), look));
         await mediaReady(page, overlay.src);
+        cues[index] = validCues(await page.evaluate(() => window.walkthrough?.cues));
         const camera = await shooter(page, { viewport: canvas, deviceScaleFactor: 1, transparent: true });
 
         const total = frameCount(overlay.end - overlay.start, fps);
@@ -150,6 +153,7 @@ export async function renderOverlays({
         await context.close();
       }
     }));
+    await writeCues(outDir, cues);
   } finally {
     await browsers.close();
   }

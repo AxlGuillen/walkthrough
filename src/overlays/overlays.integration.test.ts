@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { composeTour } from '../compose/compose.ts';
 import { buildTimeline } from '../timeline/build.ts';
 import { parseTour } from '../tour/load.ts';
+import { readCues } from './cues.ts';
 import { overlayUrl, renderOverlays, resolveOverlay } from './render.ts';
 
 const ROOT = path.resolve(import.meta.dirname, '../..');
@@ -122,6 +123,26 @@ segments:
       .split('\n').filter(line => line && !line.startsWith('#'));
     expect(hashes(second)).toEqual(hashes(first));
   }, 120_000);
+});
+
+describe('sound cues', () => {
+  it("keeps where each overlay said it sounds, on the overlay's own clock", async () => {
+    await writeFile(path.join(dir, 'cued.html'), `<body><script src="${pathToFileURL(path.join(ROOT, 'templates/overlays/params.js')).href}"></script>`
+      + '<script>walkthrough.cue(0.4); walkthrough.cue(1, "boom");</script></body>');
+    const tour = parseTour(`
+title: Fixture
+url: https://example.com
+segments:
+  - hold: 2
+    overlays:
+      - { src: cued.html, fade: 0 }
+      - { src: ${path.join(ROOT, 'tests/fixtures/overlay/still.html')}, fade: 0 }
+`);
+    const out = path.join(dir, 'cues');
+    await mkdir(out, { recursive: true });
+    await renderOverlays({ overlays: buildTimeline(tour, []).overlays, tourDir: dir, outDir: out, canvas: output, output, fps: 10 });
+    expect(await readCues(out)).toEqual([[{ at: 0.4, sound: 'pop' }], []]);
+  }, 60_000);
 });
 
 describe('missing media', () => {

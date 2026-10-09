@@ -94,6 +94,7 @@
     el.style.boxShadow = '0 0.5vmin 0.8vmin rgba(0,0,0,0.45)';
   }
   kit.drift(tl, document.querySelector('.rig'), cam);
+  walkthrough.cue(0);
 
   // Writing that appears left to right at a hand's pace, with a strike that stretches with it.
   const writing = ({ text, x, y, size }, className = '') => {

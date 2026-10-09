@@ -70,6 +70,7 @@
   for (let i = 0; i < 3; i++) el('dot', bar);
   el('label', bar).textContent = scene.label;
   tl.fromTo(win, { opacity: 0, y: 30, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.5 }, 0.1);
+  walkthrough.cue(0.1);
 
   const body = el('abs body');
   place(body, scene.body);

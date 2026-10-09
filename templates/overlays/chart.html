@@ -42,6 +42,8 @@
   const NS = 'http://www.w3.org/2000/svg';
   const px = n => `${n}px`;
   const tl = kit.timeline();
+  let cued = false;
+  const cue = at => { if (!cued) walkthrough.cue(at); cued = true; };
   const at = (name, fallback) => kit.beat(name, fallback);
   document.body.classList.add(scene.mode);
 
@@ -87,6 +89,7 @@
     const title = text({ ...scene.title, y: scene.title.y }, 'title');
     title.style.translate = 'none';
     tl.fromTo(title, { opacity: 0, y: '0.4em' }, { opacity: 1, y: 0 }, 0.1);
+    cue(0.1);
   }
   if (scene.grid) {
     const lines = scene.grid.map(tick => shape('line', { x1: scene.plot.x, x2: scene.plot.x + scene.plot.width, y1: tick.y, y2: tick.y }, 'grid'));
@@ -132,6 +135,7 @@
     },
     donut() {
       const start = at('value', 0.5);
+      cue(start);
       const { x, y } = scene.center;
       shape('circle', { cx: x, cy: y, r: scene.radius, 'stroke-width': scene.width }, 'track');
       const arc = shape('circle', { cx: x, cy: y, r: scene.radius, 'stroke-width': scene.width, transform: `rotate(-90 ${x} ${y})` }, 'stroke');
@@ -143,6 +147,7 @@
     },
     stat() {
       const start = at('value', 0.4);
+      cue(start);
       const value = text(scene.value, 'value');
       const label = text(scene.label, 'label');
       tl.fromTo(value, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.5 }, start);
@@ -153,6 +158,7 @@
     compare() {
       const first = at('before', 0.4);
       const second = at('after', first + 1.3);
+      cue(first);
       for (const [side, start] of [[scene.before, first], [scene.after, second]]) {
         const label = text(side.label, 'label');
         const value = text(side.value, 'value');

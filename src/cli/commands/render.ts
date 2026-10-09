@@ -3,6 +3,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { captureTour } from '../../capture/capture.ts';
+import { withClips } from '../../clips/plan.ts';
+import { prepareClips } from '../../clips/prepare.ts';
 import { deviceProfile, FPS, type Quality } from '../../capture/devices.ts';
 import { composeTour } from '../../compose/compose.ts';
 import { openPath } from '../../desktop/desktop.ts';
@@ -44,6 +46,8 @@ export async function render(
     const output = deviceProfile(tour.device, quality).output;
     const fps = FPS[quality];
     const look = tourLook(tour);
+    // Before anything long starts: a missing source render stops here, with the command to make it.
+    const overlays = withClips(timeline.overlays, await prepareClips(tour, paths.dir, ROOT, STORAGE, outDir));
     const plan = stagePlan(timeline, tour.device === 'mobile');
     const progress = renderProgress({
       ...(from === undefined ? { capturing: frameCount(timeline.duration, fps) } : {}),
@@ -67,7 +71,7 @@ export async function render(
         });
       },
       signal => renderOverlays({
-        overlays: timeline.overlays, tourDir: paths.dir, outDir, canvas, output, fps, look, jobs, signal,
+        overlays, tourDir: paths.dir, outDir, canvas, output, fps, look, jobs, signal,
         onFrame: (overlay, frame) => progress('overlays', frame, overlay),
       }),
     ]);

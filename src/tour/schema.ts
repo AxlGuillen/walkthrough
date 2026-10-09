@@ -293,8 +293,24 @@ export const tourSchema = z.strictObject({
     }).transform(settings => ({ enabled: true, ...settings })),
   ]).prefault(true),
   accent: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'use a #RRGGBB color').default('#FF3B5C'),
+  // Videos an overlay plays that come from another tour's render on this machine: never
+  // committed, each machine cuts its own. An overlay asks for one with params: { clip: clip:<name> }.
+  clips: z.record(z.string().regex(/^[a-z0-9-]+$/, 'use lowercase letters, digits and dashes'), z.strictObject({
+    tour: z.string().regex(/\.ya?ml$/, 'the tour file it comes from, relative to this one'),
+    // Where the clip starts in that render, and how long its first frame holds still before it.
+    from: z.number().min(0).default(0),
+    hold: z.number().min(0).default(0),
+  })).default({}),
   segments: z.array(segment).min(1),
 }).superRefine((tour, ctx) => {
+  tour.segments.forEach((segment, s) => segment.overlays.forEach((overlay, o) => {
+    for (const [key, value] of Object.entries(overlay.params)) {
+      const name = clipName(value);
+      if (name !== undefined && !(name in tour.clips)) {
+        ctx.addIssue({ code: 'custom', message: `clip "${name}" is not declared in clips:`, path: ['segments', s, 'overlays', o, 'params', key] });
+      }
+    }
+  }));
   // The stage tilts the bare recording; a device frame is composed after it, flat.
   if (tour.frame !== 'none' && tour.segments.some(s => s.aside || s.flow?.mode === 'aside' || s.do.some(step => step.kind === 'shot'))) {
     ctx.addIssue({ code: 'custom', message: 'shots do not work with a device frame yet; drop frame or the shots', path: ['frame'] });
@@ -305,3 +321,11 @@ export const tourSchema = z.strictObject({
   }
 });
 export type Tour = z.infer<typeof tourSchema>;
+export type Clip = Tour['clips'][string];
+
+const CLIP_PREFIX = 'clip:';
+
+// The clip a param value asks for (clip:<name>), if it asks for one.
+export function clipName(value: string): string | undefined {
+  return value.startsWith(CLIP_PREFIX) ? value.slice(CLIP_PREFIX.length) : undefined;
+}

@@ -31,9 +31,12 @@ setup:
 # Before rendering:
 # 1. The guest's stay runs Oct 5–11, 2026: after it, the reserve panel offers no dates.
 #    Extend the stay in the test data, or render before then.
-# 2. Render tours/gpm/phone-booking.yaml and phone-itinerary.yaml and copy their videos to
-#    tours/gpm/assets/ under the same names (the device cards play them).
+# 2. The device cards play clips cut from this machine's newest renders of phone-booking.yaml
+#    and phone-itinerary.yaml (clips: below); walkthrough check says if one is missing.
 
+clips:
+  booking: { tour: phone-booking.yaml }
+  itinerary: { tour: phone-itinerary.yaml }
 segments:
   # 0:00 · Open: the portal pulled back for a beat, then full screen on "Not anymore".
   - say: On a laptop, a guest portal has always lived in a narrow column.
@@ -100,7 +103,7 @@ segments:
       - src: overlays/phone.html
         from: 1.8
         to: 12.6
-        params: { title: Desktop. And the phone., clip: assets/phone-booking.mp4 }
+        params: { title: Desktop. And the phone., clip: "clip:booking" }
         beats: { title: 1.9, phone: 2.2 }
 
   # 0:59 · The itinerary, with the booking in it: close on it, then the cards, then the phone.
@@ -126,7 +129,7 @@ segments:
       - src: overlays/phone.html
         from: 3.6
         to: 10.7
-        params: { title: The same stay. Any screen., clip: assets/phone-itinerary.mp4 }
+        params: { title: The same stay. Any screen., clip: "clip:itinerary" }
         beats: { title: 3.7, phone: 4 }
 
   # 1:16 · Control: Studio, a section renamed, saved as a draft and previewed. Never published.

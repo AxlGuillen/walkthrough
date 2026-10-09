@@ -21,7 +21,7 @@
 <script src="../../../templates/overlays/vendor/gsap/gsap.min.js"></script>
 <script src="../../../templates/overlays/kit.js"></script>
 <script>
-  document.querySelector('video').src = asset(param('clip', 'assets/phone-hero.mp4'));
+  document.querySelector('video').src = asset(param('clip'));
   const tl = kit.timeline();
   const open = kit.beat('open', 2.5);
   // Wider and wider until it is the whole screen, then gone: the desktop is underneath.

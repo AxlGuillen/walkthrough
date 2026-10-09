@@ -8,8 +8,8 @@ sfx: false
 clickStyle: none
 waitTimeout: 90
 # The clip the booking card in global.yaml plays beside the desktop recording: the same
-# booking, on a phone, up to "Agree & Book" (never pressed). No voice. Render it, then copy
-# the video to tours/gpm/assets/phone-booking.mp4. The first 1.2 s stay still: they play
+# booking, on a phone, up to "Agree & Book" (never pressed). No voice. The global tours cut
+# their clip from this tour's newest render on the machine (clips:). The first 1.2 s stay still: they play
 # behind the phone's entrance.
 segments:
   # #experiences opens on the catalog, a short scroll above the card.

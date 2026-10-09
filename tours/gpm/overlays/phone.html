@@ -35,7 +35,7 @@
 <script src="../../../templates/overlays/vendor/gsap/gsap.min.js"></script>
 <script src="../../../templates/overlays/kit.js"></script>
 <script>
-  document.querySelector('video').src = asset(param('clip', 'assets/phone-booking.mp4'));
+  document.querySelector('video').src = asset(param('clip'));
   const tl = kit.timeline();
   if (param('clip2')) {
     const second = document.createElement('video');

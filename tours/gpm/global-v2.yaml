@@ -39,13 +39,16 @@ setup:
 #
 # Before rendering:
 # 1. The guest's stay runs Oct 5–11, 2026: after it, the reserve panel offers no dates.
-# 2. Render phone-hero.yaml, phone-booking.yaml and phone-itinerary.yaml and copy their videos
-#    to tours/gpm/assets/ under the same names. The device card plays them cut to its 7.8 s,
-#    the booking from its first tap and the stay from the word "stay" (4.96 s in):
-#      ffmpeg -ss 3 -i phone-booking.mp4 -c:v libx264 -pix_fmt yuv420p -crf 16 -an phone-booking-v2.mp4
-#      ffmpeg -i phone-itinerary.mp4 -vf "trim=start=1.2,setpts=PTS-STARTPTS,tpad=start_mode=clone:start_duration=4.96" \
-#        -c:v libx264 -pix_fmt yuv420p -crf 16 -an phone-itinerary-v2.mp4
+# 2. The column and the device card play clips cut from this machine's newest renders of
+#    phone-hero.yaml, phone-booking.yaml and phone-itinerary.yaml (clips: below); walkthrough
+#    check says if one is missing.
 
+# The device card plays its clips cut to its 7.8 s: the booking from its first tap, and the stay
+# from the word "stay" (4.96 s in), its first frame held until then.
+clips:
+  hero: { tour: phone-hero.yaml }
+  booking: { tour: phone-booking.yaml, from: 3 }
+  itinerary: { tour: phone-itinerary.yaml, from: 1.2, hold: 4.96 }
 segments:
   # Open: the portal as a narrow column, which opens into the desktop on "Not anymore".
   - say: On a laptop, a guest portal has always lived in a narrow column. Not anymore. Now the whole screen belongs to the property.
@@ -56,7 +59,7 @@ segments:
       - src: overlays/column.html
         to: whole
         fade: 0
-        params: { clip: assets/phone-hero.mp4 }
+        params: { clip: "clip:hero" }
         beats: { open: Not }
 
   # The walkthrough: down into the categories, the camera turned a little.
@@ -116,7 +119,7 @@ segments:
       - src: overlays/phone.html
         from: Without
         to: plan
-        params: { title: Desktop. And the phone., clip: assets/phone-booking-v2.mp4, clip2: assets/phone-itinerary-v2.mp4 }
+        params: { title: Desktop. And the phone., clip: "clip:booking", clip2: "clip:itinerary" }
         beats: { title: Without, phone: giving, swap: stay }
 
   # Studio: a section off, another one up, a new photo in the hero, previewed as a guest sees

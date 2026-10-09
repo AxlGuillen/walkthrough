@@ -11,8 +11,8 @@ setup:
     https://uat.booketing.com:
       gpm:itinerary-view:phone: cards
 # The clip the itinerary card in global.yaml plays beside the desktop recording: the guest's
-# stay as cards on a phone. No voice. Render it, then copy the video to
-# tours/gpm/assets/phone-itinerary.mp4. The first 1.5 s stay still, behind the phone's entrance.
+# stay as cards on a phone. No voice. The global tours cut their clip from
+# this tour's newest render on the machine (clips:). The first 1.5 s stay still, behind the phone's entrance.
 segments:
   - hold: 1.5
     do:

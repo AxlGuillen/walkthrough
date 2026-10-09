@@ -6,8 +6,8 @@ language: en
 sfx: false
 waitTimeout: 90
 # The narrow column global-v2.yaml opens on: the top of the portal on a phone, still for a
-# beat, then a slow scroll. No voice. Render it, then copy the video to
-# tours/gpm/assets/phone-hero.mp4.
+# beat, then a slow scroll. No voice. global-v2.yaml cuts its clip from
+# this tour's newest render on the machine (clips:).
 segments:
   - hold: 3
     do:

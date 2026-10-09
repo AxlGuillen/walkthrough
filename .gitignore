@@ -5,6 +5,3 @@ out/
 .env.*
 !.env.example
 .DS_Store
-
-# Generated clips a tour plays (rendered from another tour), never committed
-tours/*/assets/*.mp4

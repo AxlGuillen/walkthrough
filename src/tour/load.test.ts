@@ -215,3 +215,25 @@ segments:
     expect(() => resolveFiles(tour('nowhere.jpg'), dir)).toThrow(/nowhere\.jpg does not exist/);
   });
 });
+
+describe('clips', () => {
+  const withOverlay = (params: string) => `
+title: Global
+url: https://example.com
+clips:
+  booking: { tour: phone-booking.yaml, from: 3 }
+segments:
+  - hold: 2
+    overlays:
+      - { src: overlays/phone.html, params: ${params} }
+`;
+
+  it('declares where each clip comes from, starting at the top and holding nothing by default', () => {
+    expect(parseTour(withOverlay('{ clip: "clip:booking" }')).clips).toEqual({ booking: { tour: 'phone-booking.yaml', from: 3, hold: 0 } });
+    expect(parseTour(minimal).clips).toEqual({});
+  });
+
+  it('refuses a param that asks for a clip nobody declared', () => {
+    expect(() => parseTour(withOverlay('{ clip: "clip:hero" }'))).toThrow(/clip "hero" is not declared in clips:/);
+  });
+});

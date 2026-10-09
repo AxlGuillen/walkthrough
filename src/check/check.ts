@@ -1,5 +1,6 @@
 import type { Page } from 'playwright-core';
 import { localeOf } from '../charts/scale.ts';
+import { clipSources, missingMessage, staleMessage } from '../clips/prepare.ts';
 import { deviceProfile } from '../capture/devices.ts';
 import { looksLikeLogin, openContext } from '../capture/session.ts';
 import { dismissDialogs, installSetup } from '../capture/setup.ts';
@@ -12,7 +13,8 @@ import { CAMERA, stagePlan } from '../stage/plan.ts';
 import { resolveOverlay } from '../overlays/render.ts';
 import type { Size } from '../timeline/camera.ts';
 import type { Timeline, TimedAction } from '../timeline/build.ts';
-import type { Tour } from '../tour/schema.ts';
+import type { Storage } from '../tour/paths.ts';
+import { clipName, type Tour } from '../tour/schema.ts';
 import { selectorOf, worst, type CheckItem, type Status } from './report.ts';
 
 const ACTION_TIMEOUT = 5_000;
@@ -28,6 +30,18 @@ export function checkOverlays(tourDir: string, timeline: Timeline): CheckItem[] 
       notes: found ? [] : ['not found in the tour folder or templates/overlays'],
     };
   });
+}
+
+// Clips are cut from renders made on this machine: report the ones missing or older than their tour,
+// at the first moment an overlay plays them.
+export async function checkClips(tour: Pick<Tour, 'clips'>, timeline: Timeline, tourDir: string, root: string, storage: Storage): Promise<CheckItem[]> {
+  const firstUse = (name: string) => Math.min(...timeline.overlays.filter(o => Object.values(o.params).some(v => clipName(v) === name)).map(o => o.start), Infinity);
+  return (await clipSources(tour, tourDir, root, storage)).map(source => ({
+    time: Number.isFinite(firstUse(source.name)) ? firstUse(source.name) : 0,
+    label: `clip ${source.name} (${source.tourFile})`,
+    status: !source.render ? 'fail' : source.stale ? 'warn' : 'ok',
+    notes: !source.render ? [missingMessage(source)] : source.stale ? [staleMessage(source)] : [],
+  }));
 }
 
 // Below this, a step is gone before anyone can read it.

@@ -45,6 +45,8 @@ Un recurso dice algo que la app no muestra por sí sola. Uno por frase, y no má
   bun run walkthrough catalog --device=both --open
   ```
 
+  Una plantilla nueva dice cuándo suena con `walkthrough.cue(segundo)`, en el mismo segundo que el tween (o el retraso de CSS) que trae lo que el ojo sigue: casi siempre el título. Sin eso, su *pop* cae en su primer cuadro y la auditoría de sincronía lo señala.
+
   Al cambiar una plantilla o agregar un recurso, agrega su ejemplo al catálogo y revisa las hojas antes del commit. Una prueba de `verify` comprueba que cada entrada sea válida y quepa en 16:9 y 9:16.
 - **Ejemplos narrados**, con voz y un sitio de fondo: `tours/examples/aperturas.yaml`, `graficas.yaml`, `codigo.yaml` y `flujos.yaml`. Sin voz, sobre un sitio: `resaltar.yaml` (los ocho estilos de resaltar) y `marco.yaml` (el marco de dispositivo).
 - **La skill `recursos`** del repo guía cómo elegirlos, escribirlos y revisarlos.

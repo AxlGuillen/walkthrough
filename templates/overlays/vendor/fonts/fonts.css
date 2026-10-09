@@ -1,4 +1,4 @@
-/* One weight each; the 400–700 range keeps the browser from faking a bold. */
+/* Hand lettering: one weight each; the 400–700 range keeps the browser from faking a bold. */
 @font-face {
   font-family: "Permanent Marker";
   src: url("PermanentMarker-Regular.ttf") format("truetype");
@@ -9,5 +9,27 @@
   font-family: "Kalam";
   src: url("Kalam-Bold.ttf") format("truetype");
   font-weight: 400 700;
+  font-display: block;
+}
+/* Variable: one file gives every weight the templates use, so none is faked. */
+@font-face {
+  font-family: "Inter";
+  src: url("inter/Inter.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("jetbrains-mono/JetBrainsMono.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: block;
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("jetbrains-mono/JetBrainsMono-Italic.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: italic;
   font-display: block;
 }

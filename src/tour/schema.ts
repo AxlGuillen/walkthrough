@@ -262,7 +262,7 @@ export const tourSchema = z.strictObject({
   texture: z.enum(TEXTURES).default('plain'),
   // The brand's mark in a corner while the app is on screen, not over the opening or closing.
   watermark: z.boolean().default(false),
-  // Titles in the system face, or in a display serif (Instrument Serif, vendored).
+  // Titles in Inter, like the rest, or in a display serif (Instrument Serif); both vendored.
   typeface: z.enum(['system', 'editorial']).default('system'),
   // Fluent Emoji in their vector Color style, or the 3D one.
   emojiStyle: z.enum(['color', '3d']).default('color'),

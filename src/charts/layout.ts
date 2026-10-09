@@ -94,8 +94,9 @@ export function chartBeats(chart: Chart): Record<string, string | number> {
   return beats;
 }
 
-// Rough advance of a bold sans glyph in ems, generous so text measured here never overflows.
-const CHAR_EM = 0.58;
+// Advance of Inter in bold, in ems, generous so text measured here never overflows: its figures
+// reach 0.59 and short labels 0.6.
+const CHAR_EM = 0.6;
 
 // When each point of a series appears, on the overlay's clock: on its beat when it has one,
 // spread between its anchored neighbors when not, as the steps of a flow are.

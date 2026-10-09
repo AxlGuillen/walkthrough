@@ -31,13 +31,17 @@ describe('hand lettering', () => {
     await page.goto(`${pathToFileURL(TEMPLATES_DIR).href}/base.css`);
     await page.setContent(`<link rel="stylesheet" href="${pathToFileURL(TEMPLATES_DIR).href}/base.css">`
       + '<p style="font-family: var(--marker)">Marcador</p><p style="font-family: var(--hand)">Nota</p>'
-      + '<p style="font-family: \'Instrument Serif\'">Título</p>');
+      + '<p style="font-family: \'Instrument Serif\'">Título</p><p style="font-family: var(--font)">Texto</p>'
+      + '<p style="font-family: var(--mono)">code <i>comment</i></p>');
     const statuses = await page.evaluate(async () => {
       await document.fonts.ready;
       // The serif has an italic face too, which nothing here uses: only the faces in use load.
-      return Object.fromEntries([...document.fonts].filter(face => face.style === 'normal').map(face => [face.family.replace(/"/g, ''), face.status]));
+      return [...document.fonts].map(face => `${face.family.replace(/"/g, '')} ${face.style}: ${face.status}`).sort();
     });
-    expect(statuses).toEqual({ 'Permanent Marker': 'loaded', Kalam: 'loaded', 'Instrument Serif': 'loaded' });
+    expect(statuses).toEqual([
+      'Instrument Serif italic: unloaded', 'Instrument Serif normal: loaded', 'Inter normal: loaded',
+      'JetBrains Mono italic: loaded', 'JetBrains Mono normal: loaded', 'Kalam normal: loaded', 'Permanent Marker normal: loaded',
+    ]);
     await page.close();
   });
 });

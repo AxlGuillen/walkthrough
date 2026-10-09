@@ -27,9 +27,10 @@
   /* Behind text laid over the app: the app's own text must not show through. */
   --scrim-strong: rgba(9, 7, 15, 0.94);
   --shadow: rgba(0, 0, 0, 0.45);
-  --font: -apple-system, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
-  --mono: "SF Mono", ui-monospace, Menlo, monospace;
-  /* Titles: the system face by default, a display serif with typeface: editorial. */
+  /* Vendored (vendor/fonts), so a video looks the same on macOS and Windows. */
+  --font: "Inter", sans-serif;
+  --mono: "JetBrains Mono", monospace;
+  /* Titles: Inter by default, a display serif with typeface: editorial. */
   --display: var(--font);
   /* Hand lettering, vendored so it looks the same on every system. */
   --marker: "Permanent Marker", cursive;

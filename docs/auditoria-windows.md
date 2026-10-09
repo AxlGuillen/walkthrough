@@ -10,6 +10,8 @@ Lo que falta para que un render en Windows sea igual de confiable que en la Mac.
 
 ## Pendientes
 
+Al 8/oct/2026 quedan hechos los puntos 2 a 5 y 7 a 9 (fase 13 del plan). Falta el render real (1 y 6) y comparar el catálogo con el de la Mac (parte del 5).
+
 ### P1 · Bloquean un render o cambian el resultado
 
 1. **Ningún render completo con un sitio real en Windows.** La captura solo se probó con fixtures locales. Sunset Shores responde 401, así que el showcase y casi todos los ejemplos no corren sin sesión.

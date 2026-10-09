@@ -369,7 +369,7 @@ En 9:16, `aside-left` y `aside-right` ponen la pantalla arriba y el texto abajo.
       - { text: Marks that follow the page, emoji: pushpin, at: marks }
 ```
 
-- ***Palabras entre asteriscos*** van en cursiva y en el color de acento (con `typeface: editorial`; en la letra del sistema, solo en el acento). Una o dos por título.
+- ***Palabras entre asteriscos*** van en cursiva y en el color de acento (con `typeface: editorial`; en Inter, solo en el acento). Una o dos por título.
 - **De lado se lee:** con `aside-left` o `aside-right` la pantalla no se endereza antes de un `highlight`, así que puedes resaltar algo mientras el texto lo explica. `inset` sí se endereza.
 - **Una entrada desde fuera del cuadro:** `shot: { to: away, duration: 0.4, at: 0 }` al inicio deja el escenario vacío y el `inset` siguiente sube la pantalla a su sitio, bajo el título. Así abre `tours/examples/aparte.yaml`.
 - **Uno por sección, no dos seguidos:** entre dos `aside` la pantalla vuelve a pantalla completa y se aparta otra vez. Si quieres dos ideas juntas, ponlas en un solo `aside` con puntos.
@@ -377,7 +377,9 @@ En 9:16, `aside-left` y `aside-right` ponen la pantalla arriba y el texto abajo.
 
 ## Tipografía
 
-`typeface: editorial` en el tour pone los títulos (aperturas, capítulos, cierres, apartes, gráficas, tablas…) en **Instrument Serif**, una serif de exhibición (OFL, en `templates/overlays/vendor/fonts/`). El texto corrido sigue en la letra del sistema. Por defecto, `system`. Sirve para videos con tono de presentación; para entregas de trabajo, la del sistema es más neutra.
+`typeface: editorial` en el tour pone los títulos (aperturas, capítulos, cierres, apartes, gráficas, tablas…) en **Instrument Serif**, una serif de exhibición (OFL, en `templates/overlays/vendor/fonts/`). El texto corrido sigue en Inter. Por defecto, `system`, que es **Inter** (el nombre se queda por compatibilidad). Sirve para videos con tono de presentación; para entregas de trabajo, Inter es más neutra.
+
+La letra de todos los recursos es **Inter**, y el código va en **JetBrains Mono**, con su cursiva para los comentarios. Las dos son OFL y están vendorizadas en `templates/overlays/vendor/fonts/`, así un video sale igual en macOS y en Windows; las plantillas las piden con `var(--font)` y `var(--mono)`. Reemplazaron a SF Pro y SF Mono, que no se pueden usar fuera de equipos Apple y en Windows salían en Arial y Consolas.
 
 ## Transiciones
 

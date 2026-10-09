@@ -360,11 +360,11 @@ De paso: las marcas ya no se retiran solas cuando una Mac cargada tarda en respo
 
 **Resultado:** 23,5 min (3,2 veces más rápido), con SSIM 0,995 entre los dos videos. **Pendiente, sin pérdida:** reutilizar los cuadros de overlay en los que no hay animación activa. **Solo tras compararlo lado a lado:** capturar a menos densidad los tours sin `zoom`.
 
-## Fase 13 — Mismo esquema, entornos distintos (propuesta, 8/oct/2026)
+## Fase 13 — Mismo esquema, entornos distintos (8/oct/2026)
 
 El repo ya corre en macOS y en Windows. Esta fase cierra lo que encontró la auditoría (`docs/auditoria-windows.md`). La regla que la guía: **el repo guarda el esquema y cada máquina genera lo suyo.** Nada que salga de un render viaja de una computadora a otra; si un tour necesita algo generado, lo declara y cada entorno lo produce con sus propios renders.
 
-### 13.1 Un overlay que no carga su media falla
+### 13.1 Un overlay que no carga su media falla ✅
 
 Hoy `mediaReady` resuelve igual cuando un `<video>` o una imagen no cargan, y el render termina con el hueco en blanco (el teléfono vacío de GPM).
 
@@ -372,7 +372,7 @@ Hoy `mediaReady` resuelve igual cuando un `<video>` o una imagen no cargan, y el
 - Prueba: un overlay con un `clip` que no existe detiene el render con ese mensaje.
 - **Tamaño:** chico. Va primero: evita entregar un video roto mientras llega lo demás.
 
-### 13.2 Clips que salen de otro tour
+### 13.2 Clips que salen de otro tour ✅
 
 Hoy los clips de los teléfonos de GPM se renderizan aparte, se copian a mano a `tours/gpm/assets/` (ignorado por git) y se recortan con comandos de ffmpeg escritos en los comentarios de `global-v2.yaml`. Propuesta: el tour declara de dónde sale cada clip y cómo se recorta; la herramienta lo arma en la caché de la máquina.
 
@@ -402,21 +402,21 @@ La captura en Windows solo se ha probado con fixtures locales.
 - **Listo cuando:** termina sin errores y la auditoría de tiempos sale limpia.
 - **Tamaño:** chico (sobre todo tiempo de máquina).
 
-### 13.4 La misma letra en los dos sistemas
+### 13.4 La misma letra en los dos sistemas ✅
 
 `--font` es SF Pro y `--mono` SF Mono/Menlo: en Windows salen en Arial y Consolas. Afecta títulos, gráficas, tablas, flujos, apartes, cierre y código. SF Pro no se puede vendorizar, porque su licencia no permite usarla fuera de equipos Apple.
 
-- **Decisión pendiente:** vendorizar **Inter** y **JetBrains Mono** (OFL), como se hizo con Permanent Marker y Kalam. Así sale igual en las dos máquinas, con un cambio leve en el aspecto actual de la Mac.
+- **Decidido y hecho:** **Inter** y **JetBrains Mono** (OFL), vendorizadas como Permanent Marker y Kalam. Medidas en la página: Inter promedia 0,47 em en los títulos del aparte (800, −0,03 em) y llega a 0,59 en cifras; JetBrains Mono, 0,60. Por eso `CHAR_EM` de las gráficas subió de 0,58 a 0,6; el del aparte (0,5) y `MONO_EM` (0,62) alcanzan. La hoja de contacto de Windows no mostró desbordes y destapó un error que ya existía: una coma pegada a un énfasis podía empezar renglón.
 - Recalibrar con medidas reales las constantes de ancho que dependen de esa letra (`CHAR_EM` del aparte 0,5 y de las gráficas 0,58, `MONO_EM` 0,62). Se mide en la página ya cargada y se toma el peor caso, no el promedio: así se descubrió que Permanent Marker necesita más espacio para las mayúsculas.
 - Hojas de contacto del catálogo (`walkthrough catalog --device=both`) antes y después, en las dos máquinas, lado a lado.
 - Opcional: que la galería use las mismas letras en vez de pedirlas por nombre.
 - **Tamaño:** mediano (la calibración y la revisión visual son lo largo).
 
-### 13.5 Prueba de `upload` con un selector real
+### 13.5 Prueba de `upload` con un selector real ✅
 
 `upload` solo tiene pruebas de horario y de carga del tour. Hace falta un fixture local con `<input type="file">` y una prueba de integración que suba un archivo y lo encuentre en la página, en los dos sistemas. **Tamaño:** chico.
 
-### 13.6 Mantenimiento
+### 13.6 Mantenimiento ✅
 
 - `walkthrough clean` también borra `catalog/`, `probe/` e `inspect/`, con su prueba.
 - Un `.gitattributes` con `* text=auto eol=lf` (y los binarios marcados), para que la copia de trabajo sea igual en las dos máquinas y Git deje de avisar de CRLF en Windows.

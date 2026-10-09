@@ -6,12 +6,13 @@ import { promisify } from 'node:util';
 import { deviceProfile, FPS, type Quality } from '../capture/devices.ts';
 import type { Timeline } from '../timeline/build.ts';
 import type { Rect, Size } from '../timeline/camera.ts';
+import { captureDevice } from '../frame/layout.ts';
 import { FRAME_FILE, outputLayout } from '../frame/render.ts';
 import { overlayFile } from '../overlays/render.ts';
 import type { Tour } from '../tour/schema.ts';
 import { audioGraph, type Loudness } from './audio.ts';
 import { EVENTS_FILE, type CaptureEvent } from '../capture/events.ts';
-import { eventsFromTimeline, soundEvents, type SoundEvent } from './sfx.ts';
+import { eventsFromTimeline, soundEvents, type SoundEvent, type SoundScene } from './sfx.ts';
 import { karaokeAss } from './subtitles.ts';
 import { poseAt, screenShare, stagePlan } from '../stage/plan.ts';
 import { readCues } from '../overlays/cues.ts';
@@ -119,10 +120,7 @@ export async function composeTour(
   }
 
   const fps = FPS[quality];
-  // Without the capture's own log, every change the timeline planned is assumed to happen.
-  const navigations = existsSync(path.join(outDir, EVENTS_FILE))
-    ? (await capturedEvents(outDir, timeline)).filter(e => e.kind === 'navigate').map(e => e.time) : undefined;
-  const plan = stagePlan(timeline, tour.device === 'mobile', navigations);
+  const plan = await capturedStage(tour, timeline, outDir);
   const stage = plan.spans.map((span, i) => ({ file: stageFile(i), start: spanFrames(span, fps).first / fps }));
   const absent = stage.find(clip => !existsSync(path.join(outDir, clip.file)));
   if (absent) throw new Error(`${absent.file} is missing; render without --from=compose first`);
@@ -130,15 +128,15 @@ export async function composeTour(
   const output = 'video.mp4';
   const inputs: ComposeInputs = {
     capture: 'capture.mp4', clips, overlays, duration: timeline.duration, output, draft: quality === 'preview',
-    sfx: tour.sfx.enabled ? soundEvents(await capturedEvents(outDir, timeline), timeline.overlays, tour.sfx, {
-      fps, screen: time => screenShare(poseAt(plan.moves, time)), ...await readCues(outDir).then(cues => (cues ? { cues } : {})),
-    }) : [],
+    sfx: tour.sfx.enabled ? soundEvents(await capturedEvents(outDir, timeline), timeline.overlays, tour.sfx, await soundScene(tour, timeline, outDir, quality)) : [],
     sfxVolume: tour.sfx.volume,
     ...(subtitles ? { subtitles } : {}),
     ...(music ? { music } : {}),
     ...(frame ? { frame } : {}),
     ...(stage.length ? { stage } : {}),
   };
+  // Kept beside the video: the render's sync audit checks the sounds that were really mixed.
+  await writeFile(path.join(outDir, SFX_FILE), JSON.stringify(inputs.sfx));
   // A stuck filter graph ignores SIGTERM and would spin forever; kill it hard instead.
   const timeout = Math.round(Math.max(120, timeline.duration * 10) * 1000);
   const options = { cwd: outDir, maxBuffer: 16 * 1024 * 1024, timeout, killSignal: 'SIGKILL' as const };
@@ -156,7 +154,27 @@ export function parseLoudness(stderr: string): Loudness {
   return measured as Loudness;
 }
 
-async function capturedEvents(outDir: string, timeline: Timeline): Promise<CaptureEvent[]> {
+export const SFX_FILE = 'sfx.json';
+
+// The stage as the capture saw it: without its log, every change the timeline planned is
+// assumed to happen.
+async function capturedStage(tour: Tour, timeline: Timeline, outDir: string) {
+  const navigations = existsSync(path.join(outDir, EVENTS_FILE))
+    ? (await capturedEvents(outDir, timeline)).filter(e => e.kind === 'navigate').map(e => e.time) : undefined;
+  return stagePlan(timeline, tour.device === 'mobile', navigations);
+}
+
+// What the mix needs to place each sound on the picture; the render's sync audit asks the same.
+export async function soundScene(tour: Tour, timeline: Timeline, outDir: string, quality: Quality): Promise<SoundScene> {
+  const plan = await capturedStage(tour, timeline, outDir);
+  const cues = await readCues(outDir);
+  return {
+    fps: FPS[quality], screen: time => screenShare(poseAt(plan.moves, time)), clickStyle: tour.clickStyle,
+    pointer: deviceProfile(captureDevice(tour.device, tour.frame)).isMobile ? 'touch' : 'mouse', ...(cues ? { cues } : {}),
+  };
+}
+
+export async function capturedEvents(outDir: string, timeline: Timeline): Promise<CaptureEvent[]> {
   const file = path.join(outDir, EVENTS_FILE);
   return existsSync(file) ? JSON.parse(await readFile(file, 'utf8')) as CaptureEvent[] : eventsFromTimeline(timeline);
 }

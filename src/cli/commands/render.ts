@@ -6,7 +6,9 @@ import { captureTour } from '../../capture/capture.ts';
 import { withClips } from '../../clips/plan.ts';
 import { prepareClips } from '../../clips/prepare.ts';
 import { deviceProfile, FPS, type Quality } from '../../capture/devices.ts';
-import { composeTour } from '../../compose/compose.ts';
+import { capturedEvents, composeTour, SFX_FILE, soundScene } from '../../compose/compose.ts';
+import { auditSync, formatSync } from '../../check/sync.ts';
+import type { SoundEvent } from '../../compose/sfx.ts';
 import { openPath } from '../../desktop/desktop.ts';
 import { ensureGallery } from '../../library/launch.ts';
 import { previewMetaFile, publishVideo } from '../../library/library.ts';
@@ -14,7 +16,7 @@ import { previewAnchor, videoAnchor } from '../../library/page.ts';
 import { tourLook } from '../../brands/look.ts';
 import { auditTiming, formatTiming } from '../../check/timing.ts';
 import { EVENTS_FILE, type CaptureEvent } from '../../capture/events.ts';
-import { renderOverlays } from '../../overlays/render.ts';
+import { renderOverlays, resolveOverlay, TEMPLATES_DIR } from '../../overlays/render.ts';
 import { renderFrame } from '../../frame/render.ts';
 import { stagePlan } from '../../stage/plan.ts';
 import { renderStage, spanFrames } from '../../stage/render.ts';
@@ -99,6 +101,12 @@ export async function render(
     const notes = [...auditTiming(JSON.parse(await readFile(events, 'utf8')) as CaptureEvent[], timeline), ...stagePlan(timeline, tour.device === 'mobile').notes];
     console.log(formatTiming(notes.sort((a, b) => a.time - b.time)));
   }
+  const sfx = path.join(outDir, SFX_FILE);
+  if (tour.sfx.enabled && existsSync(sfx)) {
+    const scene = { ...await soundScene(tour, timeline, outDir, quality), mute: tour.sfx.mute, isTemplate: (src: string) => isSharedTemplate(paths.dir, src) };
+    const mixed = JSON.parse(await readFile(sfx, 'utf8')) as SoundEvent[];
+    console.log(formatSync(auditSync(mixed, await capturedEvents(outDir, timeline), timeline.overlays, scene)));
+  }
 
   if (open) {
     const url = `${await ensureGallery(ROOT)}/#${anchor}`;
@@ -107,4 +115,9 @@ export async function render(
   } else {
     console.log('  see it in the gallery: bun run gallery  (or render with --open)');
   }
+}
+
+// An overlay that comes from templates/overlays rather than the tour's own folder.
+function isSharedTemplate(tourDir: string, src: string): boolean {
+  return resolveOverlay(tourDir, src)?.startsWith(TEMPLATES_DIR) ?? false;
 }

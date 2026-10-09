@@ -360,6 +360,80 @@ De paso: las marcas ya no se retiran solas cuando una Mac cargada tarda en respo
 
 **Resultado:** 23,5 min (3,2 veces más rápido), con SSIM 0,995 entre los dos videos. **Pendiente, sin pérdida:** reutilizar los cuadros de overlay en los que no hay animación activa. **Solo tras compararlo lado a lado:** capturar a menos densidad los tours sin `zoom`.
 
+## Fase 13 — Mismo esquema, entornos distintos (propuesta, 8/oct/2026)
+
+El repo ya corre en macOS y en Windows. Esta fase cierra lo que encontró la auditoría (`docs/auditoria-windows.md`). La regla que la guía: **el repo guarda el esquema y cada máquina genera lo suyo.** Nada que salga de un render viaja de una computadora a otra; si un tour necesita algo generado, lo declara y cada entorno lo produce con sus propios renders.
+
+### 13.1 Un overlay que no carga su media falla
+
+Hoy `mediaReady` resuelve igual cuando un `<video>` o una imagen no cargan, y el render termina con el hueco en blanco (el teléfono vacío de GPM).
+
+- Que `mediaReady` falle y diga qué archivo no cargó y desde qué overlay.
+- Prueba: un overlay con un `clip` que no existe detiene el render con ese mensaje.
+- **Tamaño:** chico. Va primero: evita entregar un video roto mientras llega lo demás.
+
+### 13.2 Clips que salen de otro tour
+
+Hoy los clips de los teléfonos de GPM se renderizan aparte, se copian a mano a `tours/gpm/assets/` (ignorado por git) y se recortan con comandos de ffmpeg escritos en los comentarios de `global-v2.yaml`. Propuesta: el tour declara de dónde sale cada clip y cómo se recorta; la herramienta lo arma en la caché de la máquina.
+
+```yaml
+clips:
+  hero: { tour: phone-hero.yaml }
+  booking: { tour: phone-booking.yaml, from: 3 }
+  itinerary: { tour: phone-itinerary.yaml, from: 1.2, hold: 4.96 }   # hold: el primer cuadro, quieto, antes
+...
+      params: { clip: clip:booking, clip2: clip:itinerary }
+```
+
+- **Resolver (puro, con pruebas):** el render final más nuevo del tour de origen en `<videos>/<project>/<tour>/`, y los argumentos de ffmpeg para el recorte (`from`, `hold`). Las vistas previas no cuentan como origen.
+- **Etapa nueva antes de los overlays:** recorta cada clip a `<caché>/tours/<project>/<tour>/clips/<nombre>.mp4`, y los `params` con `clip:<nombre>` llegan al overlay apuntando ahí.
+- **Si falta el render de origen,** el render se detiene con el comando exacto (`walkthrough render tours/gpm/phone-booking.yaml`), como hace una sesión caducada. `walkthrough check` lo avisa antes.
+- **Aviso de clip viejo:** si el YAML de origen cambió después de su último render.
+- **Migrar GPM:** `global.yaml` y `global-v2.yaml` pasan a `clips:`, se borran los pasos a mano de sus comentarios y la regla `tours/*/assets/*.mp4` de `.gitignore`. Las imágenes que se suben (`banff-springs-hero.jpg`) se quedan en el repo: son entradas, no salidas.
+- **Listo cuando:** en una máquina sin clips, `check` dice qué renderizar; tras renderizar los `phone-*.yaml`, `global-v2.yaml` sale sin pasos a mano, y en la Mac el clip recortado da los mismos cuadros que el comando a mano (framemd5).
+- **Tamaño:** mediano.
+
+### 13.3 Primer render real en Windows
+
+La captura en Windows solo se ha probado con fixtures locales.
+
+- `walkthrough login gpm <url>` (a mano) y render final de `phone-booking.yaml`, que no depende de clips y de paso deja el primer origen para 13.2.
+- Medir cada etapa y agregar una columna de Windows a la tabla de «Rendimiento» de `docs/arquitectura.md`.
+- **Listo cuando:** termina sin errores y la auditoría de tiempos sale limpia.
+- **Tamaño:** chico (sobre todo tiempo de máquina).
+
+### 13.4 La misma letra en los dos sistemas
+
+`--font` es SF Pro y `--mono` SF Mono/Menlo: en Windows salen en Arial y Consolas. Afecta títulos, gráficas, tablas, flujos, apartes, cierre y código. SF Pro no se puede vendorizar, porque su licencia no permite usarla fuera de equipos Apple.
+
+- **Decisión pendiente:** vendorizar **Inter** y **JetBrains Mono** (OFL), como se hizo con Permanent Marker y Kalam. Así sale igual en las dos máquinas, con un cambio leve en el aspecto actual de la Mac.
+- Recalibrar con medidas reales las constantes de ancho que dependen de esa letra (`CHAR_EM` del aparte 0,5 y de las gráficas 0,58, `MONO_EM` 0,62). Se mide en la página ya cargada y se toma el peor caso, no el promedio: así se descubrió que Permanent Marker necesita más espacio para las mayúsculas.
+- Hojas de contacto del catálogo (`walkthrough catalog --device=both`) antes y después, en las dos máquinas, lado a lado.
+- Opcional: que la galería use las mismas letras en vez de pedirlas por nombre.
+- **Tamaño:** mediano (la calibración y la revisión visual son lo largo).
+
+### 13.5 Prueba de `upload` con un selector real
+
+`upload` solo tiene pruebas de horario y de carga del tour. Hace falta un fixture local con `<input type="file">` y una prueba de integración que suba un archivo y lo encuentre en la página, en los dos sistemas. **Tamaño:** chico.
+
+### 13.6 Mantenimiento
+
+- `walkthrough clean` también borra `catalog/`, `probe/` e `inspect/`, con su prueba.
+- Un `.gitattributes` con `* text=auto eol=lf` (y los binarios marcados), para que la copia de trabajo sea igual en las dos máquinas y Git deje de avisar de CRLF en Windows.
+- **Tamaño:** chico.
+
+### Orden
+
+1. **13.1:** pequeño, y deja de producir videos con huecos.
+2. **13.3:** valida la captura en Windows y produce el primer clip de origen.
+3. **13.2:** usa lo que dejó 13.3.
+4. **13.4:** en cuanto se decida la letra.
+5. **13.5 y 13.6**, en cualquier momento.
+
+**Fuera de esta fase:** Linux (las rutas y la Papelera ya tienen su rama, pero no hay máquina donde probarlo).
+
+**Fecha a cuidar:** `global-v2.yaml` necesita la estancia del 5 al 11 de octubre. Si ese video se necesita antes de que exista 13.2, se renderiza en la Mac, donde están los clips hechos a mano.
+
 ## Estimación
 
 | Fase | Tamaño |
@@ -376,3 +450,4 @@ De paso: las marcas ya no se retiran solas cuando una Mac cargada tarda en respo
 | 9 | Mediana-grande (9.4 toca el montaje) |
 | 10 | Grande: 10.1 chica, 10.2 y 10.3 medianas, 10.4 mediana por escena |
 | 12 | Mediana: cuatro cambios chicos, medidos uno por uno |
+| 13 | Mediana: 13.2 y 13.4 medianas, el resto chicas |

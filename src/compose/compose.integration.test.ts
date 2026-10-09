@@ -45,6 +45,30 @@ segments:
     expect(readFileSync(path.join(dir, 'subs.ass'), 'utf8')).toContain('{\\k50}Hola');
   }, 60_000);
 
+  it('starts the narration when its segment does, not at the start of the video', async () => {
+    // A first segment without words, then two phrases: the voice keeps its silence in front.
+    ffmpeg('-f', 'lavfi', '-i', 'sine=f=440:d=1:sample_rate=44100', 'voice/02.wav');
+    ffmpeg('-f', 'lavfi', '-i', 'sine=f=660:d=1:sample_rate=44100', 'voice/03.wav');
+    const tour = parseTour(`
+title: Fixture
+url: https://example.com
+sfx: false
+segments:
+  - hold: 1.5
+  - say: Hola
+  - say: Mundo
+`);
+    // Speech is looked up by segment: the first one says nothing.
+    const said = (text: string) => ({ duration: 1, words: [{ text, start: 0, end: 1 }] });
+    const timeline = buildTimeline(tour, [undefined, said('Hola'), said('Mundo')]);
+    await composeTour(tour, timeline, dir, dir);
+    const pcm = execFileSync('ffmpeg', ['-v', 'error', '-i', path.join(dir, 'video.mp4'), '-ac', '1', '-ar', '48000', '-f', 's16le', '-']);
+    const samples = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length / 2);
+    const peak = samples.reduce((max, s) => Math.max(max, Math.abs(s)), 0);
+    const onset = samples.findIndex(s => Math.abs(s) > peak / 5) / 48000;
+    expect(onset).toBeCloseTo(timeline.segments[1]!.speechStart!, 2);
+  }, 60_000);
+
   it('finishes with several effects of the same kind under music', async () => {
     const tour = parseTour(`
 title: Fixture

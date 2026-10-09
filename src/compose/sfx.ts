@@ -1,7 +1,7 @@
 import type { CaptureEvent } from '../capture/events.ts';
 import { TRANSITION, TYPING_RATE, ZOOM_DURATION } from '../capture/schedule.ts';
 import { random } from '../effects/sketch.ts';
-import { TIMING } from '../effects/scene.ts';
+import { TIMING, type ClickStyle } from '../effects/scene.ts';
 import type { Cue } from '../overlays/cues.ts';
 import { CHANGE_LENGTH } from '../stage/plan.ts';
 import { coversApp, type Timeline, type TimedOverlay } from '../timeline/build.ts';
@@ -30,6 +30,9 @@ export interface SoundScene {
   cues?: readonly (readonly Cue[])[];
   // How much of the recording is in the frame at an instant: stage shots can take it away.
   screen?: (time: number) => number;
+  // How a click shows: a mouse cursor presses on its frame; on a touch screen only its mark does.
+  pointer?: 'mouse' | 'touch';
+  clickStyle?: ClickStyle;
 }
 
 const CLICKS = [[3200, 900, 1300, 260], [2700, 1000, 1100, 300], [3700, 800, 1500, 240]] as const;
@@ -112,7 +115,7 @@ export function overlayOnset(start: number, cue: number, fps: number): number {
 // animation shows and lasts as long as it does. What the viewer cannot see stays silent.
 export function soundEvents(
   captured: readonly CaptureEvent[], overlays: readonly TimedOverlay[], { mute }: Pick<SfxSettings, 'mute'> = { mute: [] },
-  { fps, cues, screen = () => 1 }: SoundScene = { fps: 30 },
+  { fps, cues, screen = () => 1, pointer = 'mouse', clickStyle = 'circle' }: SoundScene = { fps: 30 },
 ): SoundEvent[] {
   const events: SoundEvent[] = [];
   const hidden = overlays.filter(coversApp);
@@ -120,9 +123,14 @@ export function soundEvents(
   for (const event of captured) {
     if (!seen(event.time)) continue;
     switch (event.kind) {
-      case 'click':
-        events.push({ sound: 'click', time: atFrame(event.time, fps), variant: variantFor(event.time, CLICKS.length) });
+      case 'click': {
+        // The cursor presses on the click's frame, and a ripple opens on it; a drawn circle starts
+        // on the frame after. A touch screen without a click style shows nothing, so it is silent.
+        if (pointer === 'touch' && clickStyle === 'none') break;
+        const onset = pointer === 'touch' && clickStyle === 'circle' ? afterFrame : atFrame;
+        events.push({ sound: 'click', time: onset(event.time, fps), variant: variantFor(event.time, CLICKS.length) });
         break;
+      }
       case 'type':
         for (let i = 0; i < event.chars; i++) events.push({ sound: 'keys', time: atFrame(event.time + i / TYPING_RATE, fps), variant: i % KEYS.length });
         break;
@@ -173,13 +181,19 @@ export function eventsFromTimeline({ actions }: Pick<Timeline, 'actions'>): Capt
   });
 }
 
+// Starts a stream `time` seconds in, to the sample and never early. adelay's padding comes out
+// without timestamps in ffmpeg 8.1, and the atrim after a mix then drops it: every sound slid
+// earlier by the first one's delay. asetpts numbers the samples again from zero.
+export function placeAt(time: number): string {
+  return `adelay=${Math.ceil(time * SAMPLE_RATE - 1e-6)}S:all=1,asetpts=N/SR/TB`;
+}
+
 // One source per event on purpose: ffmpeg 8.1 spins forever on asplit → adelay → amix,
-// even with two events. The sounds are a fraction of a second, so this costs nothing. The
-// delay is in samples, rounded up: a sound never starts before its frame.
+// even with two events. The sounds are a fraction of a second, so this costs nothing.
 export function sfxGraph(events: readonly SoundEvent[], duration: number, volume = 1): { parts: string[]; label: string } | null {
   if (events.length === 0) return null;
   const parts = events.map((event, i) =>
-    `${source(event)},aformat=channel_layouts=stereo,volume=${+(GAIN[event.sound] * volume).toFixed(4)},adelay=${Math.ceil(event.time * SAMPLE_RATE - 1e-6)}S:all=1[fx${i}]`);
+    `${source(event)},aformat=channel_layouts=stereo,volume=${+(GAIN[event.sound] * volume).toFixed(4)},${placeAt(event.time)}[fx${i}]`);
   const labels = events.map((_, i) => `[fx${i}]`).join('');
   parts.push(`${labels}amix=inputs=${events.length}:normalize=0:duration=longest,apad,atrim=0:${duration.toFixed(3)}[sfx]`);
   return { parts, label: '[sfx]' };

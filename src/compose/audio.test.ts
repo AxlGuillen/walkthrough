@@ -4,8 +4,9 @@ import { audioGraph } from './audio.ts';
 describe('audioGraph', () => {
   it('places each clip at its start and pads the voice to the video length', () => {
     const graph = audioGraph({ clips: [{ input: 1, start: 0.35 }, { input: 2, start: 5.5 }], duration: 10 });
-    expect(graph).toContain('[1:a]aformat=channel_layouts=stereo,adelay=350:all=1[v0]');
-    expect(graph).toContain('[2:a]aformat=channel_layouts=stereo,adelay=5500:all=1[v1]');
+    // At 48 kHz, so the delay counts samples like the effects do.
+    expect(graph).toContain('[1:a]aformat=channel_layouts=stereo:sample_rates=48000,adelay=16800S:all=1,asetpts=N/SR/TB[v0]');
+    expect(graph).toContain('[2:a]aformat=channel_layouts=stereo:sample_rates=48000,adelay=264000S:all=1,asetpts=N/SR/TB[v1]');
     expect(graph).toContain('[v0][v1]amix=inputs=2:normalize=0:duration=longest,apad,atrim=0:10.000[voice]');
     expect(graph).not.toContain('sidechaincompress');
     expect(graph).toMatch(/\[voice\]loudnorm=I=-16.*\[aout\]$/);

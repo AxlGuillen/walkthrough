@@ -69,6 +69,15 @@ describe('soundEvents', () => {
     expect(sounds[2]!.variant).not.toBe(sounds[3]!.variant);
   });
 
+  it('sounds a click when it shows: the press, a ripple, the first stroke of a circle, or not at all', () => {
+    const click: CaptureEvent[] = [{ kind: 'click', time: 1 }];
+    const at = (scene: Partial<Parameters<typeof soundEvents>[3]>) => soundEvents(click, [], { mute: [] }, { fps: 30, ...scene }).map(e => e.time);
+    expect(at({ pointer: 'mouse', clickStyle: 'none' })).toEqual([1]);
+    expect(at({ pointer: 'touch', clickStyle: 'ripple' })).toEqual([1]);
+    expect(at({ pointer: 'touch', clickStyle: 'circle' })[0]).toBeCloseTo(31 / 30, 9);
+    expect(at({ pointer: 'touch', clickStyle: 'none' })).toEqual([]);
+  });
+
   it('keeps quiet what happens while the stage holds the recording out of the frame', () => {
     const away = (time: number) => (time >= 2 && time <= 3 ? 0 : 1);
     const sounds = soundEvents([{ kind: 'click', time: 1 }, { kind: 'click', time: 2.5 }], [overlay(2.2)], { mute: [] }, { fps: 30, screen: away });
@@ -117,8 +126,9 @@ describe('sfxGraph', () => {
     const text = graph.parts.join(';');
     expect(text).not.toContain('asplit');
     expect(text.match(/aevalsrc/g)).toHaveLength(3);
-    // In samples, so a sound lands on its frame to the sample.
-    expect(text).toContain('adelay=120000S:all=1[fx1]');
+    // In samples, so a sound lands on its frame to the sample, and numbered again from zero:
+    // ffmpeg 8.1 leaves adelay's padding without timestamps, and the trim after the mix dropped it.
+    expect(text).toContain('adelay=120000S:all=1,asetpts=N/SR/TB[fx1]');
     expect(text).toContain('[fx0][fx1][fx2]amix=inputs=3');
   });
 

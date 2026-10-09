@@ -1,4 +1,4 @@
-import { sfxGraph, type SoundEvent } from './sfx.ts';
+import { placeAt, sfxGraph, type SoundEvent } from './sfx.ts';
 
 export interface VoiceClip {
   input: number;
@@ -40,8 +40,7 @@ export function audioGraph({ clips, duration, music, sfx = [], sfxVolume = 1, lo
     parts.push(`anullsrc=r=48000:cl=stereo,atrim=0:${d}[voice]`);
   } else {
     clips.forEach(({ input, start }, i) => {
-      const ms = Math.round(start * 1000);
-      parts.push(`[${input}:a]aformat=channel_layouts=stereo,adelay=${ms}:all=1[v${i}]`);
+      parts.push(`[${input}:a]aformat=channel_layouts=stereo:sample_rates=48000,${placeAt(start)}[v${i}]`);
     });
     const labels = clips.map((_, i) => `[v${i}]`).join('');
     parts.push(`${labels}amix=inputs=${clips.length}:normalize=0:duration=longest,apad,atrim=0:${d}[voice]`);

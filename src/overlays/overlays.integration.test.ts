@@ -124,6 +124,27 @@ segments:
   }, 120_000);
 });
 
+describe('missing media', () => {
+  it('stops the render and names what did not load, instead of leaving a blank hole', async () => {
+    await writeFile(path.join(dir, 'broken.html'), '<body><video src="missing-clip.mp4" muted></video><img src="missing-photo.png"><img></body>');
+    const tour = parseTour(`
+title: Fixture
+url: https://example.com
+segments:
+  - hold: 1
+    overlays:
+      - { src: broken.html, fade: 0 }
+`);
+    const out = path.join(dir, 'broken');
+    await mkdir(out, { recursive: true });
+    const error = await renderOverlays({ overlays: buildTimeline(tour, []).overlays, tourDir: dir, outDir: out, canvas: output, output, fps: 10 })
+      .then(() => undefined, (e: Error) => e.message);
+    expect(error).toMatch(/^broken\.html could not load /);
+    expect(error).toContain(path.join(dir, 'missing-clip.mp4'));
+    expect(error).toContain(path.join(dir, 'missing-photo.png'));
+  }, 60_000);
+});
+
 describe('still overlays', () => {
   it('shoots a page where nothing moves once, and repeats that frame for as long as it is on', async () => {
     const tour = parseTour(`

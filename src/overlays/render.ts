@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import type { Page } from 'playwright-core';
 import { headlessBrowsers } from '../capture/browsers.ts';
 import { installClock } from '../capture/clock.ts';
@@ -118,7 +118,7 @@ export async function renderOverlays({
         const clock = await installClock(page);
         // Loaded with the clock frozen, not through settle(): nothing may run before frame 0.
         await page.goto(overlayUrl(source, tourDir, overlayParams(overlay, canvas, look.lang), look));
-        await mediaReady(page);
+        await mediaReady(page, overlay.src);
         const camera = await shooter(page, { viewport: canvas, deviceScaleFactor: 1, transparent: true });
 
         const total = frameCount(overlay.end - overlay.start, fps);
@@ -156,16 +156,20 @@ export async function renderOverlays({
 }
 
 // Event-based on purpose: page timers are frozen, so a setTimeout fallback would never fire.
-async function mediaReady(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+// A clip or an image that does not load stops the render: it would leave a blank hole.
+async function mediaReady(page: Page, overlay: string): Promise<void> {
+  const failed = await page.evaluate(async () => {
     await document.fonts.ready;
-    const images = [...document.images].filter(image => !image.complete).map(image =>
-      new Promise(resolve => { image.onload = image.onerror = resolve; }));
-    const videos = [...document.querySelectorAll('video')].filter(video => video.readyState < 2).map(video =>
-      new Promise(resolve => {
-        video.addEventListener('loadeddata', resolve, { once: true });
-        video.addEventListener('error', resolve, { once: true });
+    const images = [...document.images].filter(image => image.getAttribute('src'))
+      .map(image => image.decode().then(() => null, () => image.currentSrc || image.src));
+    const videos = [...document.querySelectorAll('video')].filter(video => video.currentSrc || video.src).map(video =>
+      new Promise<string | null>(resolve => {
+        const result = () => resolve(video.error ? video.currentSrc || video.src : null);
+        if (video.readyState >= 2 || video.error) return result();
+        video.addEventListener('loadeddata', result, { once: true });
+        video.addEventListener('error', result, { once: true });
       }));
-    await Promise.all([...images, ...videos]);
+    return (await Promise.all([...images, ...videos])).filter(src => src !== null);
   });
+  if (failed.length) throw new Error(`${overlay} could not load ${failed.map(src => (src.startsWith('file:') ? fileURLToPath(src) : src)).join(', ')}`);
 }

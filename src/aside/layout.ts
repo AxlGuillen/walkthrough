@@ -3,13 +3,20 @@ import { spreadTimes } from '../timeline/build.ts';
 import type { Rect, Size } from '../timeline/camera.ts';
 import type { Aside } from './schema.ts';
 
+export interface TitleRun {
+  text: string;
+  em: boolean;
+  // Continues the word before it: the line may not break between them.
+  glued?: true;
+}
+
 export interface AsideScene {
   layout: Aside['layout'];
   align: 'left' | 'center';
   box: Rect;
   eyebrow?: string;
   // The title in runs, the emphasized ones in italics.
-  title: { text: string; em: boolean }[];
+  title: TitleRun[];
   points: { text: string; emoji?: string; time: number }[];
   font: { eyebrow: number; title: number; point: number };
   // When the screen has set itself aside and the title can rise, and when everything leaves.
@@ -24,12 +31,33 @@ export function asideBeats(aside: Aside): Record<string, string | number> {
   return beats;
 }
 
-export function titleRuns(title: string): AsideScene['title'] {
-  return title.split(/(\*[^*]+\*)/).filter(Boolean).map(run => (run.startsWith('*') && run.endsWith('*') && run.length > 2
+export function titleRuns(title: string): TitleRun[] {
+  const runs = title.split(/(\*[^*]+\*)/).filter(Boolean).map(run => (run.startsWith('*') && run.endsWith('*') && run.length > 2
     ? { text: run.slice(1, -1), em: true } : { text: run, em: false }));
+  // An emphasis touching the letters or the comma beside it ("*placed*,") is one word. Each word
+  // rises in a box of its own, and the line may break between boxes, so the pieces on either side
+  // of the seam are split off and the later one marked glued.
+  return runs.flatMap((run, i) => {
+    const pieces: TitleRun[] = [];
+    let rest = run.text;
+    if (i > 0 && /\S$/.test(runs[i - 1]!.text) && /^\S/.test(rest)) {
+      const head = rest.match(/^\S+/)![0];
+      pieces.push({ text: head, em: run.em, glued: true });
+      rest = rest.slice(head.length);
+    }
+    if (i < runs.length - 1 && /\S$/.test(rest) && /^\S/.test(runs[i + 1]!.text)) {
+      const tail = rest.match(/\S+$/)![0];
+      if (rest.length > tail.length) pieces.push({ text: rest.slice(0, -tail.length), em: run.em });
+      pieces.push({ text: tail, em: run.em });
+    } else if (rest) {
+      pieces.push({ text: rest, em: run.em });
+    }
+    return pieces;
+  });
 }
 
-// Average advance of the display faces, in ems; generous, so a fit here never overflows.
+// Average advance of the display faces, in ems (Inter 800 at -0.03em: 0.47); generous, so a fit
+// here never overflows.
 const CHAR_EM = 0.5;
 const lines = (text: string, size: number, width: number) => Math.ceil((text.length * size * CHAR_EM) / width);
 const EXIT = 0.6;

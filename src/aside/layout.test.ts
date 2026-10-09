@@ -13,10 +13,23 @@ const aside = asideSchema.parse({
 
 describe('titleRuns', () => {
   it('sets words between asterisks apart, keeping the rest as is', () => {
-    expect(titleRuns('Every frame is *placed*, not recorded')).toEqual([
-      { text: 'Every frame is ', em: false }, { text: 'placed', em: true }, { text: ', not recorded', em: false },
+    expect(titleRuns('Every frame is *placed* not recorded')).toEqual([
+      { text: 'Every frame is ', em: false }, { text: 'placed', em: true }, { text: ' not recorded', em: false },
     ]);
     expect(titleRuns('No emphasis')).toEqual([{ text: 'No emphasis', em: false }]);
+  });
+
+  it('keeps an emphasis and the comma or letters touching it on one line', () => {
+    expect(titleRuns('Every frame is *placed*, not recorded')).toEqual([
+      { text: 'Every frame is ', em: false }, { text: 'placed', em: true }, { text: ',', em: false, glued: true }, { text: ' not recorded', em: false },
+    ]);
+    expect(titleRuns('A *super*market and *so on* forever')).toEqual([
+      { text: 'A ', em: false }, { text: 'super', em: true }, { text: 'market', em: false, glued: true }, { text: ' and ', em: false },
+      { text: 'so on', em: true }, { text: ' forever', em: false },
+    ]);
+    expect(titleRuns('pre*fix*ed')).toEqual([
+      { text: 'pre', em: false }, { text: 'fix', em: true, glued: true }, { text: 'ed', em: false, glued: true },
+    ]);
   });
 });
 

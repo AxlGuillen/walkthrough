@@ -20,6 +20,7 @@
   .point img { width: 1.6em; height: 1.6em; flex: none; object-fit: contain; }
   .point .bar { width: 0.22em; align-self: stretch; flex: none; border-radius: 1em; background: var(--accent); }
   .word { display: inline-block; }
+  .glue { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -53,7 +54,12 @@
   // The title rises word by word out of its own line, each run keeping its emphasis.
   const title = el('h1', 'title', box);
   title.style.fontSize = px(scene.font.title);
-  for (const run of scene.title) el(run.em ? 'em' : 'span', '', title).textContent = run.text;
+  // A run and the glued ones after it share a wrapper the line cannot break inside.
+  scene.title.forEach((run, i) => {
+    const next = scene.title[i + 1];
+    const parent = run.glued ? title.lastElementChild : next?.glued ? el('span', 'glue', title) : title;
+    el(run.em ? 'em' : 'span', '', parent).textContent = run.text;
+  });
   const words = kit.split(title, 'words', { mask: true });
   tl.fromTo(words, { yPercent: 110 }, { yPercent: 0, duration: 0.7, stagger: 0.06, ease: kit.ease.out }, scene.enter + 0.2);
 

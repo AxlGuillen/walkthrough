@@ -10,7 +10,7 @@ Lo que falta para que un render en Windows sea igual de confiable que en la Mac.
 
 ## Pendientes
 
-Al 8/oct/2026 quedan hechos los puntos 2 a 5 y 7 a 9 (fase 13 del plan). Falta el render real (1 y 6) y comparar el catálogo con el de la Mac (parte del 5).
+Al 9/oct/2026 quedan hechos los puntos 1 a 4 y 6 a 9 (fase 13 del plan): el primer render real en Windows fue la entrega de DYMMSA en vista previa. Falta comparar el catálogo con el de la Mac (parte del 5) y, cuando convenga, un render final del mismo tour en las dos máquinas.
 
 ### P1 · Bloquean un render o cambian el resultado
 

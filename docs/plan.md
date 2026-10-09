@@ -393,7 +393,7 @@ clips:
 - **Listo cuando:** en una máquina sin clips, `check` dice qué renderizar; tras renderizar los `phone-*.yaml`, `global-v2.yaml` sale sin pasos a mano, y en la Mac el clip recortado da los mismos cuadros que el comando a mano (framemd5).
 - **Tamaño:** mediano.
 
-### 13.3 Primer render real en Windows
+### 13.3 Primer render real en Windows ✅
 
 La captura en Windows solo se ha probado con fixtures locales.
 
@@ -401,6 +401,8 @@ La captura en Windows solo se ha probado con fixtures locales.
 - Medir cada etapa y agregar una columna de Windows a la tabla de «Rendimiento» de `docs/arquitectura.md`.
 - **Listo cuando:** termina sin errores y la auditoría de tiempos sale limpia.
 - **Tamaño:** chico (sobre todo tiempo de máquina).
+- **Hecho el 9/oct/2026 con DYMMSA** en lugar de `phone-booking.yaml`, cuyo botón de reservar ya no existe en el portal de UAT (ver abajo). `entrega-semana-40.yaml` en `--preview`, sobre una copia fuera del repo con dos selectores al día (la foto ahora se llama «Axl Guillen» y la semana anterior de Santiago suma 16:11): 36 de 36 pasos en `check`, 2:06 de video en 2:50, auditoría de tiempos limpia. Detalle en «Rendimiento».
+- **Encontrado de paso, no es de Windows:** los datos se movieron bajo dos tours. `entrega-semana-40.yaml` falla en esos dos pasos (es una entrega ya hecha y se deja como está), y `phone-booking.yaml` no encuentra `button[aria-label^="Reserve Castello Italiana Standard Seating"]`: el portal ahora muestra un enlace.
 
 ### 13.4 La misma letra en los dos sistemas ✅
 
